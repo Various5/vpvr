@@ -150,7 +150,7 @@
 {% block content %}
 <div class="container-fluid server-settings-container">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>HDHomeRun Server Settings</h1>
+        <h1>Network Tuner Server Settings</h1>
         <button class="btn btn-outline-primary" onclick="refreshServerInfo()">
             <i class="bi bi-arrow-clockwise"></i> Refresh
         </button>
@@ -172,7 +172,7 @@
             <div class="row align-items-center">
                 <div class="col-md-4">
                     <div class="info-group">
-                        <div class="info-label">HDHomeRun Emulation</div>
+                        <div class="info-label">Network Tuner Emulation</div>
                         <span class="status-indicator active">
                             <i class="bi bi-check-circle-fill"></i> Active
                         </span>
@@ -297,7 +297,7 @@
             <div class="alert alert-info mb-3">
                 <div class="alert-icon">
                     <i class="bi bi-info-circle"></i>
-                    <span>This server emulates an HDHomeRun device, allowing you to use it with Plex, Jellyfin, Emby, and other compatible applications.</span>
+                    <span>This server emulates a network tuner device, allowing you to use it with Plex, Jellyfin, Emby, and other compatible applications.</span>
                 </div>
             </div>
             
@@ -306,7 +306,7 @@
                 <ol>
                     <li>Go to Plex Settings → Live TV & DVR</li>
                     <li>Click "Set Up" or "Add Device"</li>
-                    <li>Enter the Base URL shown above when prompted for the HDHomeRun IP address</li>
+                    <li>Enter the Base URL shown above when prompted for the network tuner IP address</li>
                     <li>Plex should automatically detect the device and available channels</li>
                     <li>For EPG data, add the EPG URL as an XMLTV source in Plex</li>
                 </ol>
@@ -317,7 +317,7 @@
                 <ol>
                     <li>Go to Dashboard → Live TV</li>
                     <li>Click "Add" under Tuner Devices</li>
-                    <li>Select "HDHomeRun" as the tuner type</li>
+                    <li>Select "Network Tuner" as the tuner type</li>
                     <li>Enter the Base URL shown above</li>
                     <li>Click "Save" and Jellyfin will detect available channels</li>
                     <li>Add the EPG URL as an XMLTV guide data source</li>
@@ -329,7 +329,7 @@
                 <ol>
                     <li>Go to Settings → Live TV</li>
                     <li>Click "Add" under TV Tuner Devices</li>
-                    <li>Select "HDHomeRun"</li>
+                    <li>Select "Network Tuner"</li>
                     <li>Enter the Device Discovery URL or Base URL</li>
                     <li>Configure the EPG by adding the EPG URL as an XMLTV source</li>
                 </ol>
@@ -347,7 +347,7 @@
                 </div>
                 <ul class="mb-0 mt-2">
                     <li>If the device is not detected, ensure your media server can reach this server's IP address</li>
-                    <li>Some applications may require port 5004 to be open for HDHomeRun discovery</li>
+                    <li>Some applications may require port 5004 to be open for network tuner discovery</li>
                     <li>If using Docker, ensure proper port mapping is configured</li>
                     <li>Check that you have active channels configured in the system</li>
                 </ul>
@@ -393,7 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Load server information
 async function loadServerInfo() {
     try {
-        const response = await fetch('/api/hdhr/server-info', {
+        const response = await fetch('/api/tuner/server-info', {
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('token')}`
             }

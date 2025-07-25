@@ -6,6 +6,7 @@ from .playlist import Playlist
 from .credit import CreditTransaction, UserQuota
 from .custom_playlist import CustomPlaylist
 from .epg_source import EPGSource, EPGChannelMapping, EPGImportLog
+from .tuner import Tuner, StreamMapping, TunerHealthCheck, TunerStatus
 
 __all__ = [
     "User", "Role", "UserRole",
@@ -15,5 +16,6 @@ __all__ = [
     "Playlist",
     "CreditTransaction", "UserQuota",
     "CustomPlaylist",
-    "EPGSource", "EPGChannelMapping", "EPGImportLog"
+    "EPGSource", "EPGChannelMapping", "EPGImportLog",
+    "Tuner", "StreamMapping", "TunerHealthCheck", "TunerStatus"
 ]

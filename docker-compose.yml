@@ -6,7 +6,7 @@ services:
     container_name: iptv-pvr
     ports:
       - "8000:8000"    # Web interface
-      - "5004:5004"    # HDHomeRun port
+      - "5004:5004"    # Network Tuner port
     volumes:
       - ./recordings:/app/recordings
       - ./iptv_pvr.db:/app/iptv_pvr.db

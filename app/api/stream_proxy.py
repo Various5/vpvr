@@ -302,7 +302,7 @@ async def proxy_channel_by_number_stream(
     current_user: Optional[User] = Depends(get_current_user_flexible)
 ):
     """
-    Proxy channel stream by channel number (HDHomeRun format).
+    Proxy channel stream by channel number (Network Tuner format).
     
     Args:
         channel_number: The channel number to stream
@@ -321,7 +321,7 @@ async def proxy_channel_by_number_stream(
     channel = db.query(Channel).filter(Channel.number == channel_number).first()
     
     if not channel:
-        # Try to find by index in the channel list (HDHomeRun compatibility)
+        # Try to find by index in the channel list (Network Tuner compatibility)
         try:
             idx = int(channel_number) - 1
             channels = db.query(Channel).filter(Channel.is_active == True).order_by(Channel.number, Channel.name).all()

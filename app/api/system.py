@@ -75,7 +75,7 @@ async def get_system_status(
     
     # Service status
     services = {
-        "hdhr": check_hdhr_status(),
+        "tuner": check_tuner_status(),
         "websocket": check_websocket_status(),
         "scheduler": check_scheduler_status()
     }
@@ -240,15 +240,15 @@ def get_storage_info(path: str) -> Dict:
             "percent": 0
         }
 
-def check_hdhr_status() -> bool:
-    """Check if HDHomeRun emulation is running"""
-    # Check if the HDHomeRun discovery port is listening
+def check_tuner_status() -> bool:
+    """Check if Network Tuner emulation is running"""
+    # Check if the Network Tuner discovery port is listening
     try:
         import socket
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.settimeout(1)
         sock.bind(('', 0))  # Bind to any available port
-        sock.sendto(b'', ('127.0.0.1', 5004))  # Try to send to HDHomeRun port
+        sock.sendto(b'', ('127.0.0.1', 5004))  # Try to send to Network Tuner port
         return True
     except:
         return False

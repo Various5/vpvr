@@ -26,6 +26,47 @@ async function logout() {
     window.location.href = '/login';
 }
 
+// Clear cache function
+function clearCache() {
+    if (confirm('Clear all cached data? This will refresh the page.')) {
+        // Clear localStorage
+        const themeToKeep = localStorage.getItem('theme');
+        const tokenToKeep = localStorage.getItem('token');
+        const autoSwitchToKeep = localStorage.getItem('autoSwitchBackground');
+        const switchIntervalToKeep = localStorage.getItem('backgroundSwitchInterval');
+        
+        localStorage.clear();
+        
+        // Restore essential items
+        if (themeToKeep) localStorage.setItem('theme', themeToKeep);
+        if (tokenToKeep) localStorage.setItem('token', tokenToKeep);
+        if (autoSwitchToKeep) localStorage.setItem('autoSwitchBackground', autoSwitchToKeep);
+        if (switchIntervalToKeep) localStorage.setItem('backgroundSwitchInterval', switchIntervalToKeep);
+        
+        // Clear sessionStorage
+        sessionStorage.clear();
+        
+        // Clear browser caches if possible
+        if ('caches' in window) {
+            caches.keys().then(function(names) {
+                for (let name of names) {
+                    caches.delete(name);
+                }
+            });
+        }
+        
+        // Show notification
+        if (window.showNotification) {
+            showNotification('Cache cleared successfully!', 'success');
+        }
+        
+        // Reload the page after a short delay
+        setTimeout(() => {
+            window.location.reload(true);
+        }, 1000);
+    }
+}
+
 // Setup axios defaults
 axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('token')}`;
 

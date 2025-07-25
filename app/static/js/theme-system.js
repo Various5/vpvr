@@ -4,11 +4,11 @@ class ThemeManager {
         this.themes = [
             { id: 'light', name: 'Light', icon: 'sun', description: 'Clean and bright for daytime use' },
             { id: 'dark', name: 'Dark', icon: 'moon-stars', description: 'Easy on the eyes for night viewing' },
-            { id: 'spacecake', name: 'Spacecake', icon: 'stars', description: 'A trippy, animated experience' },
+            { id: 'trip', name: 'Trip', icon: 'stars', description: 'Progressive psychedelic experience' },
             { id: 'spacewars', name: 'SpaceWars', icon: 'rocket', description: 'Journey through the cosmos with dynamic effects' }
         ];
         
-        this.currentTheme = localStorage.getItem('theme') || 'light';
+        this.currentTheme = localStorage.getItem('theme') || 'dark';
         this.init();
     }
 
@@ -16,15 +16,17 @@ class ThemeManager {
         // Check visual effects setting
         this.visualEffectsEnabled = localStorage.getItem('visualEffects') !== 'false';
         
-        // Wait a moment for CSS to be ready, then apply saved theme
-        setTimeout(() => {
-            this.applyTheme(this.currentTheme, true);
-            this.updateVisualEffects();
-        }, 100);
+        // Apply theme immediately without delay
+        this.applyTheme(this.currentTheme, true);
+        this.updateVisualEffects();
+        
+        // Track if we're changing the theme to avoid loops
+        this.isChangingTheme = false;
         
         // Listen for theme changes from other tabs
         window.addEventListener('storage', (e) => {
-            if (e.key === 'theme' && e.newValue) {
+            // Only apply if we didn't just change it ourselves
+            if (e.key === 'theme' && e.newValue && !this.isChangingTheme) {
                 this.applyTheme(e.newValue, true);
             } else if (e.key === 'visualEffects') {
                 this.visualEffectsEnabled = e.newValue !== 'false';
@@ -34,41 +36,61 @@ class ThemeManager {
     }
 
     applyTheme(themeId, skipAnimation = false) {
+        console.log(`[ThemeSystem] applyTheme called with: ${themeId}, current: ${this.currentTheme}`);
+        
+        // Prevent multiple simultaneous theme changes
+        if (this.isChangingTheme) {
+            console.log('[ThemeSystem] Already changing theme, skipping');
+            return;
+        }
+        
         const oldTheme = this.currentTheme;
+        
+        // If theme hasn't changed, do nothing
+        if (oldTheme === themeId) {
+            console.log('[ThemeSystem] Theme unchanged, skipping');
+            return;
+        }
+        
+        // Set flag to prevent loops
+        this.isChangingTheme = true;
         
         // Validate theme
         if (!this.themes.find(t => t.id === themeId)) {
-            console.warn(`Theme '${themeId}' not found, falling back to 'light'`);
-            themeId = 'light';
-            localStorage.setItem('theme', 'light');
+            console.warn(`Theme '${themeId}' not found, falling back to 'dark'`);
+            themeId = 'dark';
         }
         
-        // Update data attribute
-        document.documentElement.setAttribute('data-theme', themeId);
-        
-        // Enable/disable theme CSS files
-        this.themes.forEach(theme => {
-            const link = document.getElementById(`theme-${theme.id}-css`);
-            if (link) {
-                link.disabled = theme.id !== themeId;
+        // Clean up previous theme effects
+        if (oldTheme === 'trip') {
+            document.body.classList.remove('phase-1', 'phase-2', 'phase-3', 'phase-4', 'phase-5');
+            if (this.tripPhaseTimers) {
+                this.tripPhaseTimers.forEach(timer => clearTimeout(timer));
+                this.tripPhaseTimers = [];
             }
-        });
+        }
+        
+        // Remove all particle effects
+        document.querySelectorAll('.trip-particle, .spacewars-star').forEach(el => el.remove());
+        
+        // Simply change the data-theme attribute - CSS is already loaded
+        document.documentElement.setAttribute('data-theme', themeId);
         
         // Save preference
         this.currentTheme = themeId;
         localStorage.setItem('theme', themeId);
         
-        // Update any theme UI elements
+        // Reset flag after a small delay
+        setTimeout(() => {
+            this.isChangingTheme = false;
+        }, 50);
+        
+        // Update UI elements
         this.updateThemeUI();
         
-        // Trigger animation for theme change
-        if (!skipAnimation && oldTheme !== themeId) {
-            this.triggerTransition(oldTheme, themeId);
-        }
-        
-        // Special effects for spacecake (only if visual effects enabled)
-        if (themeId === 'spacecake' && !skipAnimation && this.visualEffectsEnabled) {
-            this.activateSpacecakeMode();
+        // Special effects for trip (only if visual effects enabled)
+        if (themeId === 'trip' && !skipAnimation && this.visualEffectsEnabled) {
+            this.activateTripMode();
         }
         
         // Special effects for spacewars (only if visual effects enabled)
@@ -97,34 +119,55 @@ class ThemeManager {
     }
 
     triggerTransition(oldTheme, newTheme) {
-        // Add transition class
-        document.body.style.transition = 'background-color 0.3s ease, color 0.3s ease';
-        
-        // Remove transition after animation
-        setTimeout(() => {
-            document.body.style.transition = '';
-        }, 300);
+        // Removed transitions to prevent flickering
     }
 
-    activateSpacecakeMode() {
-        // Create floating particles for spacecake theme
+    activateTripMode() {
+        // Clear any existing trip phases
+        document.body.classList.remove('phase-1', 'phase-2', 'phase-3', 'phase-4', 'phase-5');
+        
+        // Clear any existing timers
+        if (this.tripPhaseTimers) {
+            this.tripPhaseTimers.forEach(timer => clearTimeout(timer));
+        }
+        this.tripPhaseTimers = [];
+        
+        // Progressive phase activation
+        const phases = [
+            { class: 'phase-1', delay: 0 },      // Immediate
+            { class: 'phase-2', delay: 60000 },  // 60s
+            { class: 'phase-3', delay: 120000 }, // 120s
+            { class: 'phase-4', delay: 180000 }, // 180s
+            { class: 'phase-5', delay: 240000 }  // 240s
+        ];
+        
+        phases.forEach(phase => {
+            const timer = setTimeout(() => {
+                if (this.currentTheme === 'trip') {
+                    document.body.classList.add(phase.class);
+                }
+            }, phase.delay);
+            this.tripPhaseTimers.push(timer);
+        });
+        
+        // Create floating particles for trip theme
         const particleCount = 15;
         const container = document.body;
         
         for (let i = 0; i < particleCount; i++) {
             const particle = document.createElement('div');
-            particle.className = 'spacecake-particle';
+            particle.className = 'trip-particle';
             particle.style.cssText = `
                 position: fixed;
                 width: ${Math.random() * 10 + 5}px;
                 height: ${Math.random() * 10 + 5}px;
-                background: ${['#ee7752', '#e73c7e', '#23a6d5', '#23d5ab'][Math.floor(Math.random() * 4)]};
+                background: ${['#ff66ff', '#66ffff', '#ffff66', '#ff6699'][Math.floor(Math.random() * 4)]};
                 border-radius: 50%;
                 pointer-events: none;
                 z-index: 9999;
                 left: ${Math.random() * window.innerWidth}px;
                 top: ${window.innerHeight + 20}px;
-                opacity: 0.8;
+                opacity: 0.6;
                 animation: floatUp ${Math.random() * 3 + 2}s ease-out forwards;
             `;
             
@@ -135,9 +178,9 @@ class ThemeManager {
         }
         
         // Add floating animation if not exists
-        if (!document.getElementById('spacecake-float-animation')) {
+        if (!document.getElementById('trip-float-animation')) {
             const style = document.createElement('style');
-            style.id = 'spacecake-float-animation';
+            style.id = 'trip-float-animation';
             style.textContent = `
                 @keyframes floatUp {
                     to {
@@ -239,7 +282,7 @@ class ThemeManager {
         } else {
             document.body.classList.add('no-effects');
             // Remove any active particle effects
-            document.querySelectorAll('.spacecake-particle, .spacewars-star').forEach(el => el.remove());
+            document.querySelectorAll('.trip-particle, .spacewars-star').forEach(el => el.remove());
         }
     }
     
@@ -249,8 +292,36 @@ class ThemeManager {
         this.updateVisualEffects();
         
         // Re-apply theme effects if enabling and on special theme
-        if (enabled && (this.currentTheme === 'spacecake' || this.currentTheme === 'spacewars')) {
+        if (enabled && (this.currentTheme === 'trip' || this.currentTheme === 'spacewars')) {
             this.applyTheme(this.currentTheme);
+        }
+    }
+    
+    clearCacheAndReload() {
+        // Show confirmation dialog
+        if (confirm('This will clear all cached data and reload the page. Continue?')) {
+            // Clear all localStorage
+            localStorage.clear();
+            
+            // Clear sessionStorage
+            sessionStorage.clear();
+            
+            // Clear cookies for this domain
+            document.cookie.split(";").forEach(function(c) { 
+                document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+            });
+            
+            // Clear all caches if available
+            if ('caches' in window) {
+                caches.keys().then(names => {
+                    names.forEach(name => {
+                        caches.delete(name);
+                    });
+                });
+            }
+            
+            // Force reload without cache
+            window.location.reload(true);
         }
     }
 
@@ -289,6 +360,12 @@ class ThemeManager {
                             ${this.visualEffectsEnabled ? 'Disable' : 'Enable'} Effects
                         </a>
                     </li>
+                    <li>
+                        <a class="dropdown-item" href="#" onclick="themeManager.clearCacheAndReload(); return false;">
+                            <i class="bi bi-arrow-clockwise me-2"></i>
+                            Clear Cache & Reload
+                        </a>
+                    </li>
                 </ul>
             </div>
         `;
@@ -299,10 +376,20 @@ class ThemeManager {
 let themeManager;
 
 function initThemeManager() {
+    console.log('[ThemeSystem] initThemeManager called');
+    
+    // Check if already initialized
+    if (window.themeManager) {
+        console.log('[ThemeSystem] Theme manager already exists, skipping init');
+        return;
+    }
+    
     // Set initial theme attribute to prevent flash
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    const validThemes = ['light', 'dark', 'spacecake', 'spacewars'];
-    const themeToUse = validThemes.includes(savedTheme) ? savedTheme : 'light';
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    const validThemes = ['light', 'dark', 'trip', 'spacewars'];
+    const themeToUse = validThemes.includes(savedTheme) ? savedTheme : 'dark';
+    
+    console.log(`[ThemeSystem] Initial theme: ${themeToUse}`);
     
     // Set theme attribute immediately to prevent flash of unstyled content
     document.documentElement.setAttribute('data-theme', themeToUse);

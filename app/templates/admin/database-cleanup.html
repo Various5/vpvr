@@ -5,26 +5,28 @@
 {% block extra_css %}
 <style>
 .cleanup-dashboard {
-    background: linear-gradient(135deg, #ff6b6b 0%, #c44569 100%);
-    color: white;
+    background: linear-gradient(135deg, var(--bs-danger) 0%, #c44569 100%);
+    color: var(--bs-emphasis-color);
     padding: 2rem;
     border-radius: 15px;
     margin-bottom: 2rem;
+    border: 1px solid var(--bs-border-color);
 }
 
 .cleanup-dashboard h1 {
-    color: white;
+    color: var(--bs-emphasis-color);
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .cleanup-dashboard p {
-    color: rgba(255, 255, 255, 0.95);
+    color: var(--bs-body-color);
+    opacity: 0.9;
 }
 
 .stat-card {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--bs-tertiary-bg);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: 1px solid var(--bs-border-color);
     border-radius: 10px;
     padding: 1.5rem;
     text-align: center;
@@ -33,32 +35,37 @@
 
 .stat-card:hover {
     transform: translateY(-5px);
-    background: rgba(255, 255, 255, 0.25);
+    background: var(--bs-secondary-bg);
+    box-shadow: var(--bs-box-shadow);
 }
 
 .stat-card h3, .stat-card p {
-    color: white;
+    color: var(--bs-emphasis-color);
     margin: 0;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .stat-card h3 {
     font-size: 2.5rem;
     font-weight: 700;
     margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, var(--bs-primary) 0%, var(--bs-info) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .stat-card p {
     font-weight: 500;
-    opacity: 1;
+    color: var(--bs-secondary-color);
 }
 
 .cleanup-section {
-    background: white;
+    background: var(--bs-body-bg);
+    border: 1px solid var(--bs-border-color);
     border-radius: 10px;
     padding: 2rem;
     margin-bottom: 2rem;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    box-shadow: var(--bs-box-shadow);
 }
 
 .cleanup-item {
@@ -66,7 +73,8 @@
     justify-content: space-between;
     align-items: center;
     padding: 1rem;
-    border-bottom: 1px solid #e9ecef;
+    border-bottom: 1px solid var(--bs-border-color);
+    color: var(--bs-body-color);
 }
 
 .cleanup-item:last-child {
@@ -74,28 +82,42 @@
 }
 
 .size-badge {
-    background: #e9ecef;
+    background: var(--bs-secondary-bg);
+    color: var(--bs-body-color);
     padding: 0.25rem 0.75rem;
     border-radius: 20px;
     font-size: 0.875rem;
     font-weight: 600;
+    border: 1px solid var(--bs-border-color);
 }
 
 .sources-table {
     width: 100%;
     margin-top: 1rem;
+    background: var(--bs-body-bg);
+    color: var(--bs-body-color);
+    border: 1px solid var(--bs-border-color);
+    border-radius: 8px;
+    overflow: hidden;
 }
 
 .sources-table th {
-    background: #f8f9fa;
+    background: var(--bs-tertiary-bg);
+    color: var(--bs-emphasis-color);
     font-weight: 600;
     padding: 0.75rem;
     text-align: left;
+    border-bottom: 1px solid var(--bs-border-color);
 }
 
 .sources-table td {
     padding: 0.75rem;
-    border-bottom: 1px solid #dee2e6;
+    border-bottom: 1px solid var(--bs-border-color);
+    color: var(--bs-body-color);
+}
+
+.sources-table tbody tr:hover {
+    background: var(--bs-secondary-bg);
 }
 
 .source-status {

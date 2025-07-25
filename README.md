@@ -4,13 +4,13 @@
 
 ==================================================================
 Turn your IPTV (M3U playlists) into a full-featured DVR with
-scheduling, EPG support, HDHomeRun emulation, live streaming,
+scheduling, EPG support, network tuner emulation, live streaming,
 multi-user access, and more.
 ==================================================================
 
 ### FEATURES
 
-- HDHomeRun Emulation (compatible with Plex, Jellyfin, Emby, Channels DVR, NextPVR)
+- Network Tuner Emulation (compatible with Plex, Jellyfin, Emby, Channels DVR, NextPVR)
 - Smart Recording (single episodes or full series)
 - M3U / M3U8 Playlist Support
 - EPG / XMLTV Integration
@@ -90,9 +90,9 @@ Navigate to:
 Navigate to:  
 `Admin → EPG Manager → Add Source → Enter XMLTV URL`
 
-**3. Enable HDHomeRun Emulation**  
+**3. Enable Network Tuner Emulation**  
 Navigate to:  
-`Settings → Network → Enable HDHomeRun`
+`Settings → Network → Enable Network Tuner`
 
 **4. Set Recording Preferences**  
 Navigate to:  
@@ -100,7 +100,7 @@ Navigate to:
 
 ---
 
-### HDHOMERUN EMULATION URLS
+### NETWORK TUNER EMULATION URLS
 
 Replace `your-ip` with the actual IP address of your server:
 

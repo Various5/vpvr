@@ -12,10 +12,21 @@
     <!-- Immediate theme setup to prevent FOUC -->
     <script>
         (function() {
-            const savedTheme = localStorage.getItem('theme') || 'light';
-            const validThemes = ['light', 'dark', 'spacecake', 'spacewars'];
-            const theme = validThemes.includes(savedTheme) ? savedTheme : 'light';
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            const validThemes = ['light', 'dark', 'trip', 'spacewars', 'jungle', 'desert', 'tech'];
+            const theme = validThemes.includes(savedTheme) ? savedTheme : 'dark';
             document.documentElement.setAttribute('data-theme', theme);
+            // Also set body style to prevent any flash
+            const themeColors = {
+                'light': '#f8fafc',
+                'dark': '#0b0f1a', 
+                'trip': '#0a0a0a',
+                'spacewars': '#000510',
+                'jungle': '#1a2e1a',
+                'desert': '#3e2723',
+                'tech': '#0a1a0a'
+            };
+            document.documentElement.style.backgroundColor = themeColors[theme] || '#1a1d21';
         })();
     </script>
     
@@ -23,12 +34,21 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     
-    <!-- Theme System v3 -->
+    <!-- Bootstrap Overrides - Must come after Bootstrap -->
+    <link href="/static/css/bootstrap-overrides.css" rel="stylesheet">
+    
+    <!-- Theme System v3 - All themes loaded to prevent flickering -->
     <link href="/static/css/themes/v3/theme-base.css" rel="stylesheet">
-    <link href="/static/css/themes/v3/theme-light.css" rel="stylesheet" id="theme-light-css" disabled>
-    <link href="/static/css/themes/v3/theme-dark.css" rel="stylesheet" id="theme-dark-css" disabled>
-    <link href="/static/css/themes/v3/theme-spacecake.css" rel="stylesheet" id="theme-spacecake-css" disabled>
-    <link href="/static/css/themes/v3/spacewars.css" rel="stylesheet" id="theme-spacewars-css" disabled>
+    <link href="/static/css/themes/v3/theme-light.css" rel="stylesheet">
+    <link href="/static/css/themes/v3/theme-dark.css" rel="stylesheet">
+    <link href="/static/css/themes/v3/theme-trip.css" rel="stylesheet">
+    <link href="/static/css/themes/v3/spacewars.css" rel="stylesheet">
+    <link href="/static/css/themes/v3/theme-jungle.css" rel="stylesheet">
+    <link href="/static/css/themes/v3/theme-desert.css" rel="stylesheet">
+    <link href="/static/css/themes/v3/theme-tech.css" rel="stylesheet">
+    
+    <!-- Uniform Base System - Foundation for all templates -->
+    <link href="/static/css/uniform-base.css" rel="stylesheet">
     
     <!-- Core Styles -->
     <link href="/static/css/style.css" rel="stylesheet">
@@ -36,6 +56,15 @@
     <!-- Modal Fixes -->
     <link href="/static/css/clean-modal-fix.css" rel="stylesheet">
     <link href="/static/css/modal-force-fix.css" rel="stylesheet">
+    
+    <!-- Dropdown and Text Readability Fixes -->
+    <link href="/static/css/dropdown-fixes.css" rel="stylesheet">
+    
+    <!-- Text Readability Optimization -->
+    <link href="/static/css/text-readability-fixes.css" rel="stylesheet">
+    
+    <!-- No Transitions - Prevents flickering -->
+    <link href="/static/css/no-transitions.css" rel="stylesheet">
     
     {% block extra_css %}{% endblock %}
 </head>
@@ -81,13 +110,13 @@
                         </a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="/admin/users">Users</a></li>
-                            <li><a class="dropdown-item" href="/admin/channel-manager">Channel Manager</a></li>
+                            <li><a class="dropdown-item" href="/admin/channel-manager"><i class="bi bi-collection-play"></i> Channel Manager</a></li>
                             <li><a class="dropdown-item" href="/admin/imports">Import Sources</a></li>
                             <li><a class="dropdown-item" href="/admin/database-cleanup"><i class="bi bi-trash3"></i> Database Cleanup</a></li>
                             <li><a class="dropdown-item" href="/admin/epg-manager"><i class="bi bi-broadcast"></i> EPG Manager</a></li>
                             <li><a class="dropdown-item" href="/admin/system">System</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/server-settings"><i class="bi bi-hdd-network"></i> Server Settings</a></li>
+                            <li><a class="dropdown-item" href="/tuner-settings"><i class="bi bi-broadcast-pin"></i> Tuner Settings</a></li>
                         </ul>
                     </li>
                 </ul>
@@ -106,6 +135,7 @@
                             <li><a class="dropdown-item" href="/profile"><i class="bi bi-person"></i> Profile</a></li>
                             <li><a class="dropdown-item" href="/themes"><i class="bi bi-palette"></i> Themes</a></li>
                             <li><a class="dropdown-item" href="/settings"><i class="bi bi-gear"></i> Settings</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="clearCache()"><i class="bi bi-arrow-clockwise"></i> Clear Cache</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="#" onclick="logout()"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
                         </ul>
@@ -158,11 +188,20 @@
     <!-- Notification System - Must load before other systems -->
     <script src="/static/js/notification-system.js"></script>
     
+    <!-- Uniform Base System - Foundation functionality for all templates -->
+    <script src="/static/js/uniform-base.js"></script>
+    
     <!-- Axios for API calls -->
     <script src="https://cdn.jsdelivr.net/npm/axios@1.6.2/dist/axios.min.js"></script>
     
     <!-- Theme System -->
     <script src="/static/js/theme-system.js"></script>
+    
+    <!-- Theme Background Manager -->
+    <script src="/static/js/theme-background-manager.js"></script>
+    
+    <!-- Theme Debugger - TEMPORARY -->
+    <script src="/static/js/theme-debugger.js"></script>
     
     <!-- Error Management System -->
     <script src="/static/js/error-system.js"></script>
@@ -172,6 +211,12 @@
     
     <!-- Core Application -->
     <script src="/static/js/app.js"></script>
+    
+    <!-- Spacewars Effects (loads only when needed) -->
+    <script src="/static/js/spacewars-effects.js"></script>
+    
+    <!-- Void War System - Epic HTML5 Battle Animation -->
+    <script src="/static/js/void-war-system.js"></script>
     
     {% block extra_js %}{% endblock %}
 </body>

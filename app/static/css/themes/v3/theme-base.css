@@ -1,5 +1,22 @@
 /* Theme Base - Common styles and CSS variables */
 
+/* Disable animations when visual effects are off */
+body.no-effects * {
+    animation: none !important;
+    transition: none !important;
+}
+
+body.no-effects .trip-particle,
+body.no-effects .spacewars-star {
+    display: none !important;
+}
+
+/* Ensure theme changes are instant */
+[data-theme] * {
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+}
+
 /* Default theme variables (Light theme as default) */
 :root {
     /* Primary colors */

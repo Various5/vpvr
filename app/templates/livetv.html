@@ -4,351 +4,675 @@
 
 {% block extra_css %}
 <style>
-    /* Dark theme support */
-    [data-bs-theme="dark"] {
-        --channel-bg: #1a1a1a;
-        --channel-hover: #2a2a2a;
-        --channel-active: #333;
-        --channel-border: #444;
-        --filter-bg: #2a2a2a;
-        --filter-active: #0d6efd;
-        --text-muted: #999;
+/* Modern LiveTV 2026 Design System */
+:root {
+    --player-bg: rgba(0, 0, 0, 0.15);
+    --control-bg: rgba(255, 255, 255, 0.08);
+    --control-border: rgba(255, 255, 255, 0.12);
+    --menu-bg: rgba(0, 0, 0, 0.7);
+    --backdrop-blur: blur(20px) saturate(180%);
+    --smooth-transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+    --neon-glow: 0 0 20px var(--bs-primary);
+}
+
+/* LiveTV Container */
+.livetv-container {
+    height: calc(100vh - 120px);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Video Player Section - 50% smaller */
+.video-section {
+    width: 50%;
+    max-width: 600px;
+    margin: 0 auto;
+    position: relative;
+    border-radius: 20px;
+    overflow: hidden;
+    backdrop-filter: var(--backdrop-blur);
+    -webkit-backdrop-filter: var(--backdrop-blur);
+    background: var(--player-bg);
+    border: 1px solid var(--control-border);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    transition: var(--smooth-transition);
+}
+
+.video-section.expanded {
+    width: 80%;
+    max-width: 1200px;
+}
+
+.video-section.fullscreen {
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 9999;
+    border-radius: 0;
+}
+
+/* Video Player */
+.video-player {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16/9;
+    background: #000;
+    display: block;
+}
+
+/* Slide-out Menu System */
+.player-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.slide-menu {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 320px;
+    background: var(--menu-bg);
+    backdrop-filter: var(--backdrop-blur);
+    -webkit-backdrop-filter: var(--backdrop-blur);
+    border: 1px solid var(--control-border);
+    transform: translateX(-100%);
+    transition: var(--smooth-transition);
+    pointer-events: all;
+    overflow-y: auto;
+    color: var(--bs-body-color);
+}
+
+.slide-menu.active {
+    transform: translateX(0);
+}
+
+.slide-menu.right {
+    right: 0;
+    left: auto;
+    transform: translateX(100%);
+}
+
+.slide-menu.right.active {
+    transform: translateX(0);
+}
+
+/* Menu Headers */
+.menu-header {
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid var(--control-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.menu-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--bs-emphasis-color);
+    margin: 0;
+}
+
+.menu-close {
+    background: none;
+    border: none;
+    color: var(--bs-body-color);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 50%;
+    transition: var(--smooth-transition);
+}
+
+.menu-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--bs-primary);
+}
+
+/* Menu Content */
+.menu-content {
+    padding: 20px;
+}
+
+/* Remote Control */
+.remote-control {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    max-width: 280px;
+    margin: 0 auto;
+}
+
+.remote-btn {
+    aspect-ratio: 1;
+    background: var(--control-bg);
+    backdrop-filter: var(--backdrop-blur);
+    border: 1px solid var(--control-border);
+    border-radius: 15px;
+    color: var(--bs-body-color);
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: var(--smooth-transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.remote-btn:hover {
+    background: var(--bs-primary);
+    color: white;
+    box-shadow: var(--neon-glow);
+    transform: translateY(-2px);
+}
+
+.remote-btn.large {
+    grid-column: span 2;
+}
+
+.remote-btn.center {
+    grid-column: 2;
+    background: var(--bs-primary);
+    color: white;
+    font-size: 2rem;
+}
+
+/* Channel List */
+.channel-list {
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+}
+
+.channel-sort {
+    padding: 0 20px 20px;
+    border-bottom: 1px solid var(--control-border);
+    margin-bottom: 20px;
+}
+
+.sort-controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.sort-btn {
+    padding: 8px 16px;
+    background: var(--control-bg);
+    border: 1px solid var(--control-border);
+    border-radius: 20px;
+    color: var(--bs-body-color);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--smooth-transition);
+}
+
+.sort-btn.active,
+.sort-btn:hover {
+    background: var(--bs-primary);
+    color: white;
+    border-color: var(--bs-primary);
+}
+
+.channel-search {
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--control-bg);
+    border: 1px solid var(--control-border);
+    border-radius: 10px;
+    color: var(--bs-body-color);
+    margin-top: 10px;
+}
+
+.channel-search::placeholder {
+    color: var(--bs-secondary-color);
+}
+
+.channel-item {
+    padding: 15px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    transition: var(--smooth-transition);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.channel-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.channel-item.active {
+    background: var(--bs-primary);
+    color: white;
+}
+
+.channel-logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    object-fit: contain;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.channel-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.channel-name {
+    font-weight: 600;
+    margin: 0 0 5px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.channel-number {
+    font-size: 0.8rem;
+    opacity: 0.7;
+}
+
+.channel-program {
+    font-size: 0.85rem;
+    opacity: 0.8;
+    margin: 5px 0 0 0;
+    color: var(--bs-secondary-color);
+}
+
+/* EPG Display */
+.epg-section {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-top: 20px;
+}
+
+.epg-program {
+    padding: 15px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    transition: var(--smooth-transition);
+}
+
+.epg-program:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.epg-program.current {
+    background: rgba(var(--bs-primary-rgb), 0.2);
+    border-left: 4px solid var(--bs-primary);
+}
+
+.program-time {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--bs-primary);
+    margin-bottom: 5px;
+}
+
+.program-title {
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.program-description {
+    font-size: 0.85rem;
+    opacity: 0.8;
+    line-height: 1.4;
+}
+
+/* Control Bar */
+.control-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+    padding: 20px;
+    transition: var(--smooth-transition);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.video-section:hover .control-bar,
+.control-bar.show {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.control-buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+}
+
+.control-btn {
+    background: var(--control-bg);
+    backdrop-filter: var(--backdrop-blur);
+    border: 1px solid var(--control-border);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    color: var(--bs-body-color);
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: var(--smooth-transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.control-btn:hover {
+    background: var(--bs-primary);
+    color: white;
+    box-shadow: var(--neon-glow);
+    transform: scale(1.1);
+}
+
+.control-btn.active {
+    background: var(--bs-primary);
+    color: white;
+}
+
+/* Menu Toggle Buttons */
+.menu-toggles {
+    position: absolute;
+    top: 20px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+    pointer-events: none;
+    z-index: 11;
+}
+
+.menu-toggle {
+    background: var(--control-bg);
+    backdrop-filter: var(--backdrop-blur);
+    border: 1px solid var(--control-border);
+    border-radius: 10px;
+    padding: 10px 15px;
+    color: var(--bs-body-color);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--smooth-transition);
+    pointer-events: all;
+    opacity: 0.8;
+}
+
+.menu-toggle:hover,
+.menu-toggle.active {
+    background: var(--bs-primary);
+    color: white;
+    opacity: 1;
+    box-shadow: var(--neon-glow);
+}
+
+/* Recording Controls */
+.recording-controls {
+    margin-top: 20px;
+    padding: 20px;
+    background: rgba(220, 53, 69, 0.1);
+    border: 1px solid rgba(220, 53, 69, 0.3);
+    border-radius: 10px;
+}
+
+.recording-btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--bs-danger);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--smooth-transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.recording-btn:hover {
+    background: #c82333;
+    transform: translateY(-2px);
+}
+
+.recording-btn.recording {
+    background: #28a745;
+    animation: recordingPulse 2s infinite;
+}
+
+@keyframes recordingPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+    50% { box-shadow: 0 0 0 20px rgba(220, 53, 69, 0); }
+}
+
+/* Info Display */
+.channel-info-display {
+    position: absolute;
+    top: 80px;
+    left: 20px;
+    right: 20px;
+    background: var(--menu-bg);
+    backdrop-filter: var(--backdrop-blur);
+    border: 1px solid var(--control-border);
+    border-radius: 15px;
+    padding: 20px;
+    color: var(--bs-body-color);
+    transform: translateY(-20px);
+    opacity: 0;
+    transition: var(--smooth-transition);
+    pointer-events: none;
+    z-index: 12;
+}
+
+.channel-info-display.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.current-channel {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.current-channel-logo {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    object-fit: contain;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.current-channel-name {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--bs-emphasis-color);
+}
+
+.current-program {
+    font-size: 1rem;
+    margin: 5px 0 0 0;
+    color: var(--bs-primary);
+}
+
+.program-progress {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    margin-top: 15px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background: var(--bs-primary);
+    border-radius: 2px;
+    transition: width 1s ease;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .video-section {
+        width: 95%;
     }
     
-    [data-bs-theme="light"] {
-        --channel-bg: #fff;
-        --channel-hover: #f8f9fa;
-        --channel-active: #e9ecef;
-        --channel-border: #dee2e6;
-        --filter-bg: #f8f9fa;
-        --filter-active: #0d6efd;
-        --text-muted: #6c757d;
-    }
-    
-    .tv-container {
-        background: #000;
-        border-radius: 10px;
-        overflow: hidden;
-        box-shadow: 0 0 20px rgba(0,0,0,0.5);
-    }
-    
-    #videoPlayer {
+    .slide-menu {
         width: 100%;
-        height: auto;
-        max-height: 70vh;
-        background: #000;
     }
     
-    .channel-list {
-        max-height: 70vh;
-        overflow-y: auto;
+    .remote-control {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
     }
     
-    .channel-item {
-        cursor: pointer;
-        transition: all 0.2s;
-        border-left: 3px solid transparent;
-        background: var(--channel-bg);
+    .remote-btn {
+        font-size: 1.2rem;
     }
     
-    .channel-item:hover {
-        background-color: var(--channel-hover);
-    }
-    
-    .channel-item.active {
-        background-color: var(--channel-active);
-        border-left-color: var(--filter-active);
-    }
-    
-    .channel-logo {
-        width: 40px;
-        height: 40px;
-        object-fit: contain;
-    }
-    
-    .controls-bar {
-        background: rgba(0,0,0,0.8);
-        color: white;
-        padding: 10px;
-    }
-    
-    .epg-info {
-        background: var(--channel-bg);
-        border-radius: 5px;
-        padding: 10px;
-        margin-top: 10px;
-        border: 1px solid var(--channel-border);
-    }
-    
-    .volume-slider {
-        width: 100px;
-    }
-    
-    .video-loading {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        color: white;
-        font-size: 1.5rem;
-        z-index: 10;
-        display: none;
-    }
-    
-    .tv-container-wrapper {
-        position: relative;
-    }
-    
-    /* Filters and controls */
-    .filter-section {
-        background: var(--filter-bg);
-        border-radius: 8px;
-        padding: 12px;
-        margin-bottom: 15px;
-    }
-    
-    .filter-tags {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-top: 8px;
-    }
-    
-    .filter-tag {
-        padding: 4px 12px;
-        border-radius: 20px;
-        background: var(--channel-bg);
-        border: 1px solid var(--channel-border);
-        cursor: pointer;
-        transition: all 0.2s;
-        font-size: 0.875rem;
-    }
-    
-    .filter-tag:hover {
-        border-color: var(--filter-active);
-        color: var(--filter-active);
-    }
-    
-    .filter-tag.active {
-        background: var(--filter-active);
-        color: white;
-        border-color: var(--filter-active);
-    }
-    
-    .channel-info-bar {
-        padding: 10px 15px;
-        background: var(--filter-bg);
-        border-radius: 8px;
-        margin-bottom: 10px;
-        font-size: 0.875rem;
-        color: var(--text-muted);
-    }
-    
-    .pagination-container {
-        padding: 15px 0;
-        border-top: 1px solid var(--channel-border);
-        margin-top: auto;
-    }
-    
-    .pagination .page-link {
-        background: var(--channel-bg);
-        border-color: var(--channel-border);
-        color: var(--bs-body-color);
-    }
-    
-    .pagination .page-link:hover {
-        background: var(--channel-hover);
-        border-color: var(--filter-active);
-        color: var(--filter-active);
-    }
-    
-    .pagination .page-item.active .page-link {
-        background: var(--filter-active);
-        border-color: var(--filter-active);
-        color: white;
-    }
-    
-    .pagination .page-item.disabled .page-link {
-        background: var(--channel-bg);
-        border-color: var(--channel-border);
-        color: var(--text-muted);
-    }
-    
-    .channel-list-container {
-        display: flex;
+    .menu-toggles {
         flex-direction: column;
-        height: 100%;
+        gap: 10px;
+        align-items: center;
     }
-    
-    .channel-list-content {
-        flex: 1;
-        overflow-y: auto;
-        min-height: 0;
-    }
-    
-    .quality-badge {
-        font-size: 0.7rem;
-        padding: 2px 6px;
-        border-radius: 3px;
-        background: rgba(0,0,0,0.1);
-        margin-left: 5px;
-    }
+}
+
+/* Theme-specific enhancements */
+[data-theme="spacewars"] .control-btn:hover {
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.8);
+}
+
+[data-theme="trip"] .control-btn:hover {
+    box-shadow: 0 0 20px rgba(255, 0, 255, 0.8);
+}
+
+[data-theme="jungle"] .control-btn:hover {
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.8);
+}
+
+[data-theme="desert"] .control-btn:hover {
+    box-shadow: 0 0 20px rgba(255, 152, 0, 0.8);
+}
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <!-- Video Player Column -->
-        <div class="col-lg-8">
-            <div class="tv-container-wrapper">
-                <div class="tv-container">
-                    <video id="videoPlayer" controls autoplay></video>
-                    <div class="video-loading" id="videoLoading">
-                        <div class="spinner-border" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="controls-bar d-flex justify-content-between align-items-center">
-                    <div class="d-flex align-items-center gap-3">
-                        <button class="btn btn-sm btn-light" onclick="togglePlay()">
-                            <i class="bi bi-play-fill" id="playIcon"></i>
-                        </button>
-                        <button class="btn btn-sm btn-light" onclick="toggleMute()">
-                            <i class="bi bi-volume-up-fill" id="muteIcon"></i>
-                        </button>
-                        <input type="range" class="form-range volume-slider" id="volumeSlider" 
-                               min="0" max="100" value="100" onchange="setVolume(this.value)">
-                    </div>
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-sm btn-danger" onclick="recordChannel()">
-                            <i class="bi bi-record-circle"></i> Record
-                        </button>
-                        <button class="btn btn-sm btn-light" onclick="toggleFullscreen()">
-                            <i class="bi bi-fullscreen"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
+<div class="livetv-container">
+    <!-- Video Player Section -->
+    <div class="video-section" id="videoSection">
+        <!-- Video Player -->
+        <video class="video-player" id="videoPlayer" controls muted>
+            <source src="" type="application/x-mpegURL">
+            Your browser does not support the video tag.
+        </video>
+        
+        <!-- Player Overlay with Slide-out Menus -->
+        <div class="player-overlay">
+            <!-- Menu Toggle Buttons -->
+            <div class="menu-toggles">
+                <button class="menu-toggle" id="remoteToggle">
+                    <i class="bi bi-joystick"></i> Remote
+                </button>
+                <button class="menu-toggle" id="channelsToggle">
+                    <i class="bi bi-list-ul"></i> Channels
+                </button>
             </div>
             
-            <!-- Current Program Info -->
-            <div class="epg-info" id="currentProgramInfo">
-                <h5 id="currentChannelName">Select a channel to start watching</h5>
-                <div id="programDetails"></div>
+            <!-- Channel Info Display -->
+            <div class="channel-info-display" id="channelInfoDisplay">
+                <div class="current-channel">
+                    <img class="current-channel-logo" id="currentChannelLogo" src="" alt="Channel Logo">
+                    <div>
+                        <h3 class="current-channel-name" id="currentChannelName">Select a Channel</h3>
+                        <p class="current-program" id="currentProgram">No program information</p>
+                    </div>
+                </div>
+                <div class="program-progress">
+                    <div class="progress-bar" id="programProgress" style="width: 0%"></div>
+                </div>
             </div>
-        </div>
-        
-        <!-- Channel List Column -->
-        <div class="col-lg-4">
-            <div class="card h-100">
-                <div class="card-header">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Channels</h5>
-                        <button class="btn btn-sm btn-outline-primary" onclick="refreshChannels()">
-                            <i class="bi bi-arrow-clockwise"></i>
+            
+            <!-- Remote Control Menu (Left) -->
+            <div class="slide-menu" id="remoteMenu">
+                <div class="menu-header">
+                    <h4 class="menu-title">Remote Control</h4>
+                    <button class="menu-close" onclick="closeMenu('remote')">×</button>
+                </div>
+                <div class="menu-content">
+                    <div class="remote-control">
+                        <button class="remote-btn" onclick="changeVolume(1)"><i class="bi bi-volume-up"></i></button>
+                        <button class="remote-btn" onclick="channelUp()"><i class="bi bi-chevron-up"></i></button>
+                        <button class="remote-btn" onclick="showInfo()"><i class="bi bi-info-circle"></i></button>
+                        <button class="remote-btn" onclick="changeVolume(-1)"><i class="bi bi-volume-down"></i></button>
+                        <button class="remote-btn center" onclick="togglePlay()"><i class="bi bi-play-pause"></i></button>
+                        <button class="remote-btn" onclick="toggleMute()"><i class="bi bi-volume-mute"></i></button>
+                        <button class="remote-btn" onclick="previousChannel()"><i class="bi bi-skip-backward"></i></button>
+                        <button class="remote-btn" onclick="channelDown()"><i class="bi bi-chevron-down"></i></button>
+                        <button class="remote-btn" onclick="nextChannel()"><i class="bi bi-skip-forward"></i></button>
+                        <button class="remote-btn" onclick="toggleSize()"><i class="bi bi-arrows-fullscreen" id="sizeIcon"></i></button>
+                        <button class="remote-btn" onclick="toggleFullscreen()"><i class="bi bi-fullscreen"></i></button>
+                        <button class="remote-btn" onclick="showSettings()"><i class="bi bi-gear"></i></button>
+                    </div>
+                    
+                    <!-- Recording Controls -->
+                    <div class="recording-controls">
+                        <h5 style="margin-bottom: 15px; color: var(--bs-emphasis-color);">Recording</h5>
+                        <button class="recording-btn" id="recordBtn" onclick="toggleRecording()">
+                            <i class="bi bi-record-circle"></i>
+                            <span id="recordText">Start Recording</span>
                         </button>
                     </div>
-                    <input type="text" class="form-control form-control-sm mt-2" 
-                           id="channelSearch" placeholder="Search channels...">
-                    
-                    <!-- Filters -->
-                    <div class="filter-section mt-3">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <small class="text-muted">Group Filter</small>
-                            <small class="text-muted" id="activeFilters"></small>
-                        </div>
-                        <div class="filter-tags" id="groupFilters">
-                            <span class="filter-tag active" data-filter="all">All Groups</span>
-                            <!-- Groups will be loaded dynamically -->
-                        </div>
-                    </div>
-                    
-                    <div class="filter-section">
-                        <small class="text-muted">Status</small>
-                        <div class="filter-tags" id="statusFilters">
-                            <span class="filter-tag active" data-filter="all">All</span>
-                            <span class="filter-tag" data-filter="online">Online</span>
-                            <span class="filter-tag" data-filter="offline">Offline</span>
-                        </div>
-                    </div>
-                    
-                    <div class="filter-section">
-                        <small class="text-muted">Quality</small>
-                        <div class="filter-tags" id="qualityFilters">
-                            <span class="filter-tag active" data-filter="all">All</span>
-                            <span class="filter-tag" data-filter="HD">HD</span>
-                            <span class="filter-tag" data-filter="SD">SD</span>
-                            <span class="filter-tag" data-filter="FHD">FHD</span>
-                            <span class="filter-tag" data-filter="4K">4K</span>
-                        </div>
-                    </div>
-                    
-                    <!-- Controls -->
-                    <div class="d-flex gap-2 mt-3">
-                        <select class="form-select form-select-sm" id="sortSelect">
-                            <option value="name-asc">Name (A-Z)</option>
-                            <option value="name-desc">Name (Z-A)</option>
-                            <option value="number-asc">Number (Low-High)</option>
-                            <option value="number-desc">Number (High-Low)</option>
-                            <option value="group-asc">Group (A-Z)</option>
-                            <option value="quality-desc">Quality (High-Low)</option>
-                        </select>
-                        <select class="form-select form-select-sm" id="perPageSelect" style="width: auto;">
-                            <option value="25">25</option>
-                            <option value="50" selected>50</option>
-                            <option value="100">100</option>
-                            <option value="500">500</option>
-                        </select>
-                    </div>
                 </div>
-                <div class="card-body p-0 channel-list-container">
-                    <div class="channel-info-bar">
-                        <span id="channelCountInfo">Loading channels...</span>
-                    </div>
-                    <div class="channel-list-content">
-                        <div class="channel-list" id="channelList">
-                            <!-- Channels will be loaded here -->
+            </div>
+            
+            <!-- Channels Menu (Right) -->
+            <div class="slide-menu right" id="channelsMenu">
+                <div class="menu-header">
+                    <h4 class="menu-title">Channels & EPG</h4>
+                    <button class="menu-close" onclick="closeMenu('channels')">×</button>
+                </div>
+                <div class="menu-content">
+                    <!-- Channel Sorting -->
+                    <div class="channel-sort">
+                        <div class="sort-controls">
+                            <button class="sort-btn active" onclick="sortChannels('number')">Number</button>
+                            <button class="sort-btn" onclick="sortChannels('name')">Name</button>
+                            <button class="sort-btn" onclick="sortChannels('group')">Group</button>
+                            <button class="sort-btn" onclick="sortChannels('recent')">Recent</button>
                         </div>
+                        <input type="text" class="channel-search" id="channelSearch" placeholder="Search channels...">
                     </div>
-                    <!-- Pagination -->
-                    <div class="pagination-container px-3">
-                        <nav aria-label="Channel pagination">
-                            <ul class="pagination pagination-sm justify-content-center mb-0" id="paginationControls">
-                                <!-- Pagination will be generated here -->
-                            </ul>
-                        </nav>
+                    
+                    <!-- Channel List -->
+                    <div class="channel-list" id="channelList">
+                        <!-- Channels will be loaded here -->
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
-
-<!-- Record Modal -->
-<div class="modal fade" id="recordModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Record Channel</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p>Record <strong id="recordChannelName"></strong></p>
-                <div class="mb-3">
-                    <label for="recordDuration" class="form-label">Duration (minutes)</label>
-                    <input type="number" class="form-control" id="recordDuration" value="60" min="1" max="480">
+            
+            <!-- Control Bar -->
+            <div class="control-bar" id="controlBar">
+                <div class="control-buttons">
+                    <button class="control-btn" onclick="previousChannel()"><i class="bi bi-skip-backward"></i></button>
+                    <button class="control-btn" onclick="togglePlay()" id="playBtn"><i class="bi bi-play"></i></button>
+                    <button class="control-btn" onclick="nextChannel()"><i class="bi bi-skip-forward"></i></button>
+                    <button class="control-btn" onclick="toggleSize()" id="expandBtn"><i class="bi bi-arrows-fullscreen"></i></button>
+                    <button class="control-btn" onclick="toggleFullscreen()"><i class="bi bi-fullscreen"></i></button>
                 </div>
-                <div class="alert alert-info">
-                    <small>The recording will start immediately and continue for the specified duration.</small>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" onclick="startRecording()">
-                    <i class="bi bi-record-circle"></i> Start Recording
-                </button>
             </div>
         </div>
     </div>
@@ -357,828 +681,524 @@
 
 {% block extra_js %}
 <script>
-let channels = [];
-let filteredChannels = [];
-let currentChannel = null;
-let player = null;
-let hls = null;
-let groups = [];
-
-// Pagination and filtering state
-let currentPage = 1;
-let itemsPerPage = 50;
-let currentSort = 'name-asc';
-let currentSearch = '';
-let currentFilters = {
-    group: 'all',
-    status: 'all',
-    quality: 'all'
-};
-
-// Helper function to make authenticated requests with auto-refresh
-async function fetchWithAuth(url, options = {}) {
-    const token = localStorage.getItem('token');
-    if (!token) {
-        window.location.href = '/login';
-        return null;
+// LiveTV Modern Interface Controller
+class LiveTVController {
+    constructor() {
+        this.currentChannel = null;
+        this.isExpanded = false;
+        this.isFullscreen = false;
+        this.isRecording = false;
+        this.channels = [];
+        this.currentSort = 'number';
+        this.isPlaying = false;
+        this.volume = 1.0;
+        this.isMuted = false;
+        this.recentChannels = [];
+        
+        this.init();
     }
     
-    const headers = {
-        ...options.headers,
-        'Authorization': `Bearer ${token}`
-    };
+    async init() {
+        await this.loadChannels();
+        this.setupEventListeners();
+        this.startInfoDisplayTimer();
+        this.updateChannelList();
+        
+        // Auto-hide info display after 3 seconds
+        setTimeout(() => {
+            document.getElementById('channelInfoDisplay').classList.remove('show');
+        }, 3000);
+    }
     
-    let response = await fetch(url, { ...options, headers });
-    
-    // If we get 401, try to refresh the token
-    if (response.status === 401) {
+    async loadChannels() {
         try {
-            const refreshResponse = await fetch('/api/auth/refresh', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
+            const response = await axios.get('/api/channels', {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
             });
-            
-            if (refreshResponse.ok) {
-                const data = await refreshResponse.json();
-                localStorage.setItem('token', data.access_token);
-                
-                // Retry the original request with new token
-                headers['Authorization'] = `Bearer ${data.access_token}`;
-                response = await fetch(url, { ...options, headers });
-            } else {
-                // Refresh failed, redirect to login
-                localStorage.removeItem('token');
-                window.location.href = '/login';
-                return null;
-            }
+            this.channels = response.data;
+            this.updateChannelList();
         } catch (error) {
-            console.error('Token refresh failed:', error);
-            localStorage.removeItem('token');
-            window.location.href = '/login';
-            return null;
+            console.error('Failed to load channels:', error);
+            showNotification('Failed to load channels', 'error');
         }
     }
     
-    return response;
-}
-
-async function loadChannels() {
-    try {
-        const response = await fetchWithAuth('/api/channels');
-        if (!response || !response.ok) throw new Error('Failed to fetch channels');
+    setupEventListeners() {
+        const videoPlayer = document.getElementById('videoPlayer');
+        const channelSearch = document.getElementById('channelSearch');
+        const remoteToggle = document.getElementById('remoteToggle');
+        const channelsToggle = document.getElementById('channelsToggle');
         
-        channels = await response.json();
+        // Video player events
+        videoPlayer.addEventListener('play', () => {
+            this.isPlaying = true;
+            document.getElementById('playBtn').innerHTML = '<i class="bi bi-pause"></i>';
+        });
         
-        // Extract unique groups
-        const uniqueGroups = [...new Set(channels.map(ch => ch.group).filter(g => g))];
-        groups = uniqueGroups.sort();
+        videoPlayer.addEventListener('pause', () => {
+            this.isPlaying = false;
+            document.getElementById('playBtn').innerHTML = '<i class="bi bi-play"></i>';
+        });
         
-        // Load groups into filter
-        loadGroupFilters();
+        // Search functionality
+        channelSearch.addEventListener('input', (e) => {
+            this.filterChannels(e.target.value);
+        });
         
-        // Apply filters and display
-        applyFiltersAndDisplay();
-    } catch (error) {
-        console.error('Failed to load channels:', error);
-        showNotification('Failed to load channels', 'error');
+        // Menu toggles
+        remoteToggle.addEventListener('click', () => this.toggleMenu('remote'));
+        channelsToggle.addEventListener('click', () => this.toggleMenu('channels'));
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            this.handleKeyboard(e);
+        });
+        
+        // Mouse movement for control bar
+        const videoSection = document.getElementById('videoSection');
+        videoSection.addEventListener('mousemove', () => {
+            this.showControlBar();
+        });
+        
+        videoSection.addEventListener('mouseleave', () => {
+            this.hideControlBar();
+        });
     }
-}
-
-function loadGroupFilters() {
-    const container = document.getElementById('groupFilters');
-    container.innerHTML = '<span class="filter-tag active" data-filter="all">All Groups</span>';
     
-    groups.forEach(group => {
-        const tag = document.createElement('span');
-        tag.className = 'filter-tag';
-        tag.dataset.filter = group;
-        tag.textContent = group;
-        tag.onclick = () => setGroupFilter(group);
-        container.appendChild(tag);
-    });
-}
-
-function setGroupFilter(group) {
-    currentFilters.group = group;
-    document.querySelectorAll('#groupFilters .filter-tag').forEach(tag => {
-        tag.classList.toggle('active', tag.dataset.filter === group);
-    });
-    currentPage = 1;
-    applyFiltersAndDisplay();
-    updateURL();
-}
-
-function setStatusFilter(status) {
-    currentFilters.status = status;
-    document.querySelectorAll('#statusFilters .filter-tag').forEach(tag => {
-        tag.classList.toggle('active', tag.dataset.filter === status);
-    });
-    currentPage = 1;
-    applyFiltersAndDisplay();
-    updateURL();
-}
-
-function setQualityFilter(quality) {
-    currentFilters.quality = quality;
-    document.querySelectorAll('#qualityFilters .filter-tag').forEach(tag => {
-        tag.classList.toggle('active', tag.dataset.filter === quality);
-    });
-    currentPage = 1;
-    applyFiltersAndDisplay();
-    updateURL();
-}
-
-function applyFiltersAndDisplay() {
-    // Apply search filter
-    filteredChannels = channels.filter(channel => {
-        if (currentSearch && !channel.name.toLowerCase().includes(currentSearch.toLowerCase()) &&
-            !(channel.number && channel.number.includes(currentSearch))) {
-            return false;
-        }
+    updateChannelList() {
+        const channelsContainer = document.getElementById('channelList');
+        channelsContainer.innerHTML = '';
         
-        // Group filter
-        if (currentFilters.group !== 'all' && channel.group !== currentFilters.group) {
-            return false;
-        }
+        let sortedChannels = [...this.channels];
         
-        // Status filter
-        if (currentFilters.status !== 'all') {
-            const status = channel.status || 'offline';
-            if (status !== currentFilters.status) {
-                return false;
-            }
-        }
-        
-        // Quality filter
-        if (currentFilters.quality !== 'all') {
-            const quality = extractQuality(channel.name);
-            if (quality !== currentFilters.quality) {
-                return false;
-            }
-        }
-        
-        return true;
-    });
-    
-    // Apply sorting
-    sortChannels();
-    
-    // Display with pagination
-    displayChannels();
-}
-
-function extractQuality(channelName) {
-    if (channelName.includes('4K') || channelName.includes('UHD')) return '4K';
-    if (channelName.includes('FHD') || channelName.includes('1080')) return 'FHD';
-    if (channelName.includes('HD') || channelName.includes('720')) return 'HD';
-    return 'SD';
-}
-
-function sortChannels() {
-    const [field, order] = currentSort.split('-');
-    
-    filteredChannels.sort((a, b) => {
-        let valueA, valueB;
-        
-        switch(field) {
-            case 'name':
-                valueA = a.name.toLowerCase();
-                valueB = b.name.toLowerCase();
-                break;
+        // Sort channels
+        switch(this.currentSort) {
             case 'number':
-                valueA = parseInt(a.number) || 999999;
-                valueB = parseInt(b.number) || 999999;
+                sortedChannels.sort((a, b) => (a.number || 999) - (b.number || 999));
+                break;
+            case 'name':
+                sortedChannels.sort((a, b) => a.name.localeCompare(b.name));
                 break;
             case 'group':
-                valueA = (a.group || '').toLowerCase();
-                valueB = (b.group || '').toLowerCase();
+                sortedChannels.sort((a, b) => (a.group_name || '').localeCompare(b.group_name || ''));
                 break;
-            case 'quality':
-                const qualityOrder = {'4K': 4, 'FHD': 3, 'HD': 2, 'SD': 1};
-                valueA = qualityOrder[extractQuality(a.name)] || 0;
-                valueB = qualityOrder[extractQuality(b.name)] || 0;
+            case 'recent':
+                sortedChannels = this.recentChannels.map(id => 
+                    this.channels.find(ch => ch.id === id)
+                ).filter(Boolean);
                 break;
-            default:
-                return 0;
         }
         
-        if (order === 'asc') {
-            return valueA < valueB ? -1 : valueA > valueB ? 1 : 0;
-        } else {
-            return valueA > valueB ? -1 : valueA < valueB ? 1 : 0;
-        }
-    });
-}
-
-function displayChannels() {
-    const container = document.getElementById('channelList');
-    container.innerHTML = '';
-    
-    // Calculate pagination
-    const totalChannels = filteredChannels.length;
-    const totalPages = Math.ceil(totalChannels / itemsPerPage);
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = Math.min(startIndex + itemsPerPage, totalChannels);
-    const paginatedChannels = filteredChannels.slice(startIndex, endIndex);
-    
-    // Update channel count info
-    const channelCountInfo = document.getElementById('channelCountInfo');
-    if (totalChannels > 0) {
-        channelCountInfo.textContent = `Showing ${startIndex + 1}-${endIndex} of ${totalChannels} channels`;
-    } else {
-        channelCountInfo.textContent = 'No channels found';
+        sortedChannels.forEach(channel => {
+            const channelElement = this.createChannelElement(channel);
+            channelsContainer.appendChild(channelElement);
+        });
+        
+        // Load EPG for visible channels
+        this.loadChannelEPG();
     }
     
-    // Keep currently playing channel visible
-    let currentChannelInPage = false;
-    
-    paginatedChannels.forEach(channel => {
-        const channelDiv = document.createElement('div');
-        channelDiv.className = 'channel-item p-3 border-bottom';
-        channelDiv.onclick = () => playChannel(channel, channelDiv);
-        channelDiv.innerHTML = `
-            <div class="d-flex align-items-center">
-                ${channel.logo_url ? 
-                    `<img src="${channel.logo_url}" class="channel-logo me-3">` : 
-                    '<i class="bi bi-tv fs-3 me-3"></i>'
-                }
-                <div class="flex-grow-1">
-                    <h6 class="mb-0">
-                        ${channel.number ? channel.number + ' - ' : ''}${channel.name}
-                        <span class="quality-badge">${extractQuality(channel.name)}</span>
-                    </h6>
-                    <small class="text-muted">
-                        <span id="epg-${channel.id}">Loading...</span>
-                        ${channel.group ? ` • ${channel.group}` : ''}
-                    </small>
-                </div>
-                <i class="bi bi-play-circle fs-4 text-primary"></i>
+    createChannelElement(channel) {
+        const element = document.createElement('div');
+        element.className = `channel-item ${this.currentChannel?.id === channel.id ? 'active' : ''}`;
+        element.onclick = () => this.selectChannel(channel);
+        
+        element.innerHTML = `
+            <img class="channel-logo" src="${channel.logo_url || ''}" alt="${channel.name}" 
+                 onerror="this.style.display='none'">
+            <div class="channel-info">
+                <div class="channel-name">${channel.name}</div>
+                <div class="channel-number">Ch ${channel.number || '---'}</div>
+                <div class="channel-program" id="program-${channel.id}">Loading...</div>
             </div>
         `;
-        container.appendChild(channelDiv);
         
-        // Check if this is the current channel
-        if (currentChannel && currentChannel.id === channel.id) {
-            channelDiv.classList.add('active');
-            currentChannelInPage = true;
-        }
-        
-        // Load EPG info
-        loadChannelEPG(channel.id);
-    });
-    
-    // If current channel is not in view, show a notice
-    if (currentChannel && !currentChannelInPage) {
-        const notice = document.createElement('div');
-        notice.className = 'alert alert-info m-3';
-        notice.innerHTML = `
-            <small><i class="bi bi-info-circle"></i> Currently playing: <strong>${currentChannel.name}</strong> 
-            <a href="#" onclick="jumpToCurrentChannel(); return false;">Jump to channel</a></small>
-        `;
-        container.insertBefore(notice, container.firstChild);
+        return element;
     }
     
-    // Render pagination
-    renderPagination(totalPages);
-}
-
-function renderPagination(totalPages) {
-    const container = document.getElementById('paginationControls');
-    container.innerHTML = '';
-    
-    if (totalPages <= 1) return;
-    
-    // Previous button
-    const prevItem = document.createElement('li');
-    prevItem.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
-    prevItem.innerHTML = `<a class="page-link" href="#" data-page="${currentPage - 1}">Previous</a>`;
-    container.appendChild(prevItem);
-    
-    // Page numbers
-    const maxVisiblePages = 5;
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-    
-    if (endPage - startPage < maxVisiblePages - 1) {
-        startPage = Math.max(1, endPage - maxVisiblePages + 1);
-    }
-    
-    // First page and ellipsis
-    if (startPage > 1) {
-        const firstItem = document.createElement('li');
-        firstItem.className = 'page-item';
-        firstItem.innerHTML = `<a class="page-link" href="#" data-page="1">1</a>`;
-        container.appendChild(firstItem);
-        
-        if (startPage > 2) {
-            const ellipsisItem = document.createElement('li');
-            ellipsisItem.className = 'page-item disabled';
-            ellipsisItem.innerHTML = '<span class="page-link">...</span>';
-            container.appendChild(ellipsisItem);
-        }
-    }
-    
-    // Page numbers
-    for (let i = startPage; i <= endPage; i++) {
-        const pageItem = document.createElement('li');
-        pageItem.className = `page-item ${i === currentPage ? 'active' : ''}`;
-        pageItem.innerHTML = `<a class="page-link" href="#" data-page="${i}">${i}</a>`;
-        container.appendChild(pageItem);
-    }
-    
-    // Last page and ellipsis
-    if (endPage < totalPages) {
-        if (endPage < totalPages - 1) {
-            const ellipsisItem = document.createElement('li');
-            ellipsisItem.className = 'page-item disabled';
-            ellipsisItem.innerHTML = '<span class="page-link">...</span>';
-            container.appendChild(ellipsisItem);
-        }
-        
-        const lastItem = document.createElement('li');
-        lastItem.className = 'page-item';
-        lastItem.innerHTML = `<a class="page-link" href="#" data-page="${totalPages}">${totalPages}</a>`;
-        container.appendChild(lastItem);
-    }
-    
-    // Next button
-    const nextItem = document.createElement('li');
-    nextItem.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
-    nextItem.innerHTML = `<a class="page-link" href="#" data-page="${currentPage + 1}">Next</a>`;
-    container.appendChild(nextItem);
-    
-    // Add click handlers
-    container.querySelectorAll('.page-link').forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            const page = parseInt(e.target.dataset.page);
-            if (page && !e.target.parentElement.classList.contains('disabled')) {
-                changePage(page);
-            }
-        });
-    });
-}
-
-function changePage(page) {
-    currentPage = page;
-    displayChannels();
-    updateURL();
-    
-    // Scroll to top of channel list
-    document.querySelector('.channel-list').scrollTop = 0;
-}
-
-function jumpToCurrentChannel() {
-    if (!currentChannel) return;
-    
-    // Find the page containing the current channel
-    const channelIndex = filteredChannels.findIndex(ch => ch.id === currentChannel.id);
-    if (channelIndex === -1) {
-        // Channel not in filtered results, reset filters
-        currentFilters = { group: 'all', status: 'all', quality: 'all' };
-        currentSearch = '';
-        document.getElementById('channelSearch').value = '';
-        applyFiltersAndDisplay();
-        
-        // Try again
-        const newIndex = filteredChannels.findIndex(ch => ch.id === currentChannel.id);
-        if (newIndex !== -1) {
-            currentPage = Math.floor(newIndex / itemsPerPage) + 1;
-            displayChannels();
-        }
-    } else {
-        currentPage = Math.floor(channelIndex / itemsPerPage) + 1;
-        displayChannels();
-    }
-}
-
-function updateURL() {
-    const params = new URLSearchParams();
-    
-    if (currentPage > 1) params.set('page', currentPage);
-    if (currentSort !== 'name-asc') params.set('sort', currentSort);
-    if (itemsPerPage !== 50) params.set('per_page', itemsPerPage);
-    if (currentSearch) params.set('search', currentSearch);
-    if (currentFilters.group !== 'all') params.set('group', currentFilters.group);
-    if (currentFilters.status !== 'all') params.set('status', currentFilters.status);
-    if (currentFilters.quality !== 'all') params.set('quality', currentFilters.quality);
-    
-    const newURL = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
-    window.history.replaceState({}, '', newURL);
-}
-
-function loadStateFromURL() {
-    const params = new URLSearchParams(window.location.search);
-    
-    currentPage = parseInt(params.get('page')) || 1;
-    currentSort = params.get('sort') || 'name-asc';
-    itemsPerPage = parseInt(params.get('per_page')) || 50;
-    currentSearch = params.get('search') || '';
-    currentFilters.group = params.get('group') || 'all';
-    currentFilters.status = params.get('status') || 'all';
-    currentFilters.quality = params.get('quality') || 'all';
-    
-    // Update UI elements
-    document.getElementById('sortSelect').value = currentSort;
-    document.getElementById('perPageSelect').value = itemsPerPage;
-    document.getElementById('channelSearch').value = currentSearch;
-}
-
-async function loadChannelEPG(channelId) {
-    try {
-        const response = await fetchWithAuth(`/api/epg/now-next/${channelId}`);
-        if (!response || !response.ok) throw new Error('Failed to fetch EPG');
-        const data = await response.json();
-        
-        const epgDiv = document.getElementById(`epg-${channelId}`);
-        if (data.now) {
-            epgDiv.textContent = data.now.title;
-        } else {
-            epgDiv.textContent = 'No program info';
-        }
-    } catch (error) {
-        document.getElementById(`epg-${channelId}`).textContent = 'No EPG data';
-    }
-}
-
-async function playChannel(channel, channelElement) {
-    try {
-        currentChannel = channel;
-        
-        // Show loading indicator
-        document.getElementById('videoLoading').style.display = 'block';
-        
-        // Update UI
-        document.querySelectorAll('.channel-item').forEach(item => {
-            item.classList.remove('active');
-        });
-        if (channelElement) {
-            channelElement.classList.add('active');
-        }
-        
-        // Update player
-        player = document.getElementById('videoPlayer');
-        
-        // Try different streaming methods
-        const streamMethods = [
-            { url: `/api/stream-proxy/channels/${channel.id}/stream`, type: 'direct' },
-            { url: `/api/stream-proxy/channels/${channel.id}/stream?transcode=true`, type: 'transcoded' },
-            { url: `/api/channels/${channel.id}/stream-url`, type: 'original' }
-        ];
-        
-        let streamSuccess = false;
-        
-        for (const method of streamMethods) {
-            try {
-                if (method.type === 'original') {
-                    // Get original stream URL
-                    const response = await fetchWithAuth(method.url);
-                    if (!response || !response.ok) continue;
-                    const data = await response.json();
-                    const streamUrl = data.stream_url;
-                    
-                    // Check if it's an HLS stream
-                    if (streamUrl.endsWith('.m3u8') || streamUrl.includes('m3u8')) {
-                        if (Hls.isSupported()) {
-                            // Use HLS.js for HLS streams
-                            if (hls) {
-                                hls.destroy();
-                            }
-                            hls = new Hls({
-                                enableWorker: true,
-                                lowLatencyMode: true,
-                                backBufferLength: 90
-                            });
-                            hls.loadSource(streamUrl);
-                            hls.attachMedia(player);
-                            hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                                player.play().catch(e => console.log('Autoplay failed:', e));
-                            });
-                            hls.on(Hls.Events.ERROR, function(event, data) {
-                                if (data.fatal) {
-                                    console.error('HLS fatal error:', data);
-                                    if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-                                        hls.startLoad();
-                                    } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
-                                        hls.recoverMediaError();
-                                    }
-                                }
-                            });
-                            streamSuccess = true;
-                            break;
-                        } else if (player.canPlayType('application/vnd.apple.mpegurl')) {
-                            // Native HLS support (Safari)
-                            player.src = streamUrl;
-                            player.play().catch(e => console.log('Autoplay failed:', e));
-                            streamSuccess = true;
-                            break;
-                        }
-                    } else {
-                        // Try direct playback for non-HLS streams
-                        player.src = streamUrl;
-                        await player.play();
-                        streamSuccess = true;
-                        break;
-                    }
-                } else {
-                    // Use proxy stream
-                    const proxyUrl = method.url;
-                    const authHeader = { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
-                    
-                    if (hls) {
-                        hls.destroy();
-                        hls = null;
-                    }
-                    
-                    // For transcoded streams, we need to handle them differently
-                    if (method.type === 'transcoded') {
-                        player.src = proxyUrl;
-                        // Add auth token as query parameter for video element
-                        player.src = `${proxyUrl}&token=${localStorage.getItem('token')}`;
-                    } else {
-                        player.src = `${proxyUrl}?token=${localStorage.getItem('token')}`;
-                    }
-                    
-                    await player.play();
-                    streamSuccess = true;
-                    break;
-                }
-            } catch (e) {
-                console.error(`Failed with ${method.type} method:`, e);
-                continue;
-            }
-        }
-        
-        if (!streamSuccess) {
-            throw new Error('All streaming methods failed');
-        }
-        
-        // Update channel info
-        document.getElementById('currentChannelName').textContent = channel.name;
-        
-        // Load current program info
-        loadCurrentProgram(channel.id);
-        
-    } catch (error) {
-        console.error('Failed to play channel:', error);
-        document.getElementById('videoLoading').style.display = 'none';
-        alert('Failed to play channel. The stream may be incompatible or unavailable.');
-    }
-}
-
-async function loadCurrentProgram(channelId) {
-    try {
-        const response = await fetchWithAuth(`/api/epg/now-next/${channelId}`);
-        if (!response || !response.ok) throw new Error('Failed to fetch program info');
-        const data = await response.json();
-        
-        const programDiv = document.getElementById('programDetails');
-        
-        if (data.now) {
-            const now = data.now;
-            const startTime = new Date(now.start_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            const endTime = new Date(now.end_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    async selectChannel(channel) {
+        try {
+            // Update recent channels
+            this.recentChannels = this.recentChannels.filter(id => id !== channel.id);
+            this.recentChannels.unshift(channel.id);
+            this.recentChannels = this.recentChannels.slice(0, 10);
             
-            programDiv.innerHTML = `
-                <div class="row">
-                    <div class="col-md-6">
-                        <strong>Now Playing:</strong> ${now.title}<br>
-                        <small class="text-muted">${startTime} - ${endTime}</small>
-                        ${now.description ? `<p class="mt-2 small">${now.description}</p>` : ''}
-                    </div>
-                    ${data.next ? `
-                        <div class="col-md-6">
-                            <strong>Up Next:</strong> ${data.next.title}<br>
-                            <small class="text-muted">${new Date(data.next.start_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
-                        </div>
-                    ` : ''}
-                </div>
-            `;
-        } else {
-            programDiv.innerHTML = '<p class="text-muted">No program information available</p>';
-        }
-    } catch (error) {
-        console.error('Failed to load program info:', error);
-    }
-}
-
-// Player controls
-function togglePlay() {
-    if (player) {
-        if (player.paused) {
-            player.play();
-            document.getElementById('playIcon').className = 'bi bi-pause-fill';
-        } else {
-            player.pause();
-            document.getElementById('playIcon').className = 'bi bi-play-fill';
+            this.currentChannel = channel;
+            
+            // Get stream URL
+            const response = await axios.get(`/api/channels/${channel.id}/stream-url`, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+            
+            const videoPlayer = document.getElementById('videoPlayer');
+            videoPlayer.src = response.data.stream_url;
+            
+            // Update UI
+            this.updateCurrentChannelInfo();
+            this.updateChannelList();
+            this.showChannelInfo();
+            
+            // Load EPG for selected channel
+            await this.loadChannelEPG(channel.id);
+            
+            videoPlayer.play();
+            
+        } catch (error) {
+            console.error('Failed to select channel:', error);
+            showNotification('Failed to load channel', 'error');
         }
     }
-}
-
-function toggleMute() {
-    if (player) {
-        player.muted = !player.muted;
-        document.getElementById('muteIcon').className = player.muted ? 
-            'bi bi-volume-mute-fill' : 'bi bi-volume-up-fill';
+    
+    updateCurrentChannelInfo() {
+        if (!this.currentChannel) return;
+        
+        document.getElementById('currentChannelName').textContent = this.currentChannel.name;
+        document.getElementById('currentChannelLogo').src = this.currentChannel.logo_url || '';
     }
-}
-
-function setVolume(value) {
-    if (player) {
-        player.volume = value / 100;
+    
+    showChannelInfo() {
+        const infoDisplay = document.getElementById('channelInfoDisplay');
+        infoDisplay.classList.add('show');
+        
+        // Auto-hide after 3 seconds
+        setTimeout(() => {
+            infoDisplay.classList.remove('show');
+        }, 3000);
     }
-}
-
-function toggleFullscreen() {
-    if (player) {
-        if (player.requestFullscreen) {
-            player.requestFullscreen();
-        } else if (player.webkitRequestFullscreen) {
-            player.webkitRequestFullscreen();
+    
+    async loadChannelEPG(specificChannelId = null) {
+        const channelsToLoad = specificChannelId ? [specificChannelId] : 
+            this.channels.slice(0, 20).map(ch => ch.id); // Load EPG for first 20 visible channels
+        
+        for (const channelId of channelsToLoad) {
+            try {
+                const response = await axios.get(`/api/epg/now-next/${channelId}`, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                
+                const programElement = document.getElementById(`program-${channelId}`);
+                if (programElement && response.data.now) {
+                    const program = response.data.now;
+                    const startTime = new Date(program.start_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    programElement.textContent = `${startTime} - ${program.title}`;
+                    
+                    // Update current program if this is the selected channel
+                    if (channelId === this.currentChannel?.id) {
+                        document.getElementById('currentProgram').textContent = program.title;
+                        this.updateProgramProgress(program);
+                    }
+                } else if (programElement) {
+                    programElement.textContent = 'No program info';
+                }
+            } catch (error) {
+                console.error(`Failed to load EPG for channel ${channelId}:`, error);
+            }
         }
     }
-}
-
-// Recording
-function recordChannel() {
-    if (!currentChannel) {
-        alert('Please select a channel first');
-        return;
+    
+    updateProgramProgress(program) {
+        const now = new Date();
+        const start = new Date(program.start_time);
+        const end = new Date(program.end_time);
+        
+        const totalDuration = end - start;
+        const elapsed = now - start;
+        const progress = Math.max(0, Math.min(100, (elapsed / totalDuration) * 100));
+        
+        document.getElementById('programProgress').style.width = `${progress}%`;
     }
     
-    document.getElementById('recordChannelName').textContent = currentChannel.name;
-    const modal = new bootstrap.Modal(document.getElementById('recordModal'));
-    modal.show();
-}
-
-async function startRecording() {
-    if (!currentChannel) return;
-    
-    const duration = document.getElementById('recordDuration').value;
-    
-    try {
-        const response = await fetchWithAuth(`/api/recordings/record-now?channel_id=${currentChannel.id}&duration_minutes=${duration}`, {
-            method: 'POST'
+    filterChannels(searchTerm) {
+        const channelItems = document.querySelectorAll('.channel-item');
+        const term = searchTerm.toLowerCase();
+        
+        channelItems.forEach(item => {
+            const channelName = item.querySelector('.channel-name').textContent.toLowerCase();
+            const channelNumber = item.querySelector('.channel-number').textContent.toLowerCase();
+            
+            if (channelName.includes(term) || channelNumber.includes(term)) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+            }
         });
-        if (!response || !response.ok) {
-            const error = response ? await response.json() : { detail: 'Network error' };
-            throw new Error(error.detail || 'Failed to start recording');
+    }
+    
+    sortChannels(sortType) {
+        this.currentSort = sortType;
+        
+        // Update active sort button
+        document.querySelectorAll('.sort-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+        
+        this.updateChannelList();
+    }
+    
+    toggleMenu(menuType) {
+        const remoteMenu = document.getElementById('remoteMenu');
+        const channelsMenu = document.getElementById('channelsMenu');
+        const remoteToggle = document.getElementById('remoteToggle');
+        const channelsToggle = document.getElementById('channelsToggle');
+        
+        if (menuType === 'remote') {
+            remoteMenu.classList.toggle('active');
+            remoteToggle.classList.toggle('active');
+            
+            // Close channels menu if open
+            channelsMenu.classList.remove('active');
+            channelsToggle.classList.remove('active');
+        } else if (menuType === 'channels') {
+            channelsMenu.classList.toggle('active');
+            channelsToggle.classList.toggle('active');
+            
+            // Close remote menu if open
+            remoteMenu.classList.remove('active');
+            remoteToggle.classList.remove('active');
+        }
+    }
+    
+    closeMenu(menuType) {
+        const remoteMenu = document.getElementById('remoteMenu');
+        const channelsMenu = document.getElementById('channelsMenu');
+        const remoteToggle = document.getElementById('remoteToggle');
+        const channelsToggle = document.getElementById('channelsToggle');
+        
+        if (menuType === 'remote') {
+            remoteMenu.classList.remove('active');
+            remoteToggle.classList.remove('active');
+        } else if (menuType === 'channels') {
+            channelsMenu.classList.remove('active');
+            channelsToggle.classList.remove('active');
+        }
+    }
+    
+    togglePlay() {
+        const videoPlayer = document.getElementById('videoPlayer');
+        if (this.isPlaying) {
+            videoPlayer.pause();
+        } else {
+            videoPlayer.play();
+        }
+    }
+    
+    toggleSize() {
+        const videoSection = document.getElementById('videoSection');
+        const sizeIcon = document.getElementById('sizeIcon');
+        const expandBtn = document.getElementById('expandBtn');
+        
+        this.isExpanded = !this.isExpanded;
+        
+        if (this.isExpanded) {
+            videoSection.classList.add('expanded');
+            sizeIcon.className = 'bi bi-arrows-collapse';
+            expandBtn.innerHTML = '<i class="bi bi-arrows-collapse"></i>';
+        } else {
+            videoSection.classList.remove('expanded');
+            sizeIcon.className = 'bi bi-arrows-fullscreen';
+            expandBtn.innerHTML = '<i class="bi bi-arrows-fullscreen"></i>';
+        }
+    }
+    
+    toggleFullscreen() {
+        const videoSection = document.getElementById('videoSection');
+        
+        if (!this.isFullscreen) {
+            if (videoSection.requestFullscreen) {
+                videoSection.requestFullscreen();
+            } else if (videoSection.webkitRequestFullscreen) {
+                videoSection.webkitRequestFullscreen();
+            } else if (videoSection.msRequestFullscreen) {
+                videoSection.msRequestFullscreen();
+            }
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
+        }
+    }
+    
+    channelUp() {
+        if (!this.currentChannel || this.channels.length === 0) return;
+        
+        const currentIndex = this.channels.findIndex(ch => ch.id === this.currentChannel.id);
+        const nextIndex = (currentIndex + 1) % this.channels.length;
+        this.selectChannel(this.channels[nextIndex]);
+    }
+    
+    channelDown() {
+        if (!this.currentChannel || this.channels.length === 0) return;
+        
+        const currentIndex = this.channels.findIndex(ch => ch.id === this.currentChannel.id);
+        const prevIndex = currentIndex === 0 ? this.channels.length - 1 : currentIndex - 1;
+        this.selectChannel(this.channels[prevIndex]);
+    }
+    
+    nextChannel() {
+        this.channelUp();
+    }
+    
+    previousChannel() {
+        this.channelDown();
+    }
+    
+    changeVolume(delta) {
+        const videoPlayer = document.getElementById('videoPlayer');
+        this.volume = Math.max(0, Math.min(1, this.volume + (delta * 0.1)));
+        videoPlayer.volume = this.volume;
+        
+        showNotification(`Volume: ${Math.round(this.volume * 100)}%`, 'info');
+    }
+    
+    toggleMute() {
+        const videoPlayer = document.getElementById('videoPlayer');
+        this.isMuted = !this.isMuted;
+        videoPlayer.muted = this.isMuted;
+        
+        showNotification(this.isMuted ? 'Muted' : 'Unmuted', 'info');
+    }
+    
+    showInfo() {
+        this.showChannelInfo();
+    }
+    
+    showSettings() {
+        showNotification('Settings menu coming soon!', 'info');
+    }
+    
+    async toggleRecording() {
+        if (!this.currentChannel) {
+            showNotification('Select a channel first', 'warning');
+            return;
         }
         
-        bootstrap.Modal.getInstance(document.getElementById('recordModal')).hide();
-        showNotification('Recording started!', 'success');
-    } catch (error) {
-        alert(error.message || 'Failed to start recording');
-    }
-}
-
-// Channel search
-document.getElementById('channelSearch').addEventListener('input', (e) => {
-    currentSearch = e.target.value;
-    currentPage = 1;
-    applyFiltersAndDisplay();
-    updateURL();
-});
-
-// Sort select
-document.getElementById('sortSelect').addEventListener('change', (e) => {
-    currentSort = e.target.value;
-    applyFiltersAndDisplay();
-    updateURL();
-});
-
-// Items per page select
-document.getElementById('perPageSelect').addEventListener('change', (e) => {
-    itemsPerPage = parseInt(e.target.value);
-    currentPage = 1;
-    applyFiltersAndDisplay();
-    updateURL();
-});
-
-// Setup filter event listeners
-document.addEventListener('DOMContentLoaded', () => {
-    // Group filters will be added dynamically
-    
-    // Status filters
-    document.querySelectorAll('#statusFilters .filter-tag').forEach(tag => {
-        tag.addEventListener('click', () => setStatusFilter(tag.dataset.filter));
-    });
-    
-    // Quality filters
-    document.querySelectorAll('#qualityFilters .filter-tag').forEach(tag => {
-        tag.addEventListener('click', () => setQualityFilter(tag.dataset.filter));
-    });
-});
-
-// Initialize player events
-document.addEventListener('DOMContentLoaded', () => {
-    // Load state from URL
-    loadStateFromURL();
-    
-    player = document.getElementById('videoPlayer');
-    
-    player.addEventListener('play', () => {
-        document.getElementById('playIcon').className = 'bi bi-pause-fill';
-    });
-    
-    player.addEventListener('pause', () => {
-        document.getElementById('playIcon').className = 'bi bi-play-fill';
-    });
-    
-    player.addEventListener('volumechange', () => {
-        document.getElementById('volumeSlider').value = player.volume * 100;
-        document.getElementById('muteIcon').className = player.muted ? 
-            'bi bi-volume-mute-fill' : 'bi bi-volume-up-fill';
-    });
-    
-    // Add error handling
-    player.addEventListener('error', (e) => {
-        console.error('Video error:', e);
-        document.getElementById('videoLoading').style.display = 'none';
-        const error = player.error;
-        if (error) {
-            let errorMsg = 'Unknown error';
-            switch(error.code) {
-                case error.MEDIA_ERR_ABORTED:
-                    errorMsg = 'Playback aborted';
-                    break;
-                case error.MEDIA_ERR_NETWORK:
-                    errorMsg = 'Network error';
-                    break;
-                case error.MEDIA_ERR_DECODE:
-                    errorMsg = 'Decode error';
-                    break;
-                case error.MEDIA_ERR_SRC_NOT_SUPPORTED:
-                    errorMsg = 'Media format not supported';
-                    break;
+        const recordBtn = document.getElementById('recordBtn');
+        const recordText = document.getElementById('recordText');
+        
+        try {
+            if (!this.isRecording) {
+                // Start recording
+                const duration = prompt('Recording duration (minutes):', '60');
+                if (!duration) return;
+                
+                await axios.post(`/api/recordings/record-now?channel_id=${this.currentChannel.id}&duration_minutes=${duration}`, {}, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                
+                this.isRecording = true;
+                recordBtn.classList.add('recording');
+                recordText.textContent = 'Stop Recording';
+                showNotification('Recording started!', 'success');
+                
+            } else {
+                // Stop recording (this would need an API endpoint)
+                this.isRecording = false;
+                recordBtn.classList.remove('recording');
+                recordText.textContent = 'Start Recording';
+                showNotification('Recording stopped!', 'info');
             }
-            console.error('Video error details:', errorMsg);
+        } catch (error) {
+            console.error('Recording error:', error);
+            showNotification('Recording failed', 'error');
         }
-    });
+    }
     
-    // Add loading state handlers
-    player.addEventListener('loadstart', () => {
-        console.log('Loading stream...');
-        document.getElementById('videoLoading').style.display = 'block';
-    });
+    handleKeyboard(e) {
+        switch(e.key) {
+            case ' ':
+                e.preventDefault();
+                this.togglePlay();
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                this.channelUp();
+                break;
+            case 'ArrowDown':
+                e.preventDefault();
+                this.channelDown();
+                break;
+            case 'ArrowLeft':
+                e.preventDefault();
+                this.previousChannel();
+                break;
+            case 'ArrowRight':
+                e.preventDefault();
+                this.nextChannel();
+                break;
+            case 'f':
+            case 'F':
+                e.preventDefault();
+                this.toggleFullscreen();
+                break;
+            case 'm':
+            case 'M':
+                e.preventDefault();
+                this.toggleMute();
+                break;
+            case 'i':
+            case 'I':
+                e.preventDefault();
+                this.showInfo();
+                break;
+        }
+    }
     
-    player.addEventListener('canplay', () => {
-        console.log('Stream ready to play');
-        document.getElementById('videoLoading').style.display = 'none';
-    });
+    showControlBar() {
+        document.getElementById('controlBar').classList.add('show');
+        clearTimeout(this.hideControlBarTimeout);
+        this.hideControlBarTimeout = setTimeout(() => {
+            this.hideControlBar();
+        }, 3000);
+    }
     
-    player.addEventListener('playing', () => {
-        console.log('Playing');
-        document.getElementById('videoLoading').style.display = 'none';
-    });
+    hideControlBar() {
+        document.getElementById('controlBar').classList.remove('show');
+    }
     
-    player.addEventListener('stalled', () => {
-        console.log('Stream stalled');
-    });
-    
-    player.addEventListener('waiting', () => {
-        console.log('Buffering...');
-        document.getElementById('videoLoading').style.display = 'block';
-    });
+    startInfoDisplayTimer() {
+        // Update program progress every minute
+        setInterval(() => {
+            if (this.currentChannel) {
+                this.loadChannelEPG(this.currentChannel.id);
+            }
+        }, 60000);
+    }
+}
+
+// Global functions for onclick handlers
+function togglePlay() { liveTVController.togglePlay(); }
+function toggleSize() { liveTVController.toggleSize(); }
+function toggleFullscreen() { liveTVController.toggleFullscreen(); }
+function channelUp() { liveTVController.channelUp(); }
+function channelDown() { liveTVController.channelDown(); }
+function nextChannel() { liveTVController.nextChannel(); }
+function previousChannel() { liveTVController.previousChannel(); }
+function changeVolume(delta) { liveTVController.changeVolume(delta); }
+function toggleMute() { liveTVController.toggleMute(); }
+function showInfo() { liveTVController.showInfo(); }
+function showSettings() { liveTVController.showSettings(); }
+function toggleRecording() { liveTVController.toggleRecording(); }
+function sortChannels(sortType) { liveTVController.sortChannels(sortType); }
+function closeMenu(menuType) { liveTVController.closeMenu(menuType); }
+
+// Initialize LiveTV Controller
+let liveTVController;
+document.addEventListener('DOMContentLoaded', () => {
+    liveTVController = new LiveTVController();
 });
 
-function refreshChannels() {
-    currentPage = 1;
-    loadChannels();
-}
+// Fullscreen event handlers
+document.addEventListener('fullscreenchange', () => {
+    liveTVController.isFullscreen = document.fullscreenElement !== null;
+    document.getElementById('videoSection').classList.toggle('fullscreen', liveTVController.isFullscreen);
+});
 
-// Helper function for notifications
-function showNotification(message, type = 'info') {
-    // Check if there's a global notification function
-    if (typeof window.showNotification === 'function') {
-        window.showNotification(message, type);
-        return;
-    }
-    
-    // Fallback to simple alert
-    if (type === 'error') {
-        console.error(message);
-        alert('Error: ' + message);
-    } else {
-        console.log(message);
-        if (type === 'success') {
-            alert(message);
-        }
-    }
-}
-
-// Load channels on page load
-loadChannels();
-
-// Auto-refresh EPG every 5 minutes
-setInterval(() => {
-    if (currentChannel) {
-        loadCurrentProgram(currentChannel.id);
-    }
-}, 300000);
+document.addEventListener('webkitfullscreenchange', () => {
+    liveTVController.isFullscreen = document.webkitFullscreenElement !== null;
+    document.getElementById('videoSection').classList.toggle('fullscreen', liveTVController.isFullscreen);
+});
 </script>
-{% endblock %}
-
-{% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 {% endblock %}

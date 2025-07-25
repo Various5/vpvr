@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 from app.database import engine, Base, SessionLocal
-from app.api import auth, channels, recordings, users, hdhr, epg, credits, websocket, system, import_sources, errors, multicore_ops, stream_proxy, enhanced_epg, admin_cleanup
+from app.api import auth, channels, recordings, users, tuner, epg, credits, websocket, system, import_sources, errors, multicore_ops, stream_proxy, enhanced_epg, admin_cleanup, database_admin
 from app import views
 from app.config import get_settings
 from app.core.error_management import error_manager, http_exception_handler, general_exception_handler
@@ -28,7 +28,7 @@ os.makedirs(settings.recording_path, exist_ok=True)
 
 app = FastAPI(
     title="IPTV PVR System",
-    description="Full-featured IPTV Web PVR with HDHomeRun emulation",
+    description="Full-featured IPTV Web PVR with Network Tuner emulation",
     version="1.0.0"
 )
 
@@ -55,9 +55,9 @@ app.include_router(epg.router, prefix="/api/epg", tags=["EPG"])
 app.include_router(recordings.router, prefix="/api/recordings", tags=["Recordings"])
 app.include_router(users.router, prefix="/api/users", tags=["Users"])
 app.include_router(credits.router, prefix="/api/credits", tags=["Credits"])
-app.include_router(hdhr.router, prefix="/api/hdhr", tags=["HDHomeRun"])
-# Also mount HDHomeRun endpoints at root for compatibility
-app.include_router(hdhr.router, tags=["HDHomeRun"])
+app.include_router(tuner.router, prefix="/api/tuner", tags=["Network Tuner"])
+# Also mount Network Tuner endpoints at root for compatibility
+app.include_router(tuner.router, tags=["Network Tuner"])
 app.include_router(websocket.router, prefix="/api", tags=["WebSocket"])
 app.include_router(system.router, prefix="/api/system", tags=["System"])
 app.include_router(import_sources.router, prefix="/api/import-sources", tags=["Import Sources"])
@@ -66,6 +66,7 @@ app.include_router(multicore_ops.router, prefix="/api/multicore", tags=["Multico
 app.include_router(stream_proxy.router, prefix="/api/stream-proxy", tags=["Stream Proxy"])
 app.include_router(enhanced_epg.router, prefix="/api/enhanced-epg", tags=["Enhanced EPG"])
 app.include_router(admin_cleanup.router, prefix="/api/admin/cleanup", tags=["Admin Cleanup"])
+app.include_router(database_admin.router, prefix="/api/admin/database", tags=["Database Admin"])
 
 # Include view routes
 app.include_router(views.router)
@@ -82,8 +83,8 @@ async def startup_event():
     from app.utils.background_tasks import start_background_tasks
     background_tasks = start_background_tasks()
     
-    # Start HDHomeRun SSDP discovery service
-    from app.hdhr_discovery import start_discovery
+    # Start Network Tuner SSDP discovery service
+    from app.tuner_discovery import start_discovery
     start_discovery()
     
     # NO AUTOMATIC IMPORTS AT STARTUP
@@ -127,8 +128,8 @@ async def startup_event():
 async def shutdown_event():
     global background_tasks
     
-    # Stop HDHomeRun discovery service
-    from app.hdhr_discovery import stop_discovery
+    # Stop Network Tuner discovery service
+    from app.tuner_discovery import stop_discovery
     stop_discovery()
     
     # Cancel all background tasks

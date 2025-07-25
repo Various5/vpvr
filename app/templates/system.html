@@ -178,9 +178,9 @@
                         <span class="float-end text-success">Online</span>
                     </div>
                     <div class="system-info-item">
-                        <span class="service-status" id="hdhrStatus"></span>
-                        <strong>HDHomeRun Emulation</strong>
-                        <span class="float-end" id="hdhrStatusText">Checking...</span>
+                        <span class="service-status" id="tunerStatus"></span>
+                        <strong>Network Tuner Emulation</strong>
+                        <span class="float-end" id="tunerStatusText">Checking...</span>
                     </div>
                     <div class="system-info-item">
                         <span class="service-status" id="websocketStatus"></span>
@@ -320,7 +320,7 @@ async function loadSystemStatus() {
         document.getElementById('dbSize').textContent = `${(data.db_stats.db_size / 1024 / 1024).toFixed(2)} MB`;
         
         // Update service status
-        updateServiceStatus('hdhr', data.services.hdhr);
+        updateServiceStatus('tuner', data.services.tuner);
         updateServiceStatus('websocket', data.services.websocket);
         updateServiceStatus('scheduler', data.services.scheduler);
         

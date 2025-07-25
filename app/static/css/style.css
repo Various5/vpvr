@@ -10,9 +10,7 @@
     --dark-color: #212529;
 }
 
-body {
-    background-color: #f8f9fa;
-}
+/* Body background is handled by themes */
 
 /* Hide skip navigation links that might be added by Bootstrap or accessibility tools */
 a[href="#main-content"],
@@ -45,8 +43,8 @@ body.no-effects *::after {
 }
 
 /* Remove theme-specific animated backgrounds when effects are off */
-body.no-effects[data-theme="spacecake"]::before,
-body.no-effects[data-theme="spacecake"]::after,
+body.no-effects[data-theme="trip"]::before,
+body.no-effects[data-theme="trip"]::after,
 body.no-effects[data-theme="spacewars"]::before,
 body.no-effects[data-theme="spacewars"]::after,
 body.no-effects[data-theme="dark"]::before,

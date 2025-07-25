@@ -1,304 +1,708 @@
-/* Light Theme - Clean, Modern, and Professional */
+/* Epic Light Theme V3 - Modernized 2026 with Advanced Effects */
 
-[data-theme="light"] {
-    /* Primary colors */
-    --theme-h: 210;
-    --theme-s: 100%;
-    --theme-l: 40%;
+/* Epic Light Theme Variables */
+[data-bs-theme="light"] {
+    /* Revolutionary Color Palette */
+    --bs-body-color: #2c3e50;
+    --bs-body-bg: #f8fafc;
+    --bs-emphasis-color: #1a252f;
+    --bs-secondary-color: #546e7a;
+    --bs-tertiary-color: #78909c;
     
-    /* Bootstrap color overrides */
-    --bs-primary: #0066cc;
-    --bs-primary-rgb: 0, 102, 204;
-    --bs-secondary: #6c757d;
-    --bs-success: #28a745;
-    --bs-danger: #dc3545;
-    --bs-warning: #ffc107;
-    --bs-info: #17a2b8;
-    --bs-light: #f8f9fa;
-    --bs-dark: #343a40;
+    /* Epic Modern Accent Colors */
+    --bs-primary: #3498db;
+    --bs-secondary: #95a5a6;
+    --bs-success: #27ae60;
+    --bs-info: #16a085;
+    --bs-warning: #f39c12;
+    --bs-danger: #e74c3c;
     
-    /* Backgrounds */
-    --bg-body: #ffffff;
-    --bg-surface: #ffffff;
-    --bg-surface-secondary: #f8f9fa;
-    --bg-surface-tertiary: #e9ecef;
-    --bs-body-bg: #ffffff;
-    --bs-body-bg-rgb: 255, 255, 255;
+    /* Epic Enhanced variables */
+    --bs-border-color: rgba(52, 73, 94, 0.15);
+    --bs-tertiary-bg: rgba(255, 255, 255, 0.8);
+    --bs-secondary-bg: rgba(236, 240, 241, 0.6);
+    --bs-box-shadow: 0 8px 25px rgba(52, 73, 94, 0.15);
+    --bs-box-shadow-sm: 0 4px 15px rgba(52, 73, 94, 0.08);
+    --bs-box-shadow-lg: 0 20px 60px rgba(52, 73, 94, 0.25);
     
-    /* Text colors */
-    --text-primary: #212529;
-    --text-secondary: #6c757d;
-    --text-disabled: #adb5bd;
-    --text-heading: #000000;
-    --bs-body-color: #212529;
-    --bs-body-color-rgb: 33, 37, 41;
+    /* Epic Glass morphism with depth */
+    --glass-bg: rgba(255, 255, 255, 0.15);
+    --glass-border: rgba(255, 255, 255, 0.25);
+    --glass-shadow: 0 15px 40px rgba(52, 73, 94, 0.2);
+    --backdrop-blur: blur(20px) saturate(180%);
     
-    /* Borders */
-    --border-color: #dee2e6;
-    --border-color-strong: #ced4da;
-    --bs-border-color: #dee2e6;
+    /* Epic Neon accents with glow */
+    --neon-primary: #3498db;
+    --neon-secondary: #9b59b6;
+    --neon-success: #2ecc71;
+    --neon-danger: #e74c3c;
+    --neon-warning: #f1c40f;
+    --neon-info: #1abc9c;
     
-    /* Components */
-    --navbar-bg: #ffffff;
-    --navbar-border: #dee2e6;
-    --card-bg: #ffffff;
-    --modal-bg: #ffffff;
-    --bs-card-bg: #ffffff;
-    --bs-modal-bg: #ffffff;
-    
-    /* Form inputs - HIGH CONTRAST */
-    --bs-input-bg: #ffffff;
-    --bs-input-color: #212529;
-    --bs-input-border-color: #ced4da;
-    --bs-input-focus-bg: #ffffff;
-    --bs-input-focus-border-color: #86b7fe;
-    --bs-input-focus-color: #212529;
-    --bs-input-placeholder-color: #6c757d;
-    --bs-input-disabled-bg: #e9ecef;
-    
-    /* Shadows */
-    --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-    --shadow-md: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-    --bs-box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-    --bs-box-shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.05);
-    --bs-box-shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.175);
-    
-    /* Grays */
-    --bs-gray-100: #f8f9fa;
-    --bs-gray-200: #e9ecef;
-    --bs-gray-300: #dee2e6;
-    --bs-gray-400: #ced4da;
-    --bs-gray-500: #adb5bd;
-    --bs-gray-600: #6c757d;
-    --bs-gray-700: #495057;
-    --bs-gray-800: #343a40;
-    --bs-gray-900: #212529;
-    
-    /* Links */
-    --bs-link-color: #0066cc;
-    --bs-link-hover-color: #0052a3;
-    
-    /* Transitions */
-    --transition-base: all 0.2s ease-in-out;
-    --transition-fade: opacity 0.15s linear;
-    --transition-collapse: height 0.35s ease;
+    /* Epic particle effects */
+    --particle-color: rgba(52, 152, 219, 0.6);
+    --shimmer-color: rgba(255, 255, 255, 0.8);
+    --aurora-color1: rgba(52, 152, 219, 0.3);
+    --aurora-color2: rgba(155, 89, 182, 0.2);
+    --aurora-color3: rgba(46, 204, 113, 0.2);
 }
 
-/* Light theme specific styles */
-[data-theme="light"] {
-    /* Ensure form inputs are clearly visible */
-    .form-control,
-    .form-select,
-    .form-control:focus,
-    .form-select:focus,
-    input[type="text"],
-    input[type="url"],
-    input[type="email"],
-    input[type="password"],
-    input[type="number"],
-    textarea,
-    select {
-        background-color: #ffffff !important;
-        color: #212529 !important;
-        border: 1px solid #ced4da !important;
+/* Epic Light theme base with animated background */
+[data-bs-theme="light"] body {
+    background: linear-gradient(135deg, 
+        #f5f7fa 0%, 
+        #c3cfe2 25%, 
+        #f5f7fa 50%, 
+        #ddd6f3 75%, 
+        #faaca8 100%);
+    background-size: 400% 400%;
+    animation: lightAuroraShift 20s ease infinite;
+    color: var(--bs-body-color);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-weight: 400;
+    line-height: 1.6;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Epic floating particles animation */
+[data-bs-theme="light"] body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 20% 80%, var(--particle-color) 2px, transparent 3px),
+        radial-gradient(circle at 80% 20%, var(--particle-color) 1px, transparent 2px),
+        radial-gradient(circle at 40% 40%, var(--particle-color) 1px, transparent 2px);
+    background-size: 200px 200px, 300px 300px, 150px 150px;
+    animation: lightParticleFloat 30s linear infinite;
+    pointer-events: none;
+    z-index: -1;
+    opacity: 0.6;
+}
+
+/* Epic shimmer overlay */
+[data-bs-theme="light"] body::after {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        45deg,
+        transparent 30%,
+        var(--shimmer-color) 50%,
+        transparent 70%
+    );
+    animation: lightShimmerSweep 8s ease-in-out infinite;
+    pointer-events: none;
+    z-index: -1;
+    opacity: 0.1;
+}
+
+@keyframes lightAuroraShift {
+    0%, 100% { background-position: 0% 50%; }
+    25% { background-position: 100% 50%; }
+    50% { background-position: 50% 100%; }
+    75% { background-position: 50% 0%; }
+}
+
+@keyframes lightParticleFloat {
+    0% { transform: translateY(0px) rotate(0deg); }
+    33% { transform: translateY(-20px) rotate(120deg); }
+    66% { transform: translateY(10px) rotate(240deg); }
+    100% { transform: translateY(0px) rotate(360deg); }
+}
+
+@keyframes lightShimmerSweep {
+    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+    50% { transform: translateX(50%) translateY(50%) rotate(45deg); }
+    100% { transform: translateX(200%) translateY(200%) rotate(45deg); }
+}
+
+/* Epic Cards with advanced glass morphism and depth */
+[data-bs-theme="light"] .card {
+    background: var(--glass-bg);
+    backdrop-filter: var(--backdrop-blur);
+    -webkit-backdrop-filter: var(--backdrop-blur);
+    border: 1px solid var(--glass-border);
+    box-shadow: 
+        var(--glass-shadow),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5),
+        0 0 30px rgba(52, 152, 219, 0.1);
+    border-radius: 20px;
+    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+[data-bs-theme="light"] .card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.4),
+        transparent
+    );
+    transition: left 0.6s ease;
+}
+
+[data-bs-theme="light"] .card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 
+        0 25px 80px rgba(52, 73, 94, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6),
+        0 0 50px rgba(52, 152, 219, 0.2);
+    border-color: rgba(52, 152, 219, 0.4);
+}
+
+[data-bs-theme="light"] .card:hover::before {
+    left: 100%;
+}
+
+/* Epic Navigation with floating effect */
+[data-bs-theme="light"] .navbar {
+    backdrop-filter: blur(25px) saturate(180%);
+    -webkit-backdrop-filter: blur(25px) saturate(180%);
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0 0 25px 25px;
+    margin: 0 20px;
+    box-shadow: 
+        0 8px 40px rgba(52, 73, 94, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5),
+        0 0 30px rgba(52, 152, 219, 0.1);
+    position: relative;
+    z-index: 1000;
+}
+
+[data-bs-theme="light"] .navbar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(52, 152, 219, 0.5),
+        transparent
+    );
+}
+
+[data-bs-theme="light"] .navbar-brand {
+    font-weight: 700;
+    font-size: 1.4rem;
+    text-shadow: 0 2px 10px rgba(52, 152, 219, 0.3);
+    transition: all 0.3s ease;
+}
+
+[data-bs-theme="light"] .navbar-brand:hover {
+    transform: scale(1.05);
+    text-shadow: 0 4px 20px rgba(52, 152, 219, 0.5);
+}
+
+/* Epic buttons with advanced glow and depth */
+[data-bs-theme="light"] .btn {
+    border-radius: 15px;
+    font-weight: 600;
+    padding: 0.8rem 2rem;
+    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+    backdrop-filter: blur(15px) saturate(180%);
+    -webkit-backdrop-filter: blur(15px) saturate(180%);
+    position: relative;
+    overflow: hidden;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 0.9rem;
+}
+
+[data-bs-theme="light"] .btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+    );
+    transition: left 0.5s ease;
+}
+
+[data-bs-theme="light"] .btn-primary {
+    background: linear-gradient(135deg, 
+        var(--neon-primary) 0%, 
+        var(--neon-secondary) 50%, 
+        var(--neon-primary) 100%);
+    background-size: 200% 200%;
+    border: 1px solid var(--neon-primary);
+    color: white;
+    box-shadow: 
+        0 8px 25px rgba(52, 152, 219, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3),
+        0 0 30px rgba(52, 152, 219, 0.2);
+    animation: lightButtonPulse 3s ease-in-out infinite;
+}
+
+[data-bs-theme="light"] .btn-primary:hover {
+    transform: translateY(-4px) scale(1.05);
+    box-shadow: 
+        0 15px 50px rgba(52, 152, 219, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4),
+        0 0 60px rgba(52, 152, 219, 0.4);
+    background-position: 100% 0;
+    animation: none;
+}
+
+[data-bs-theme="light"] .btn-primary:hover::before {
+    left: 100%;
+}
+
+@keyframes lightButtonPulse {
+    0%, 100% { box-shadow: 0 8px 25px rgba(52, 152, 219, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 0 30px rgba(52, 152, 219, 0.2); }
+    50% { box-shadow: 0 8px 25px rgba(52, 152, 219, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 0 50px rgba(52, 152, 219, 0.4); }
+}
+
+/* Epic Form controls with advanced glass morphism */
+[data-bs-theme="light"] .form-control {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 15px;
+    color: var(--bs-body-color);
+    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+    box-shadow: 
+        inset 0 1px 3px rgba(52, 73, 94, 0.1),
+        0 4px 15px rgba(52, 73, 94, 0.05);
+    font-weight: 500;
+    padding: 0.8rem 1.2rem;
+}
+
+[data-bs-theme="light"] .form-control:focus {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: var(--neon-primary);
+    box-shadow: 
+        0 0 30px rgba(52, 152, 219, 0.4),
+        inset 0 1px 3px rgba(52, 73, 94, 0.1),
+        0 4px 25px rgba(52, 152, 219, 0.2);
+    transform: translateY(-2px);
+}
+
+[data-bs-theme="light"] .form-control::placeholder {
+    color: rgba(52, 73, 94, 0.6);
+    font-weight: 400;
+}
+
+/* Epic Tables with floating effect */
+[data-bs-theme="light"] .table {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 
+        0 15px 40px rgba(52, 73, 94, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+[data-bs-theme="light"] .table th {
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.2),
+        rgba(255, 255, 255, 0.1)
+    );
+    border-bottom: 2px solid rgba(52, 152, 219, 0.3);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 0.8rem;
+    color: var(--bs-emphasis-color);
+    text-shadow: 0 1px 3px rgba(255, 255, 255, 0.5);
+    padding: 1.2rem 1rem;
+}
+
+[data-bs-theme="light"] .table td {
+    padding: 1rem;
+    transition: all 0.3s ease;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+[data-bs-theme="light"] .table tbody tr:hover td {
+    background: rgba(52, 152, 219, 0.1);
+    transform: scale(1.01);
+}
+
+/* Epic Modal with advanced depth */
+[data-bs-theme="light"] .modal-content {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(30px) saturate(180%);
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 25px;
+    box-shadow: 
+        0 25px 80px rgba(52, 73, 94, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5),
+        0 0 50px rgba(52, 152, 219, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+[data-bs-theme="light"] .modal-content::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.8),
+        transparent
+    );
+}
+
+[data-bs-theme="light"] .modal-backdrop {
+    background: rgba(236, 240, 241, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+[data-bs-theme="light"] .modal-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.1),
+        rgba(255, 255, 255, 0.05)
+    );
+}
+
+/* Epic Progress bars with glow */
+[data-bs-theme="light"] .progress {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 15px;
+    height: 12px;
+    overflow: hidden;
+    box-shadow: 
+        inset 0 2px 8px rgba(52, 73, 94, 0.2),
+        0 2px 10px rgba(52, 73, 94, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    position: relative;
+}
+
+[data-bs-theme="light"] .progress::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.8),
+        transparent
+    );
+}
+
+[data-bs-theme="light"] .progress-bar {
+    background: linear-gradient(
+        90deg, 
+        var(--neon-primary), 
+        var(--neon-info), 
+        var(--neon-secondary)
+    );
+    background-size: 200% 100%;
+    border-radius: 15px;
+    transition: width 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+    box-shadow: 
+        0 0 20px rgba(52, 152, 219, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    animation: lightProgressShine 2s ease-in-out infinite;
+    position: relative;
+    overflow: hidden;
+}
+
+[data-bs-theme="light"] .progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.5),
+        transparent
+    );
+    animation: lightProgressSlide 1.5s ease-in-out infinite;
+}
+
+@keyframes lightProgressShine {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+@keyframes lightProgressSlide {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+/* Epic Special effects and animations */
+[data-bs-theme="light"] .spinner-border {
+    width: 3rem;
+    height: 3rem;
+    border: 0.35em solid rgba(52, 152, 219, 0.2);
+    border-top: 0.35em solid var(--neon-primary);
+    border-right: 0.35em solid var(--neon-secondary);
+    border-radius: 50%;
+    animation: lightEpicSpin 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+    box-shadow: 
+        0 0 30px rgba(52, 152, 219, 0.4),
+        inset 0 0 20px rgba(52, 152, 219, 0.1);
+    position: relative;
+}
+
+[data-bs-theme="light"] .spinner-border::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 60%;
+    height: 60%;
+    transform: translate(-50%, -50%);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    animation: lightInnerSpin 0.8s linear infinite reverse;
+}
+
+@keyframes lightEpicSpin {
+    0% { 
+        transform: rotate(0deg) scale(1);
+        box-shadow: 0 0 30px rgba(52, 152, 219, 0.4), inset 0 0 20px rgba(52, 152, 219, 0.1);
+    }
+    50% { 
+        transform: rotate(180deg) scale(1.1);
+        box-shadow: 0 0 50px rgba(52, 152, 219, 0.6), inset 0 0 30px rgba(52, 152, 219, 0.2);
+    }
+    100% { 
+        transform: rotate(360deg) scale(1);
+        box-shadow: 0 0 30px rgba(52, 152, 219, 0.4), inset 0 0 20px rgba(52, 152, 219, 0.1);
+    }
+}
+
+@keyframes lightInnerSpin {
+    to { transform: translate(-50%, -50%) rotate(-360deg); }
+}
+
+/* Epic Custom scrollbar with glow */
+[data-bs-theme="light"] ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+[data-bs-theme="light"] ::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    box-shadow: inset 0 0 5px rgba(52, 73, 94, 0.1);
+}
+
+[data-bs-theme="light"] ::-webkit-scrollbar-thumb {
+    background: linear-gradient(
+        135deg,
+        var(--neon-primary),
+        var(--neon-secondary)
+    );
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    box-shadow: 
+        0 0 10px rgba(52, 152, 219, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+[data-bs-theme="light"] ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(
+        135deg,
+        var(--neon-secondary),
+        var(--neon-info)
+    );
+    box-shadow: 
+        0 0 20px rgba(52, 152, 219, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    transform: scale(1.1);
+}
+
+/* Epic Text selection */
+[data-bs-theme="light"] ::selection {
+    background: linear-gradient(
+        135deg,
+        rgba(52, 152, 219, 0.4),
+        rgba(155, 89, 182, 0.3)
+    );
+    color: var(--bs-emphasis-color);
+    text-shadow: 0 1px 3px rgba(255, 255, 255, 0.5);
+}
+
+[data-bs-theme="light"] ::-moz-selection {
+    background: linear-gradient(
+        135deg,
+        rgba(52, 152, 219, 0.4),
+        rgba(155, 89, 182, 0.3)
+    );
+    color: var(--bs-emphasis-color);
+    text-shadow: 0 1px 3px rgba(255, 255, 255, 0.5);
+}
+
+/* Epic Utility classes */
+[data-bs-theme="light"] .glass-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(25px) saturate(180%);
+    -webkit-backdrop-filter: blur(25px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 25px;
+    padding: 2rem;
+    box-shadow: 
+        0 20px 60px rgba(52, 73, 94, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4),
+        0 0 40px rgba(52, 152, 219, 0.1);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+[data-bs-theme="light"] .glass-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.8),
+        transparent
+    );
+}
+
+[data-bs-theme="light"] .glass-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 
+        0 30px 80px rgba(52, 73, 94, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5),
+        0 0 60px rgba(52, 152, 219, 0.2);
+}
+
+[data-bs-theme="light"] .neon-glow {
+    box-shadow: 
+        0 0 30px var(--neon-primary),
+        inset 0 0 15px rgba(52, 152, 219, 0.1);
+    animation: lightNeonPulse 2s ease-in-out infinite;
+}
+
+@keyframes lightNeonPulse {
+    0%, 100% { box-shadow: 0 0 30px var(--neon-primary), inset 0 0 15px rgba(52, 152, 219, 0.1); }
+    50% { box-shadow: 0 0 50px var(--neon-primary), inset 0 0 25px rgba(52, 152, 219, 0.2); }
+}
+
+[data-bs-theme="light"] .text-glow {
+    text-shadow: 
+        0 0 10px var(--neon-primary),
+        0 2px 4px rgba(255, 255, 255, 0.5),
+        0 0 20px rgba(52, 152, 219, 0.3);
+    font-weight: 600;
+}
+
+[data-bs-theme="light"] .floating-animation {
+    animation: lightFloating 6s ease-in-out infinite;
+}
+
+@keyframes lightFloating {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    25% { transform: translateY(-10px) rotate(1deg); }
+    50% { transform: translateY(-5px) rotate(0deg); }
+    75% { transform: translateY(-15px) rotate(-1deg); }
+}
+
+/* Epic pulse animation for important elements */
+[data-bs-theme="light"] .pulse-light {
+    animation: lightPulseGlow 2s ease-in-out infinite;
+}
+
+@keyframes lightPulseGlow {
+    0%, 100% { 
+        box-shadow: 0 0 20px rgba(52, 152, 219, 0.3);
+        transform: scale(1);
+    }
+    50% { 
+        box-shadow: 0 0 40px rgba(52, 152, 219, 0.6);
+        transform: scale(1.05);
+    }
+}
+
+/* Epic hover lift effect */
+[data-bs-theme="light"] .hover-lift {
+    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+[data-bs-theme="light"] .hover-lift:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 20px 60px rgba(52, 73, 94, 0.25);
+}
+
+/* Epic Light Theme Media Queries */
+@media (max-width: 768px) {
+    [data-bs-theme="light"] body {
+        background-size: 600% 600%;
     }
     
-    .form-control:focus,
-    .form-select:focus,
-    input:focus,
-    textarea:focus,
-    select:focus {
-        border-color: #86b7fe !important;
-        box-shadow: 0 0 0 0.25rem rgba(0, 102, 204, 0.25) !important;
-        outline: 0 !important;
+    [data-bs-theme="light"] .card {
+        border-radius: 15px;
+        margin: 0.5rem;
     }
     
-    .form-control::placeholder,
-    input::placeholder,
-    textarea::placeholder {
-        color: #6c757d !important;
-        opacity: 1 !important;
+    [data-bs-theme="light"] .btn {
+        padding: 0.6rem 1.5rem;
+        font-size: 0.85rem;
     }
     
-    .form-label,
-    label {
-        color: #212529 !important;
-        font-weight: 500;
+    [data-bs-theme="light"] .navbar {
+        margin: 0;
+        border-radius: 0;
     }
-    
-    .form-text,
-    .text-muted {
-        color: #6c757d !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [data-bs-theme="light"] * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
     }
-    
-    /* Card improvements */
-    .card {
-        background-color: #ffffff;
-        border: 1px solid #dee2e6;
-        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.05);
-        transition: all 0.2s ease-in-out;
-    }
-    
-    .card:hover {
-        box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
-        transform: translateY(-2px);
-    }
-    
-    /* Button improvements */
-    .btn {
-        transition: all 0.2s ease-in-out;
-        font-weight: 500;
-    }
-    
-    .btn-primary {
-        background-color: #0066cc;
-        border-color: #0066cc;
-        color: #ffffff;
-    }
-    
-    .btn-primary:hover {
-        background-color: #0052a3;
-        border-color: #0052a3;
-        transform: translateY(-1px);
-        box-shadow: 0 0.125rem 0.25rem rgba(0, 102, 204, 0.25);
-    }
-    
-    /* Modal improvements */
-    .modal-content {
-        background-color: #ffffff;
-        border: none;
-        box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.175);
-    }
-    
-    .modal-header {
-        background-color: #f8f9fa;
-        border-bottom: 1px solid #dee2e6;
-    }
-    
-    /* Table improvements */
-    .table {
-        color: #212529;
-    }
-    
-    .table > :not(caption) > * > * {
-        background-color: transparent;
-        border-bottom-color: #dee2e6;
-    }
-    
-    .table-hover > tbody > tr:hover > * {
-        background-color: rgba(0, 0, 0, 0.05);
-    }
-    
-    /* Progress bar */
-    .progress {
-        background-color: #e9ecef;
-    }
-    
-    /* Dropdown improvements */
-    .dropdown-menu {
-        background-color: #ffffff;
-        border: 1px solid rgba(0, 0, 0, 0.15);
-        box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
-    }
-    
-    .dropdown-item {
-        color: #212529;
-    }
-    
-    .dropdown-item:hover,
-    .dropdown-item:focus {
-        background-color: #f8f9fa;
-        color: #0066cc;
-    }
-    
-    /* Custom scrollbar */
-    ::-webkit-scrollbar {
-        width: 12px;
-        height: 12px;
-    }
-    
-    ::-webkit-scrollbar-track {
-        background: #f8f9fa;
-    }
-    
-    ::-webkit-scrollbar-thumb {
-        background: #ced4da;
-        border-radius: 6px;
-    }
-    
-    ::-webkit-scrollbar-thumb:hover {
-        background: #adb5bd;
-    }
-    
-    /* Alert improvements */
-    .alert {
-        border: 1px solid transparent;
-        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.05);
-    }
-    
-    /* Badge improvements */
-    .badge {
-        font-weight: 500;
-    }
-    
-    /* List group improvements */
-    .list-group-item {
-        background-color: #ffffff;
-        border-color: #dee2e6;
-    }
-    
-    .list-group-item:hover {
-        background-color: #f8f9fa;
-    }
-    
-    /* Import manager specific */
-    .import-header {
-        background: linear-gradient(135deg, #0066cc 0%, #004499 100%);
-    }
-    
-    .source-card {
-        background-color: #ffffff;
-    }
-    
-    .source-card.importing {
-        background-color: rgba(0, 102, 204, 0.05);
-    }
-    
-    /* Navigation */
-    .navbar {
-        background-color: #ffffff !important;
-        border-bottom: 1px solid #dee2e6;
-        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.05);
-    }
-    
-    .navbar-brand,
-    .navbar-nav .nav-link {
-        color: #212529 !important;
-    }
-    
-    .navbar-nav .nav-link:hover,
-    .navbar-nav .nav-link.active {
-        color: #0066cc !important;
-    }
-    
-    /* Sidebar */
-    .sidebar {
-        background-color: #f8f9fa;
-        border-right: 1px solid #dee2e6;
-    }
-    
-    /* Code blocks */
-    code {
-        color: #d63384;
-        background-color: #f8f9fa;
-        padding: 0.125rem 0.25rem;
-        border-radius: 0.25rem;
-    }
-    
-    pre {
-        background-color: #f8f9fa;
-        border: 1px solid #dee2e6;
-        color: #212529;
+}
+
+/* Epic High contrast mode support */
+@media (prefers-contrast: high) {
+    [data-bs-theme="light"] {
+        --bs-body-color: #000000;
+        --bs-border-color: #000000;
+        --neon-primary: #0066cc;
     }
 }

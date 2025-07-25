@@ -49,6 +49,10 @@ async def admin_playlists_page(request: Request):
 async def admin_system_page(request: Request):
     return templates.TemplateResponse("admin/system.html", {"request": request})
 
+@router.get("/admin/database", response_class=HTMLResponse)
+async def admin_database_page(request: Request):
+    return templates.TemplateResponse("admin/database.html", {"request": request})
+
 
 @router.get("/admin/epg-manager", response_class=HTMLResponse)
 async def admin_epg_manager(request: Request):
@@ -88,7 +92,7 @@ async def system_page(request: Request):
 
 @router.get("/admin/channel-manager", response_class=HTMLResponse)
 async def channel_manager_page(request: Request):
-    return templates.TemplateResponse("admin/channel-manager-v2.html", {"request": request})
+    return templates.TemplateResponse("channel-manager.html", {"request": request})
 
 @router.get("/admin/channel-manager/legacy", response_class=HTMLResponse)
 async def channel_manager_legacy_page(request: Request):
@@ -101,3 +105,7 @@ async def import_monitor_page(request: Request):
 @router.get("/server-settings", response_class=HTMLResponse)
 async def server_settings_page(request: Request):
     return templates.TemplateResponse("server-settings.html", {"request": request})
+
+@router.get("/tuner-settings", response_class=HTMLResponse)
+async def tuner_settings_page(request: Request):
+    return templates.TemplateResponse("tuner-settings.html", {"request": request})

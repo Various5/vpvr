@@ -68,8 +68,8 @@
     background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
 }
 
-/* Spacecake Theme Preview - Trippy! */
-.theme-spacecake .theme-preview {
+/* Trip Theme Preview - Trippy! */
+.theme-trip .theme-preview {
     background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
     background-size: 400% 400%;
     animation: gradientShift 15s ease infinite;
@@ -208,12 +208,62 @@
     transform: scale(1.02);
 }
 
-/* Spacecake specific animations */
-.theme-spacecake .theme-card {
+/* Jungle Theme Preview */
+.theme-jungle .theme-preview {
+    background: linear-gradient(135deg, #1a2e1a 0%, #2d5a2d 50%, #4a7c59 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.theme-jungle .theme-preview::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 30% 20%, rgba(76, 175, 80, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 70% 80%, rgba(139, 195, 74, 0.2) 0%, transparent 50%);
+    animation: jungleBreeze 8s ease-in-out infinite;
+}
+
+/* Desert Theme Preview */
+.theme-desert .theme-preview {
+    background: linear-gradient(135deg, #3e2723 0%, #5d4037 50%, #8d6e63 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.theme-desert .theme-preview::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 20% 40%, rgba(255, 152, 0, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 60%, rgba(255, 193, 7, 0.2) 0%, transparent 50%);
+    animation: desertHeat 6s ease-in-out infinite;
+}
+
+@keyframes jungleBreeze {
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.05); }
+}
+
+@keyframes desertHeat {
+    0%, 100% { opacity: 0.5; transform: translateY(0); }
+    50% { opacity: 0.7; transform: translateY(-5px); }
+}
+
+/* Trip specific animations */
+.theme-trip .theme-card {
     animation: pulse 4s ease-in-out infinite;
 }
 
-.theme-spacecake .theme-preview-ui {
+.theme-trip .theme-preview-ui {
     animation: float 6s ease-in-out infinite;
 }
 
@@ -227,7 +277,7 @@
     50% { transform: translateY(-10px); }
 }
 
-.theme-spacecake .apply-button {
+.theme-trip .apply-button {
     background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
     background-size: 400% 400%;
     animation: gradientShift 3s ease infinite;
@@ -245,6 +295,76 @@
 
 .theme-spacewars .apply-button:hover {
     box-shadow: 0 0 30px rgba(0, 212, 255, 0.7);
+    transform: translateY(-2px);
+}
+
+.theme-jungle .apply-button {
+    background: linear-gradient(135deg, #2e7d32, #4caf50);
+    color: white;
+    border: none;
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.5);
+}
+
+.theme-jungle .apply-button:hover {
+    box-shadow: 0 0 30px rgba(76, 175, 80, 0.7);
+    transform: translateY(-2px);
+}
+
+.theme-desert .apply-button {
+    background: linear-gradient(135deg, #e65100, #ff9800);
+    color: white;
+    border: none;
+    box-shadow: 0 0 20px rgba(255, 152, 0, 0.5);
+}
+
+.theme-desert .apply-button:hover {
+    box-shadow: 0 0 30px rgba(255, 152, 0, 0.7);
+    transform: translateY(-2px);
+}
+
+/* Tech Theme Preview */
+.theme-tech .theme-preview {
+    background: radial-gradient(ellipse at center, #0a1a0a 0%, #001100 50%, #003300 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.theme-tech .theme-preview::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        linear-gradient(0deg, transparent 98%, rgba(0, 255, 65, 0.3) 100%),
+        linear-gradient(90deg, transparent 48%, rgba(0, 255, 65, 0.1) 50%, transparent 52%);
+    background-size: 100% 4px, 200px 100%;
+    animation: techMatrix 3s linear infinite;
+}
+
+@keyframes techMatrix {
+    0% { 
+        background-position: 0 0, -200px 0;
+        opacity: 0.8;
+    }
+    100% { 
+        background-position: 0 4px, 200px 0;
+        opacity: 1;
+    }
+}
+
+.theme-tech .apply-button {
+    background: linear-gradient(135deg, #00ff41, #00cc33);
+    color: #000;
+    border: none;
+    box-shadow: 0 0 20px rgba(0, 255, 65, 0.5);
+    font-weight: 600;
+}
+
+.theme-tech .apply-button:hover {
+    background: linear-gradient(135deg, #00ff00, #00ff41);
+    box-shadow: 0 0 30px rgba(0, 255, 0, 0.7);
     transform: translateY(-2px);
 }
 
@@ -272,6 +392,74 @@
 .form-check-input:checked {
     background-color: var(--bs-primary);
     border-color: var(--bs-primary);
+}
+
+/* Performance Mode Toggle for each theme */
+.performance-toggle {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 5px 12px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.performance-toggle:hover {
+    background: rgba(0, 0, 0, 0.8);
+    transform: scale(1.05);
+}
+
+.performance-toggle label {
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin: 0;
+    cursor: pointer;
+    user-select: none;
+}
+
+.performance-toggle input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    margin: 0;
+    cursor: pointer;
+}
+
+.performance-toggle input[type="checkbox"]:checked {
+    background-color: #4caf50;
+    border-color: #4caf50;
+}
+
+.performance-toggle input[type="checkbox"]:not(:checked) {
+    background-color: #f44336;
+    border-color: #f44336;
+}
+
+/* Performance mode disabled styles */
+.theme-card.performance-mode::before,
+.theme-card.performance-mode::after,
+.theme-card.performance-mode .theme-preview::before,
+.theme-card.performance-mode .theme-preview::after {
+    display: none !important;
+    animation: none !important;
+}
+
+.theme-card.performance-mode {
+    animation: none !important;
+}
+
+.theme-card.performance-mode .theme-preview-ui {
+    animation: none !important;
+}
+
+.theme-card.performance-mode .apply-button {
+    animation: none !important;
 }
 
 /* Disable animations when effects are off */
@@ -323,6 +511,10 @@ body.no-effects::after {
     <div class="themes-grid">
         <!-- Light Theme -->
         <div class="theme-card theme-light" onclick="applyTheme('light')" id="theme-light">
+            <div class="performance-toggle" onclick="event.stopPropagation()">
+                <input type="checkbox" id="light-performance" checked onchange="toggleThemePerformance('light', this.checked)">
+                <label for="light-performance">Effects</label>
+            </div>
             <div class="theme-preview">
                 <div class="theme-preview-ui">
                     <div class="preview-navbar"></div>
@@ -352,6 +544,10 @@ body.no-effects::after {
         
         <!-- Dark Theme -->
         <div class="theme-card theme-dark" onclick="applyTheme('dark')" id="theme-dark">
+            <div class="performance-toggle" onclick="event.stopPropagation()">
+                <input type="checkbox" id="dark-performance" checked onchange="toggleThemePerformance('dark', this.checked)">
+                <label for="dark-performance">Effects</label>
+            </div>
             <div class="theme-preview">
                 <div class="theme-preview-ui">
                     <div class="preview-navbar"></div>
@@ -379,8 +575,12 @@ body.no-effects::after {
             </div>
         </div>
         
-        <!-- Spacecake Theme -->
-        <div class="theme-card theme-spacecake" onclick="applyTheme('spacecake')" id="theme-spacecake">
+        <!-- Trip Theme -->
+        <div class="theme-card theme-trip" onclick="applyTheme('trip')" id="theme-trip">
+            <div class="performance-toggle" onclick="event.stopPropagation()">
+                <input type="checkbox" id="trip-performance" checked onchange="toggleThemePerformance('trip', this.checked)">
+                <label for="trip-performance">Effects</label>
+            </div>
             <div class="theme-preview">
                 <div class="theme-preview-ui">
                     <div class="preview-navbar"></div>
@@ -391,7 +591,7 @@ body.no-effects::after {
                 </div>
             </div>
             <div class="theme-info">
-                <h3 class="theme-name">Spacecake</h3>
+                <h3 class="theme-name">Trip</h3>
                 <p class="theme-description">A trippy, animated experience with vibrant colors and smooth transitions</p>
                 <div class="theme-features">
                     <span class="theme-feature">
@@ -410,6 +610,10 @@ body.no-effects::after {
         
         <!-- SpaceWars Theme -->
         <div class="theme-card theme-spacewars" onclick="applyTheme('spacewars')" id="theme-spacewars">
+            <div class="performance-toggle" onclick="event.stopPropagation()">
+                <input type="checkbox" id="spacewars-performance" checked onchange="toggleThemePerformance('spacewars', this.checked)">
+                <label for="spacewars-performance">Effects</label>
+            </div>
             <div class="theme-preview">
                 <div class="theme-preview-ui">
                     <div class="preview-navbar"></div>
@@ -436,6 +640,105 @@ body.no-effects::after {
                 <button class="apply-button">🚀 Launch to Space</button>
             </div>
         </div>
+        
+        <!-- Jungle Theme -->
+        <div class="theme-card theme-jungle" onclick="applyTheme('jungle')" id="theme-jungle">
+            <div class="performance-toggle" onclick="event.stopPropagation()">
+                <input type="checkbox" id="jungle-performance" checked onchange="toggleThemePerformance('jungle', this.checked)">
+                <label for="jungle-performance">Effects</label>
+            </div>
+            <div class="theme-preview">
+                <div class="theme-preview-ui">
+                    <div class="preview-navbar"></div>
+                    <div class="preview-content">
+                        <div class="preview-card"></div>
+                        <div class="preview-card"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="theme-info">
+                <h3 class="theme-name">Jungle</h3>
+                <p class="theme-description">Nature-inspired theme with lush greens and organic flowing animations</p>
+                <div class="theme-features">
+                    <span class="theme-feature">
+                        <i class="bi bi-tree"></i> Natural
+                    </span>
+                    <span class="theme-feature">
+                        <i class="bi bi-wind"></i> Organic
+                    </span>
+                    <span class="theme-feature">
+                        <i class="bi bi-leaf"></i> Eco-Friendly
+                    </span>
+                </div>
+                <button class="apply-button">🌿 Enter the Jungle</button>
+            </div>
+        </div>
+        
+        <!-- Desert Theme -->
+        <div class="theme-card theme-desert" onclick="applyTheme('desert')" id="theme-desert">
+            <div class="performance-toggle" onclick="event.stopPropagation()">
+                <input type="checkbox" id="desert-performance" checked onchange="toggleThemePerformance('desert', this.checked)">
+                <label for="desert-performance">Effects</label>
+            </div>
+            <div class="theme-preview">
+                <div class="theme-preview-ui">
+                    <div class="preview-navbar"></div>
+                    <div class="preview-content">
+                        <div class="preview-card"></div>
+                        <div class="preview-card"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="theme-info">
+                <h3 class="theme-name">Desert</h3>
+                <p class="theme-description">Warm earth tones with subtle heat shimmer effects and sand particle animations</p>
+                <div class="theme-features">
+                    <span class="theme-feature">
+                        <i class="bi bi-sun"></i> Warm
+                    </span>
+                    <span class="theme-feature">
+                        <i class="bi bi-thermometer-sun"></i> Heat Effects
+                    </span>
+                    <span class="theme-feature">
+                        <i class="bi bi-brightness-high"></i> Energizing
+                    </span>
+                </div>
+                <button class="apply-button">🏜️ Cross the Desert</button>
+            </div>
+        </div>
+        
+        <!-- Tech Theme -->
+        <div class="theme-card theme-tech" onclick="applyTheme('tech')" id="theme-tech">
+            <div class="performance-toggle" onclick="event.stopPropagation()">
+                <input type="checkbox" id="tech-performance" checked onchange="toggleThemePerformance('tech', this.checked)">
+                <label for="tech-performance">Effects</label>
+            </div>
+            <div class="theme-preview">
+                <div class="theme-preview-ui">
+                    <div class="preview-navbar"></div>
+                    <div class="preview-content">
+                        <div class="preview-card"></div>
+                        <div class="preview-card"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="theme-info">
+                <h3 class="theme-name">Tech</h3>
+                <p class="theme-description">Matrix-inspired cyber green theme with scan lines, data streams, and circuit patterns</p>
+                <div class="theme-features">
+                    <span class="theme-feature">
+                        <i class="bi bi-cpu"></i> Cyber
+                    </span>
+                    <span class="theme-feature">
+                        <i class="bi bi-lightning"></i> Matrix
+                    </span>
+                    <span class="theme-feature">
+                        <i class="bi bi-code-slash"></i> Digital
+                    </span>
+                </div>
+                <button class="apply-button">💚 Enter the Matrix</button>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
@@ -446,12 +749,33 @@ body.no-effects::after {
 let currentTheme = localStorage.getItem('theme') || 'light';
 let visualEffectsEnabled = localStorage.getItem('visualEffects') !== 'false';
 
+// Theme performance settings
+const themesByPerformance = {
+    'light': { hasEffects: true, defaultEnabled: true },
+    'dark': { hasEffects: true, defaultEnabled: true },
+    'trip': { hasEffects: true, defaultEnabled: true },
+    'spacewars': { hasEffects: true, defaultEnabled: true },
+    'jungle': { hasEffects: true, defaultEnabled: true },
+    'desert': { hasEffects: true, defaultEnabled: true },
+    'tech': { hasEffects: true, defaultEnabled: true }
+};
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     // Ensure function exists before calling
     if (typeof updateActiveTheme === 'function') {
         updateActiveTheme();
     }
+    
+    // Initialize performance toggles for each theme
+    Object.keys(themesByPerformance).forEach(theme => {
+        const toggle = document.getElementById(`${theme}-performance`);
+        if (toggle) {
+            const isEnabled = localStorage.getItem(`${theme}-performance`) !== 'false';
+            toggle.checked = isEnabled;
+            updateThemePerformance(theme, isEnabled);
+        }
+    });
     
     // Initialize visual effects toggle
     const toggle = document.getElementById('visualEffectsToggle');
@@ -477,22 +801,31 @@ function applyTheme(themeName) {
     // Add transition for smooth theme change
     document.body.style.transition = 'all 0.3s ease';
     
+    // Update theme immediately
+    document.documentElement.setAttribute('data-theme', themeName);
+    localStorage.setItem('theme', themeName);
+    
+    // Update body background color immediately to prevent flash
+    const themeColors = {
+        'light': '#f8fafc',
+        'dark': '#0b0f1a', 
+        'trip': '#0a0a0a',
+        'spacewars': '#000510',
+        'jungle': '#1a2e1a',
+        'desert': '#3e2723',
+        'tech': '#0a1a0a'
+    };
+    document.documentElement.style.backgroundColor = themeColors[themeName] || '#1a1d21';
+    
     // Use the theme manager if available
     if (window.themeManager) {
         window.themeManager.applyTheme(themeName);
-    } else {
-        // Fallback: set theme directly
-        document.documentElement.setAttribute('data-theme', themeName);
-        localStorage.setItem('theme', themeName);
-        
-        // Enable/disable theme CSS files
-        const themes = ['light', 'dark', 'spacecake', 'spacewars'];
-        themes.forEach(theme => {
-            const link = document.getElementById(`theme-${theme}-css`);
-            if (link) {
-                link.disabled = theme !== themeName;
-            }
-        });
+    }
+    
+    // Apply background immediately if background manager exists
+    if (window.themeBackgroundManager) {
+        window.themeBackgroundManager.currentTheme = themeName;
+        window.themeBackgroundManager.applyThemeBackground();
     }
     
     currentTheme = themeName;
@@ -500,10 +833,17 @@ function applyTheme(themeName) {
     // Force style recalculation
     document.body.offsetHeight;
     
-    // Update all theme-dependent elements
+    // Update all theme-dependent elements immediately
     document.querySelectorAll('[class*="bg-"], [class*="text-"], [class*="border-"]').forEach(el => {
         el.style.transition = 'all 0.3s ease';
     });
+    
+    // Update CSS custom properties for immediate effect
+    const root = document.documentElement;
+    const computedStyles = getComputedStyle(root);
+    
+    // Trigger CSS variables update
+    root.style.setProperty('--current-theme', themeName);
     
     // Update UI
     updateActiveTheme();
@@ -511,9 +851,9 @@ function applyTheme(themeName) {
     // Show notification
     showNotification(`${themeName.charAt(0).toUpperCase() + themeName.slice(1)} theme applied!`, 'success');
     
-    // Special effects for spacecake (only if visual effects are enabled)
-    if (themeName === 'spacecake' && visualEffectsEnabled) {
-        triggerSpacecakeEffects();
+    // Special effects for trip (only if visual effects are enabled)
+    if (themeName === 'trip' && visualEffectsEnabled) {
+        triggerTripEffects();
     }
     
     // Special effects for spacewars (only if visual effects are enabled)
@@ -554,8 +894,41 @@ function updateActiveTheme() {
     }
 }
 
-// Spacecake special effects
-function triggerSpacecakeEffects() {
+// Toggle individual theme performance mode
+function toggleThemePerformance(theme, enabled) {
+    localStorage.setItem(`${theme}-performance`, enabled);
+    updateThemePerformance(theme, enabled);
+    
+    const themeName = theme.charAt(0).toUpperCase() + theme.slice(1);
+    showNotification(
+        `${themeName} effects ${enabled ? 'enabled' : 'disabled'}`,
+        'info'
+    );
+}
+
+// Update theme performance mode
+function updateThemePerformance(theme, enabled) {
+    const themeCard = document.getElementById(`theme-${theme}`);
+    if (themeCard) {
+        if (enabled) {
+            themeCard.classList.remove('performance-mode');
+        } else {
+            themeCard.classList.add('performance-mode');
+        }
+    }
+    
+    // If this is the current theme, apply performance settings to the body
+    if (theme === currentTheme) {
+        if (enabled) {
+            document.body.classList.remove(`${theme}-performance-mode`);
+        } else {
+            document.body.classList.add(`${theme}-performance-mode`);
+        }
+    }
+}
+
+// Trip special effects
+function triggerTripEffects() {
     // Create floating particles
     const particleCount = 20;
     const container = document.body;
@@ -582,9 +955,9 @@ function triggerSpacecakeEffects() {
     }
     
     // Add floating animation
-    if (!document.getElementById('spacecake-animations')) {
+    if (!document.getElementById('trip-animations')) {
         const style = document.createElement('style');
-        style.id = 'spacecake-animations';
+        style.id = 'trip-animations';
         style.textContent = `
             @keyframes floatUp {
                 to {
@@ -602,13 +975,13 @@ function updateVisualEffects(enabled) {
     if (enabled) {
         document.body.classList.remove('no-effects');
         // Re-enable theme-specific animations
-        if (currentTheme === 'spacecake' || currentTheme === 'spacewars') {
+        if (currentTheme === 'trip' || currentTheme === 'spacewars') {
             document.documentElement.setAttribute('data-theme', currentTheme);
         }
     } else {
         document.body.classList.add('no-effects');
         // Remove any active particle effects
-        document.querySelectorAll('.spacecake-particle, .spacewars-star').forEach(el => el.remove());
+        document.querySelectorAll('.trip-particle, .spacewars-star').forEach(el => el.remove());
     }
 }
 </script>

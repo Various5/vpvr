@@ -217,8 +217,8 @@
                     <div class="card feature-card shadow-sm">
                         <div class="card-body text-center">
                             <i class="bi bi-house-door feature-icon text-info"></i>
-                            <h4>HDHomeRun Compatible</h4>
-                            <p>Works with Plex, Emby, and other HDHomeRun-compatible applications</p>
+                            <h4>Network Tuner Compatible</h4>
+                            <p>Works with Plex, Emby, and other network tuner-compatible applications</p>
                         </div>
                     </div>
                 </div>
@@ -421,6 +421,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Don't run on non-index pages
     if (window.location.pathname === '/') {
         loadDashboard();
+        initVoidEasterEgg();
     }
 });
 
@@ -430,5 +431,184 @@ window.addEventListener('storage', (e) => {
         loadDashboard();
     }
 });
+
+// Void Easter Egg
+function initVoidEasterEgg() {
+    let voidSequence = '';
+    let voidActive = false;
+    let voidElements = [];
+    
+    document.addEventListener('keydown', (e) => {
+        // Add key to sequence (preserve case for V check)
+        if (e.key.length === 1) {
+            voidSequence += e.key;
+        }
+        
+        // Check for "void" or "Void" trigger (case sensitive)
+        if (voidSequence.endsWith('void') || voidSequence.endsWith('Void')) {
+            if (!voidActive) {
+                activateVoid();
+                voidActive = true;
+            }
+            voidSequence = '';
+        }
+        
+        // Check for "revert" to reverse and make it vanish
+        if (voidSequence.toLowerCase().endsWith('revert') && voidActive) {
+            healVoid();
+            voidSequence = '';
+        }
+        
+        // Keep sequence short
+        if (voidSequence.length > 10) {
+            voidSequence = voidSequence.slice(-10);
+        }
+    });
+    
+    function activateVoid() {
+        // Create void container
+        const voidContainer = document.createElement('div');
+        voidContainer.id = 'voidContainer';
+        voidContainer.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+        `;
+        document.body.appendChild(voidContainer);
+        
+        // Create initial void holes
+        createVoidHoles(5);
+    }
+    
+    function createVoidHoles(count) {
+        const container = document.getElementById('voidContainer');
+        if (!container) return;
+        
+        for (let i = 0; i < count; i++) {
+            setTimeout(() => {
+                const hole = document.createElement('div');
+                hole.className = 'void-hole';
+                hole.style.cssText = `
+                    position: absolute;
+                    background: radial-gradient(circle, 
+                        black 0%, 
+                        rgba(0,0,0,0.98) 30%, 
+                        rgba(0,0,0,0.95) 50%, 
+                        rgba(0,0,0,0.9) 70%, 
+                        transparent 100%);
+                    border-radius: 50%;
+                    width: 0;
+                    height: 0;
+                    left: ${Math.random() * window.innerWidth}px;
+                    top: ${Math.random() * window.innerHeight}px;
+                    transform: translate(-50%, -50%);
+                    animation: voidGrow 6s ease-out forwards;
+                    mix-blend-mode: normal;
+                    box-shadow: 
+                        inset 0 0 50px rgba(138, 43, 226, 0.5),
+                        inset 0 0 100px rgba(75, 0, 130, 0.3),
+                        0 0 100px rgba(0, 0, 0, 0.8);
+                `;
+                
+                // Add liquid alien form animation
+                const style = document.createElement('style');
+                style.textContent = `
+                    @keyframes voidGrow {
+                        0% {
+                            width: 0;
+                            height: 0;
+                            opacity: 0;
+                            filter: blur(0px);
+                        }
+                        10% {
+                            width: 50px;
+                            height: 50px;
+                            opacity: 1;
+                            filter: blur(5px);
+                        }
+                        50% {
+                            width: 400px;
+                            height: 400px;
+                            opacity: 1;
+                            filter: blur(15px) contrast(1.2) brightness(0.8);
+                        }
+                        100% {
+                            width: 800px;
+                            height: 800px;
+                            opacity: 0.95;
+                            filter: blur(25px) contrast(1.5) brightness(0.6);
+                            transform: translate(-50%, -50%) rotate(${Math.random() * 360}deg) scale(1.1);
+                        }
+                    }
+                    
+                    @keyframes voidPulse {
+                        0%, 100% {
+                            transform: scale(1) rotate(0deg);
+                            filter: blur(40px) contrast(2);
+                        }
+                        50% {
+                            transform: scale(1.1) rotate(180deg);
+                            filter: blur(50px) contrast(2.5);
+                        }
+                    }
+                    
+                    @keyframes voidShrink {
+                        from {
+                            width: 600px;
+                            height: 600px;
+                            opacity: 1;
+                        }
+                        to {
+                            width: 0;
+                            height: 0;
+                            opacity: 0;
+                        }
+                    }
+                `;
+                document.head.appendChild(style);
+                
+                container.appendChild(hole);
+                voidElements.push({ element: hole, style: style });
+                
+                // After growth, add pulsing
+                setTimeout(() => {
+                    hole.style.animation = 'voidPulse 3s ease-in-out infinite';
+                }, 8000);
+                
+            }, i * 1000);
+        }
+        
+        // Continue creating holes slowly
+        if (voidActive) {
+            setTimeout(() => createVoidHoles(3), 10000);
+        }
+    }
+    
+    function healVoid() {
+        voidActive = false;
+        
+        // Shrink all void holes with revert effect
+        voidElements.forEach(({ element, style }, index) => {
+            setTimeout(() => {
+                element.style.animation = 'voidShrink 2s ease-in forwards';
+                setTimeout(() => {
+                    element.remove();
+                    style.remove();
+                }, 2000);
+            }, index * 200);
+        });
+        
+        // Remove container after all holes are gone
+        setTimeout(() => {
+            const container = document.getElementById('voidContainer');
+            if (container) container.remove();
+            voidElements = [];
+        }, 2000 + voidElements.length * 200);
+    }
+}
 </script>
 {% endblock %}

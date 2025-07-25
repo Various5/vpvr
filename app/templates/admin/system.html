@@ -103,8 +103,8 @@
                                 <td id="recordingPath">{{ recording_path }}</td>
                             </tr>
                             <tr>
-                                <td>HDHomeRun URL</td>
-                                <td id="hdhrUrl">Loading...</td>
+                                <td>Network Tuner URL</td>
+                                <td id="tunerUrl">Loading...</td>
                             </tr>
                             <tr>
                                 <td>Max Concurrent Recordings</td>
@@ -178,8 +178,8 @@ async function loadSystemStatus() {
         });
         document.getElementById('recordingJobs').textContent = recordingsResponse.data.length;
         
-        // Load HDHomeRun URL
-        document.getElementById('hdhrUrl').textContent = `${window.location.protocol}//${window.location.hostname}:5004`;
+        // Load Network Tuner URL
+        document.getElementById('tunerUrl').textContent = `${window.location.protocol}//${window.location.hostname}:5004`;
         
         // Load recent activity
         loadRecentActivity();

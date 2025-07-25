@@ -13,14 +13,52 @@
     margin-bottom: 2rem;
 }
 
-/* Fix for endless scroll issue */
+/* Fix for endless scroll issue and trip theme conflicts */
 body {
     overflow-x: hidden;
+    /* Disable trip theme body animations on this page */
+    animation: none !important;
 }
 
+/* Prevent trip theme container animations */
+.container,
 .container-fluid {
     max-width: 100%;
     padding-bottom: 2rem;
+    animation: none !important;
+    transform: none !important;
+}
+
+/* Ensure all cards stay in place */
+.card, .source-card, .stat-card {
+    animation: none !important;
+    transform: none !important;
+}
+
+/* Fix for the import history card specifically */
+.import-timeline {
+    max-height: 400px;
+    overflow-y: auto;
+    animation: none !important;
+    transform: none !important;
+}
+
+/* Prevent any child elements from animating */
+.import-timeline * {
+    animation: none !important;
+    transform: none !important;
+}
+
+/* Fix for Chart.js canvas growing issue */
+#channelChart {
+    max-height: 250px !important;
+    height: 250px !important;
+    width: 100% !important;
+}
+
+/* Allow hover effects but not continuous animations */
+.card:hover, .source-card:hover, .stat-card:hover {
+    transform: translateY(-5px) !important;
 }
 
 .stat-card {
@@ -88,6 +126,8 @@ body {
 .import-timeline {
     position: relative;
     padding-left: 30px;
+    max-height: 400px;
+    overflow-y: auto;
 }
 
 .import-timeline::before {
@@ -121,10 +161,161 @@ body {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    width: 400px;
-    max-height: 500px;
+    width: 500px;
+    max-height: 600px;
     overflow-y: auto;
     z-index: 1040;
+}
+
+/* Enhanced Progress Card Styles */
+.progress-card {
+    background: var(--bg-surface);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border-color);
+    margin-bottom: 15px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.progress-card:hover {
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.progress-header {
+    padding: 15px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.progress-title {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.progress-stats {
+    display: flex;
+    gap: 20px;
+    padding: 15px 20px;
+    background: var(--bg-surface-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.progress-stat {
+    flex: 1;
+    text-align: center;
+}
+
+.progress-stat-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.progress-stat-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.progress-bar-container {
+    padding: 20px;
+}
+
+.progress-bar-enhanced {
+    height: 30px;
+    background: var(--bg-surface-secondary);
+    border-radius: 15px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    transition: width 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.progress-bar-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+.progress-eta {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.console-output {
+    background: #1a1d21;
+    color: #00ff00;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    padding: 15px;
+    max-height: 200px;
+    overflow-y: auto;
+    border-radius: 8px;
+    margin: 15px;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.console-line {
+    margin: 2px 0;
+    opacity: 0;
+    animation: fadeIn 0.3s forwards;
+}
+
+@keyframes fadeIn {
+    to { opacity: 1; }
+}
+
+.console-line.error {
+    color: #ff4444;
+}
+
+.console-line.warning {
+    color: #ffaa00;
+}
+
+.console-line.success {
+    color: #44ff44;
+}
+
+.import-controls {
+    padding: 15px;
+    display: flex;
+    gap: 10px;
+    border-top: 1px solid var(--border-color);
+}
+
+.import-controls button {
+    flex: 1;
 }
 
 .channel-preview {
@@ -283,11 +474,11 @@ body {
     <!-- Import History -->
     <div class="row">
         <div class="col-lg-8">
-            <div class="card">
+            <div class="card" style="max-height: 500px;">
                 <div class="card-header">
                     <h5 class="mb-0"><i class="bi bi-clock-history"></i> Import History</h5>
                 </div>
-                <div class="card-body">
+                <div class="card-body" style="overflow: hidden;">
                     <div class="import-timeline" id="importTimeline">
                         <!-- Timeline items will be loaded here -->
                     </div>
@@ -295,13 +486,15 @@ body {
             </div>
         </div>
         <div class="col-lg-4">
-            <div class="card">
+            <div class="card" style="max-height: 500px;">
                 <div class="card-header">
                     <h5 class="mb-0"><i class="bi bi-tags"></i> Channel Distribution</h5>
                 </div>
-                <div class="card-body">
-                    <canvas id="channelChart"></canvas>
-                    <div class="filter-tags" id="filterTags">
+                <div class="card-body" style="overflow: hidden;">
+                    <div style="position: relative; height: 250px; width: 100%;">
+                        <canvas id="channelChart"></canvas>
+                    </div>
+                    <div class="filter-tags" id="filterTags" style="max-height: 150px; overflow-y: auto;">
                         <!-- Filter tags will be loaded here -->
                     </div>
                 </div>
@@ -577,7 +770,14 @@ document.addEventListener('DOMContentLoaded', () => {
     loadSources();
     loadStats();
     loadImportHistory();
+    
+    // Destroy existing chart if it exists before initializing
+    if (channelChart) {
+        channelChart.destroy();
+        channelChart = null;
+    }
     initializeChart();
+    
     initWebSocket();
 });
 
@@ -739,6 +939,11 @@ async function loadStats() {
 // Initialize Chart
 function initializeChart() {
     const ctx = document.getElementById('channelChart').getContext('2d');
+    
+    // Set explicit size on the canvas element
+    ctx.canvas.height = 250;
+    ctx.canvas.style.height = '250px';
+    
     channelChart = new Chart(ctx, {
         type: 'doughnut',
         data: {
@@ -755,6 +960,10 @@ function initializeChart() {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            aspectRatio: 1,
+            layout: {
+                padding: 10
+            },
             plugins: {
                 legend: {
                     position: 'bottom',
@@ -772,6 +981,8 @@ function initializeChart() {
 
 // Update chart with channel data
 function updateChart(channels) {
+    if (!channelChart) return;
+    
     const groupCounts = {};
     channels.forEach(ch => {
         const group = ch.group_name || 'Uncategorized';
@@ -782,9 +993,13 @@ function updateChart(channels) {
         .sort((a, b) => b[1] - a[1])
         .slice(0, 10); // Top 10 groups
     
+    // Update chart data
     channelChart.data.labels = sortedGroups.map(g => g[0]);
     channelChart.data.datasets[0].data = sortedGroups.map(g => g[1]);
-    channelChart.update();
+    
+    // Force resize before update
+    channelChart.resize();
+    channelChart.update('none'); // Update without animation to prevent growth
 }
 
 // Update filter tags
@@ -1284,53 +1499,196 @@ async function deleteSource(sourceId) {
     }
 }
 
-// Update live progress
+// Import progress tracking
+const importTrackers = new Map();
+
+class ImportTracker {
+    constructor(importId, totalItems) {
+        this.importId = importId;
+        this.totalItems = totalItems || 0;
+        this.processedItems = 0;
+        this.startTime = Date.now();
+        this.consoleLines = [];
+        this.status = 'started';
+        this.errors = 0;
+        this.warnings = 0;
+    }
+    
+    calculateETA() {
+        if (this.processedItems === 0) return 'Calculating...';
+        
+        const elapsed = Date.now() - this.startTime;
+        const itemsPerMs = this.processedItems / elapsed;
+        const remainingItems = this.totalItems - this.processedItems;
+        const remainingMs = remainingItems / itemsPerMs;
+        
+        if (remainingMs < 60000) {
+            return `${Math.round(remainingMs / 1000)}s remaining`;
+        } else if (remainingMs < 3600000) {
+            return `${Math.round(remainingMs / 60000)}m remaining`;
+        } else {
+            const hours = Math.floor(remainingMs / 3600000);
+            const minutes = Math.round((remainingMs % 3600000) / 60000);
+            return `${hours}h ${minutes}m remaining`;
+        }
+    }
+    
+    getSpeed() {
+        const elapsed = (Date.now() - this.startTime) / 1000; // seconds
+        const speed = this.processedItems / elapsed;
+        return speed < 1 ? `${(speed * 60).toFixed(1)}/min` : `${speed.toFixed(1)}/sec`;
+    }
+    
+    addConsoleLine(text, type = 'info') {
+        this.consoleLines.push({ text, type, timestamp: new Date() });
+        if (this.consoleLines.length > 100) {
+            this.consoleLines.shift();
+        }
+        if (type === 'error') this.errors++;
+        if (type === 'warning') this.warnings++;
+    }
+}
+
+// Update live progress with enhanced visualization
 function updateLiveProgress(data) {
-    const { import_id, status, progress, message, details } = data;
+    const { import_id, status, progress, message, details, total_items, processed_items, console_output } = data;
     
     let container = document.getElementById('liveImportProgress');
     container.style.display = 'block';
+    
+    // Get or create tracker
+    let tracker = importTrackers.get(import_id);
+    if (!tracker) {
+        tracker = new ImportTracker(import_id, total_items);
+        importTrackers.set(import_id, tracker);
+    }
+    
+    // Update tracker
+    tracker.status = status;
+    if (total_items) tracker.totalItems = total_items;
+    if (processed_items) tracker.processedItems = processed_items;
+    if (console_output) {
+        tracker.addConsoleLine(console_output.text, console_output.type || 'info');
+    }
     
     let progressCard = document.getElementById(`import-${import_id}`);
     if (!progressCard) {
         progressCard = document.createElement('div');
         progressCard.id = `import-${import_id}`;
-        progressCard.className = 'card mb-2';
+        progressCard.className = 'progress-card';
         container.appendChild(progressCard);
     }
     
-    const statusColors = {
-        'started': 'primary',
-        'progress': 'info',
-        'completed': 'success',
-        'failed': 'danger'
-    };
+    const progressPercent = tracker.totalItems > 0 ? 
+        Math.round((tracker.processedItems / tracker.totalItems) * 100) : 0;
     
     progressCard.innerHTML = `
-        <div class="card-header bg-${statusColors[status]} text-white">
-            <div class="d-flex justify-content-between align-items-center">
-                <span>${message}</span>
+        <div class="progress-header">
+            <div class="progress-title">${message}</div>
+            <div class="progress-actions">
+                ${status === 'progress' ? 
+                    `<button class="btn btn-sm btn-light" onclick="pauseImport('${import_id}')" title="Pause">
+                        <i class="bi bi-pause-fill"></i>
+                    </button>` : ''
+                }
                 ${status === 'completed' || status === 'failed' ? 
-                    `<button class="btn-close btn-close-white" onclick="closeLiveProgress('${import_id}')"></button>` : 
-                    ''
+                    `<button class="btn btn-sm btn-light" onclick="closeLiveProgress('${import_id}')" title="Close">
+                        <i class="bi bi-x-lg"></i>
+                    </button>` : ''
                 }
             </div>
         </div>
-        ${progress > 0 && progress < 100 ? `
-            <div class="card-body p-2">
-                <div class="progress">
-                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
-                         style="width: ${progress}%">${progress}%</div>
+        
+        <div class="progress-stats">
+            <div class="progress-stat">
+                <div class="progress-stat-value">${tracker.processedItems}</div>
+                <div class="progress-stat-label">Processed</div>
+            </div>
+            <div class="progress-stat">
+                <div class="progress-stat-value">${tracker.totalItems}</div>
+                <div class="progress-stat-label">Total</div>
+            </div>
+            <div class="progress-stat">
+                <div class="progress-stat-value">${tracker.getSpeed()}</div>
+                <div class="progress-stat-label">Speed</div>
+            </div>
+            <div class="progress-stat">
+                <div class="progress-stat-value">${tracker.errors}</div>
+                <div class="progress-stat-label">Errors</div>
+            </div>
+        </div>
+        
+        ${status === 'progress' ? `
+            <div class="progress-bar-container">
+                <div class="progress-bar-enhanced">
+                    <div class="progress-bar-fill" style="width: ${progressPercent}%">
+                        ${progressPercent}%
+                    </div>
                 </div>
-                ${details ? `<small class="text-muted">${JSON.stringify(details)}</small>` : ''}
+                <div class="progress-eta">
+                    <span>ETA: ${tracker.calculateETA()}</span>
+                    <span>${formatElapsedTime(Date.now() - tracker.startTime)} elapsed</span>
+                </div>
+            </div>
+        ` : ''}
+        
+        <div class="console-output" id="console-${import_id}">
+            ${tracker.consoleLines.slice(-20).map(line => 
+                `<div class="console-line ${line.type}">[${line.timestamp.toLocaleTimeString()}] ${line.text}</div>`
+            ).join('')}
+        </div>
+        
+        ${status === 'completed' ? `
+            <div class="import-controls">
+                <button class="btn btn-sm btn-success" onclick="viewImportDetails('${import_id}')">
+                    <i class="bi bi-eye"></i> View Details
+                </button>
+                <button class="btn btn-sm btn-primary" onclick="closeLiveProgress('${import_id}')">
+                    <i class="bi bi-check-lg"></i> Done
+                </button>
+            </div>
+        ` : status === 'failed' ? `
+            <div class="import-controls">
+                <button class="btn btn-sm btn-warning" onclick="retryImport('${import_id}')">
+                    <i class="bi bi-arrow-clockwise"></i> Retry
+                </button>
+                <button class="btn btn-sm btn-danger" onclick="closeLiveProgress('${import_id}')">
+                    <i class="bi bi-x-lg"></i> Close
+                </button>
             </div>
         ` : ''}
     `;
     
+    // Auto-scroll console to bottom
+    const consoleElement = document.getElementById(`console-${import_id}`);
+    if (consoleElement) {
+        consoleElement.scrollTop = consoleElement.scrollHeight;
+    }
+    
     if (status === 'completed') {
         loadSources();
         loadStats();
-        setTimeout(() => closeLiveProgress(import_id), 5000);
+        // Keep completed imports visible for longer
+        setTimeout(() => {
+            if (confirm('Import completed! Close progress window?')) {
+                closeLiveProgress(import_id);
+            }
+        }, 10000);
+    }
+}
+
+// Helper function to format elapsed time
+function formatElapsedTime(ms) {
+    const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    
+    if (hours > 0) {
+        return `${hours}h ${minutes % 60}m ${seconds % 60}s`;
+    } else if (minutes > 0) {
+        return `${minutes}m ${seconds % 60}s`;
+    } else {
+        return `${seconds}s`;
     }
 }
 
@@ -1349,6 +1707,9 @@ function closeLiveProgress(import_id) {
 async function loadImportHistory() {
     // This would load from a history endpoint
     const timeline = document.getElementById('importTimeline');
+    
+    // Clear existing content first
+    timeline.innerHTML = '';
     
     // Sample history items
     const history = [
