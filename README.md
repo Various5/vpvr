@@ -1,65 +1,139 @@
-VPVR - Virtual Personal Video Recorder for IPTV
+      Virtual Personal Video Recorder
+               for IPTV
 
-TL;DR:
-Turn IPTV (M3U playlists) into a DVR with scheduling, EPG support, HDHomeRun emulation, live streaming, and more.
 
-Features:
-- HDHomeRun Emulation (Plex, Jellyfin, Emby, Channels DVR, NextPVR)
-- Smart Recording (single episode or series)
-- M3U/M3U8 Playlist Support
-- EPG/XMLTV Integration
-- Multi-User Roles & REST API Access
-- Web-based Live TV Streaming
-- Auto Storage Cleanup
-- Dark Mode & Mobile Responsive UI
+==================================================================
+Turn your IPTV (M3U playlists) into a full-featured DVR with
+scheduling, EPG support, HDHomeRun emulation, live streaming,
+multi-user access, and more.
+==================================================================
 
-Release Info:
-Version: v1.0.0 | Date: 2024-07-25
-Platform: Linux/Docker, Python 3.12+, Web App, Open Source
+### FEATURES
 
-Quick Start (Docker):
+- HDHomeRun Emulation (compatible with Plex, Jellyfin, Emby, Channels DVR, NextPVR)
+- Smart Recording (single episodes or full series)
+- M3U / M3U8 Playlist Support
+- EPG / XMLTV Integration
+- Multi-User Role Management
+- REST API Access
+- Web-Based Live TV Streaming
+- Automatic Storage Cleanup
+- Dark Mode / Mobile Responsive Interface
+
+---
+
+### RELEASE INFO
+
+```
+Version     : v1.0.0
+Date        : 2024-07-25
+Platform    : Linux / Docker, Python 3.12+, Web App
+License     : Open Source
+```
+
+---
+
+### QUICK START (DOCKER)
+
+```bash
 git clone https://github.com/Various5/vpvr.git
 cd vpvr
 docker-compose up -d
-Access: http://localhost:8000 (admin/adminpass)
+```
 
-Manual Install:
+Access the web interface at:  
+`http://localhost:8000`  
+Login credentials: `admin` / `adminpass`
+
+---
+
+### MANUAL INSTALLATION
+
+```bash
 git clone https://github.com/Various5/vpvr.git
 cd vpvr
-python3 -m venv venv && source venv/bin/activate
+python3 -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
 python init_db.py
 ./run.sh
+```
 
-System Requirements:
-Min: 2 CPU cores, 2GB RAM, 10GB+ storage, Python 3.12+, FFmpeg
-Rec: 4+ CPU, 4GB+ RAM, 50GB+ storage, FFmpeg + HW acceleration
+---
 
-Configuration:
-1) Import M3U playlist: Admin → Import Manager → Add Source → M3U URL
-2) Add EPG XMLTV (optional): Admin → EPG Manager → Add Source → XMLTV URL
-3) Enable HDHomeRun Emulation: Settings → Network → Enable HDHomeRun
-4) Set recording preferences: Settings → Recording
+### SYSTEM REQUIREMENTS
 
-HDHomeRun Emulation URLs (replace your-ip):
-- Discovery: http://your-ip:8000/discover.json
-- Lineup: http://your-ip:8000/lineup.json
+```
+Minimum:
+  - 2 CPU cores
+  - 2 GB RAM
+  - 10 GB storage
+  - Python 3.12+
+  - FFmpeg
 
-API Endpoints:
-POST /api/auth/login
-GET /api/channels
-GET /api/epg/programs
-GET /api/recordings
-POST /api/recordings/schedule
-GET /api/stream/{channel_id}
+Recommended:
+  - 4+ CPU cores
+  - 4+ GB RAM
+  - 50+ GB storage
+  - FFmpeg with hardware acceleration
+```
 
-Troubleshooting:
-- Channels not loading? Check M3U URL accessibility.
-- Missing EPG? Verify XMLTV URL and update manually.
-- Recordings fail? Check FFmpeg install and storage permissions.
-- HDHomeRun not detected? Ensure port 8000 firewall is open.
+---
 
-Credits & License:
-Code by Various5 | Powered by Python, FastAPI, FFmpeg | Open Source
+### CONFIGURATION
 
+**1. Import M3U Playlist**  
+Navigate to:  
+`Admin → Import Manager → Add Source → Enter M3U URL`
+
+**2. Add EPG Source (Optional)**  
+Navigate to:  
+`Admin → EPG Manager → Add Source → Enter XMLTV URL`
+
+**3. Enable HDHomeRun Emulation**  
+Navigate to:  
+`Settings → Network → Enable HDHomeRun`
+
+**4. Set Recording Preferences**  
+Navigate to:  
+`Settings → Recording`
+
+---
+
+### HDHOMERUN EMULATION URLS
+
+Replace `your-ip` with the actual IP address of your server:
+
+```
+Discovery : http://your-ip:8000/discover.json
+Lineup    : http://your-ip:8000/lineup.json
+```
+
+---
+
+### REST API ENDPOINTS
+
+```
+POST   /api/auth/login
+GET    /api/channels
+GET    /api/epg/programs
+GET    /api/recordings
+POST   /api/recordings/schedule
+GET    /api/stream/{channel_id}
+```
+
+---
+
+### CREDITS
+
+```
+Author     : Various5
+Tech Stack : Python, FastAPI, FFmpeg
+License    : Open Source
+```
+
+---
+
+```
 NFO Generated: 2024-07-25
+```
