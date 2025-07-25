@@ -66,37 +66,37 @@
 │ ▓▓▓ INSTALLATION ▓▓▓                                                                 │
 ├──────────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                      │
-│  ┌─ QUICK START (DOCKER) ───────────────────────────────────────────────────────┐  │
-│  │                                                                               │  │
-│  │  git clone https://github.com/Various5/vpvr.git                              │  │
-│  │  cd vpvr                                                                      │  │
-│  │  docker-compose up -d                                                        │  │
-│  │                                                                               │  │
-│  │  Access: http://localhost:8000                                               │  │
-│  │  Login:  admin / adminpass                                                   │  │
-│  │                                                                               │  │
-│  └───────────────────────────────────────────────────────────────────────────────┘  │
+│  ┌─ QUICK START (DOCKER) ───────────────────────────────────────────────────────┐    │
+│  │                                                                              │    │
+│  │  git clone https://github.com/Various5/vpvr.git                              │    │
+│  │  cd vpvr                                                                     │    │
+│  │  docker-compose up -d                                                        │    │
+│  │                                                                              │    │
+│  │  Access: http://localhost:8000                                               │    │
+│  │  Login:  admin / adminpass                                                   │    │
+│  │                                                                              │    │
+│  └──────────────────────────────────────────────────────────────────────────────┘    │
 │                                                                                      │
-│  ┌─ MANUAL INSTALLATION ─────────────────────────────────────────────────────────┐  │
-│  │                                                                               │  │
-│  │  # Clone the repository                                                       │  │
-│  │  git clone https://github.com/Various5/vpvr.git                              │  │
-│  │  cd vpvr                                                                      │  │
-│  │                                                                               │  │
-│  │  # Create virtual environment                                                 │  │
-│  │  python3 -m venv venv                                                         │  │
-│  │  source venv/bin/activate                                                     │  │
-│  │                                                                               │  │
-│  │  # Install dependencies                                                       │  │
-│  │  pip install -r requirements.txt                                              │  │
-│  │                                                                               │  │
-│  │  # Initialize database                                                        │  │
-│  │  python init_db.py                                                            │  │
-│  │                                                                               │  │
-│  │  # Run the server                                                             │  │
-│  │  ./run.sh                                                                     │  │
-│  │                                                                               │  │
-│  └───────────────────────────────────────────────────────────────────────────────┘  │
+│  ┌─ MANUAL INSTALLATION ─────────────────────────────────────────────────────────┐   │
+│  │                                                                               │   │
+│  │  # Clone the repository                                                       │   │
+│  │  git clone https://github.com/Various5/vpvr.git                               │   │
+│  │  cd vpvr                                                                      │   │
+│  │                                                                               │   │
+│  │  # Create virtual environment                                                 │   │
+│  │  python3 -m venv venv                                                         │   │
+│  │  source venv/bin/activate                                                     │   │
+│  │                                                                               │   │
+│  │  # Install dependencies                                                       │   │
+│  │  pip install -r requirements.txt                                              │   │
+│  │                                                                               │   │
+│  │  # Initialize database                                                        │   │
+│  │  python init_db.py                                                            │   │
+│  │                                                                               │   │
+│  │  # Run the server                                                             │   │
+│  │  ./run.sh                                                                     │   │
+│  │                                                                               │   │
+│  └───────────────────────────────────────────────────────────────────────────────┘   │
 │                                                                                      │
 └──────────────────────────────────────────────────────────────────────────────────────┘
 
@@ -105,11 +105,11 @@
 ├──────────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                      │
 │  MINIMUM:                           RECOMMENDED:                                     │
-│  ├─ CPU: 2 cores                   ├─ CPU: 4+ cores                                │
-│  ├─ RAM: 2GB                       ├─ RAM: 4GB+                                    │
-│  ├─ Storage: 10GB + recordings     ├─ Storage: 50GB+ for recordings               │
-│  ├─ Python 3.12+                   ├─ Python 3.12+                                 │
-│  └─ FFmpeg installed               └─ FFmpeg + HW acceleration                     │
+│  ├─ CPU: 2 cores                   ├─ CPU: 4+ cores                                  │
+│  ├─ RAM: 2GB                       ├─ RAM: 4GB+                                      │
+│  ├─ Storage: 10GB + recordings     ├─ Storage: 50GB+ for recordings                  │
+│  ├─ Python 3.12+                   ├─ Python 3.12+                                   │
+│  └─ FFmpeg installed               └─ FFmpeg + HW acceleration                       │
 │                                                                                      │
 └──────────────────────────────────────────────────────────────────────────────────────┘
 
@@ -118,33 +118,33 @@
 ├──────────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                      │
 │  1. Import your M3U playlist:                                                        │
-│     └─> Admin → Import Manager → Add Source → Enter M3U URL                        │
+│     └─> Admin → Import Manager → Add Source → Enter M3U URL                          │
 │                                                                                      │
 │  2. Add EPG source (optional but recommended):                                       │
-│     └─> Admin → EPG Manager → Add EPG Source → Enter XMLTV URL                     │
+│     └─> Admin → EPG Manager → Add EPG Source → Enter XMLTV URL                       │
 │                                                                                      │
 │  3. Configure HDHomeRun emulation:                                                   │
-│     └─> Settings → Network → Enable HDHomeRun                                       │
+│     └─> Settings → Network → Enable HDHomeRun                                        │
 │                                                                                      │
 │  4. Set recording preferences:                                                       │
-│     └─> Settings → Recording → Configure buffers and storage                        │
+│     └─> Settings → Recording → Configure buffers and storage                         │
 │                                                                                      │
 └──────────────────────────────────────────────────────────────────────────────────────┘
 
 ┌──────────────────────────────────────────────────────────────────────────────────────┐
-│ ▓▓▓ HDOMERUN SETUP ▓▓▓                                                              │
+│ ▓▓▓ HDOMERUN SETUP ▓▓▓                                                               │
 ├──────────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                      │
-│  VPVR emulates an HDHomeRun device, making it compatible with:                      │
+│  VPVR emulates an HDHomeRun device, making it compatible with:                       │
 │                                                                                      │
-│  ■ Plex Live TV & DVR        Add as HDHomeRun: http://your-ip:8000                 │
-│  ■ Jellyfin                  Network tuner: http://your-ip:8000                     │
-│  ■ Emby                      HDHomeRun: http://your-ip:8000                         │
-│  ■ Channels DVR              Add via network discovery                              │
-│  ■ NextPVR                   HDHomeRun device at port 8000                          │
+│  ■ Plex Live TV & DVR        Add as HDHomeRun: http://your-ip:8000                   │
+│  ■ Jellyfin                  Network tuner: http://your-ip:8000                      │
+│  ■ Emby                      HDHomeRun: http://your-ip:8000                          │
+│  ■ Channels DVR              Add via network discovery                               │
+│  ■ NextPVR                   HDHomeRun device at port 8000                           │
 │                                                                                      │
-│  Discovery URL: http://your-ip:8000/discover.json                                   │
-│  Lineup URL:    http://your-ip:8000/lineup.json                                     │
+│  Discovery URL: http://your-ip:8000/discover.json                                    │
+│  Lineup URL:    http://your-ip:8000/lineup.json                                      │
 │                                                                                      │
 └──────────────────────────────────────────────────────────────────────────────────────┘
 
@@ -153,13 +153,13 @@
 ├──────────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                      │
 │  Authentication:    POST   /api/auth/login                                           │
-│  Channels:         GET    /api/channels                                             │
-│  EPG:              GET    /api/epg/programs                                         │
-│  Recordings:       GET    /api/recordings                                           │
+│  Channels:         GET    /api/channels                                              │
+│  EPG:              GET    /api/epg/programs                                          │
+│  Recordings:       GET    /api/recordings                                            │
 │                    POST   /api/recordings/schedule                                   │
-│  Live Stream:      GET    /api/stream/{channel_id}                                  │
+│  Live Stream:      GET    /api/stream/{channel_id}                                   │
 │                                                                                      │
-│  Full API docs available at: http://your-ip:8000/docs                               │
+│  Full API docs available at: http://your-ip:8000/docs                                │
 │                                                                                      │
 └──────────────────────────────────────────────────────────────────────────────────────┘
 
@@ -168,16 +168,16 @@
 ├──────────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                      │
 │  ISSUE: Channels not loading                                                         │
-│  └─> Check M3U URL is accessible and valid                                          │
+│  └─> Check M3U URL is accessible and valid                                           │
 │                                                                                      │
 │  ISSUE: EPG data missing                                                             │
-│  └─> Verify XMLTV URL and run manual EPG update                                     │
+│  └─> Verify XMLTV URL and run manual EPG update                                      │
 │                                                                                      │
 │  ISSUE: Recordings fail                                                              │
-│  └─> Check FFmpeg installation and storage permissions                              │
+│  └─> Check FFmpeg installation and storage permissions                               │
 │                                                                                      │
 │  ISSUE: HDHomeRun not detected                                                       │
-│  └─> Ensure port 8000 is open in firewall                                           │
+│  └─> Ensure port 8000 is open in firewall                                            │
 │                                                                                      │
 └──────────────────────────────────────────────────────────────────────────────────────┘
 
@@ -186,13 +186,10 @@
 ├──────────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                      │
 │  CODE BY.......: Various5                                                            │
-│  POWERED BY....: Python, FastAPI, SQLAlchemy, FFmpeg                                │
+│  POWERED BY....: Python, FastAPI, SQLAlchemy, FFmpeg                                 │
 │  THANKS TO.....: Everyone who contributed ideas and tested                           │
 │                                                                                      │
 │                                                                                      │
-│         ┌─────────────────────────────────────────────────────────┐                 │
-│         │  "Recording live TV so you can live your life" - VPVR   │                 │
-│         └─────────────────────────────────────────────────────────┘                 │
 │                                                                                      │
 └──────────────────────────────────────────────────────────────────────────────────────┘
 
@@ -200,7 +197,7 @@
 │ ▓▓▓ LICENSE ▓▓▓                                                                      │
 ├──────────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                      │
-│  This project is released under the           │
+│  This project is released under the                                                  │
 │                                                                                      │
 └──────────────────────────────────────────────────────────────────────────────────────┘
 
