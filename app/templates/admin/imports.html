@@ -1,0 +1,1490 @@
+{% extends "base.html" %}
+
+{% block title %}Import Management - IPTV PVR{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Modern Import Management Styles */
+.import-dashboard {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 15px;
+    margin-bottom: 2rem;
+}
+
+/* Fix for endless scroll issue */
+body {
+    overflow-x: hidden;
+}
+
+.container-fluid {
+    max-width: 100%;
+    padding-bottom: 2rem;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.stat-card h3 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+}
+
+.stat-card p {
+    margin: 0;
+    opacity: 0.9;
+}
+
+.source-card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transition: all 0.3s;
+    overflow: hidden;
+}
+
+.source-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+.source-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1rem;
+}
+
+.source-type {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-right: 0.5rem;
+}
+
+.source-type.m3u {
+    background: #28a745;
+}
+
+.source-type.epg {
+    background: #17a2b8;
+}
+
+.import-timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.import-timeline::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 1rem;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -24px;
+    top: 5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #667eea;
+    border: 2px solid white;
+}
+
+.import-progress-live {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 400px;
+    max-height: 500px;
+    overflow-y: auto;
+    z-index: 1040;
+}
+
+.channel-preview {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.channel-group-header {
+    background: #f8f9fa;
+    padding: 0.5rem 1rem;
+    margin: 0.5rem 0;
+    border-radius: 5px;
+    font-weight: 600;
+}
+
+.channel-item {
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.channel-logo-small {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+    border-radius: 3px;
+}
+
+.filter-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.filter-tag {
+    padding: 0.25rem 0.75rem;
+    background: #e9ecef;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filter-tag:hover {
+    background: #667eea;
+    color: white;
+}
+
+.filter-tag.active {
+    background: #667eea;
+    color: white;
+}
+
+.import-status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 0.5rem;
+}
+
+.import-status-indicator.success {
+    background: #28a745;
+}
+
+.import-status-indicator.warning {
+    background: #ffc107;
+}
+
+.import-status-indicator.error {
+    background: #dc3545;
+}
+
+.import-status-indicator.processing {
+    background: #007bff;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Import Dashboard -->
+    <div class="import-dashboard">
+        <h1 class="display-4 mb-4"><i class="bi bi-cloud-download"></i> Import Management Center</h1>
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <h3 id="totalSources">0</h3>
+                    <p>Total Sources</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <h3 id="totalChannels">0</h3>
+                    <p>Active Channels</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <h3 id="totalGroups">0</h3>
+                    <p>Channel Groups</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <h3 id="lastUpdate">Never</h3>
+                    <p>Last Update</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>Quick Actions</h2>
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="showAddSourceModal()">
+                        <i class="bi bi-plus-circle"></i> Add Source
+                    </button>
+                    <button class="btn btn-success" onclick="updateAllSources()">
+                        <i class="bi bi-arrow-repeat"></i> Update All
+                    </button>
+                    <button class="btn btn-info" onclick="showScheduleModal()">
+                        <i class="bi bi-clock"></i> Schedule
+                    </button>
+                    <button class="btn btn-warning" onclick="showFilterModal()">
+                        <i class="bi bi-funnel"></i> Filters
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Sources -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3>Active Sources</h3>
+            <div class="row g-3" id="sourcesList">
+                <!-- Sources will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Import History -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-clock-history"></i> Import History</h5>
+                </div>
+                <div class="card-body">
+                    <div class="import-timeline" id="importTimeline">
+                        <!-- Timeline items will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-tags"></i> Channel Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="channelChart"></canvas>
+                    <div class="filter-tags" id="filterTags">
+                        <!-- Filter tags will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Source Modal -->
+<div class="modal fade" id="addSourceModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Source</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <ul class="nav nav-tabs mb-3" id="sourceTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="url-tab" data-bs-toggle="tab" data-bs-target="#url" type="button">
+                            <i class="bi bi-link"></i> URL Import
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="file-tab" data-bs-toggle="tab" data-bs-target="#file" type="button">
+                            <i class="bi bi-file-earmark-arrow-up"></i> File Upload
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="api-tab" data-bs-toggle="tab" data-bs-target="#api" type="button">
+                            <i class="bi bi-gear"></i> API Integration
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="iptv-org-tab" data-bs-toggle="tab" data-bs-target="#iptv-org" type="button">
+                            <i class="bi bi-globe"></i> IPTV-org
+                        </button>
+                    </li>
+                </ul>
+                <div class="tab-content" id="sourceTabContent">
+                    <!-- URL Import Tab -->
+                    <div class="tab-pane fade show active" id="url" role="tabpanel">
+                        <form id="urlImportForm">
+                            <div class="mb-3">
+                                <label for="sourceName" class="form-label">Source Name</label>
+                                <input type="text" class="form-control" id="sourceName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="sourceType" class="form-label">Source Type</label>
+                                <select class="form-select" id="sourceType" onchange="toggleSourceFields()">
+                                    <option value="m3u">M3U/M3U8 Playlist</option>
+                                    <option value="epg">EPG/XMLTV</option>
+                                    <option value="both">M3U + EPG Bundle</option>
+                                </select>
+                            </div>
+                            <div class="mb-3" id="m3uUrlField">
+                                <label for="m3uUrl" class="form-label">M3U URL</label>
+                                <input type="url" class="form-control" id="m3uUrl" placeholder="http://example.com/playlist.m3u">
+                                <small class="text-muted">Supports M3U, M3U8, and M3U_PLUS formats</small>
+                            </div>
+                            <div class="mb-3" id="epgUrlField" style="display: none;">
+                                <label for="epgUrl" class="form-label">EPG URL</label>
+                                <input type="url" class="form-control" id="epgUrl" placeholder="http://example.com/epg.xml">
+                                <small class="text-muted">Supports XMLTV format (XML, GZ)</small>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="updateInterval" class="form-label">Auto-Update Interval</label>
+                                        <select class="form-select" id="updateInterval">
+                                            <option value="0">Manual Only</option>
+                                            <option value="6">Every 6 Hours</option>
+                                            <option value="12">Every 12 Hours</option>
+                                            <option value="24" selected>Daily</option>
+                                            <option value="72">Every 3 Days</option>
+                                            <option value="168">Weekly</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="category" class="form-label">Category</label>
+                                        <input type="text" class="form-control" id="category" placeholder="e.g., Sports, Movies, News">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="autoMap" checked>
+                                <label class="form-check-label" for="autoMap">
+                                    Automatically map EPG data to channels
+                                </label>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- File Upload Tab -->
+                    <div class="tab-pane fade" id="file" role="tabpanel">
+                        <form id="fileUploadForm">
+                            <div class="mb-3">
+                                <label for="uploadSourceName" class="form-label">Source Name</label>
+                                <input type="text" class="form-control" id="uploadSourceName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="m3uFile" class="form-label">M3U File</label>
+                                <input type="file" class="form-control" id="m3uFile" accept=".m3u,.m3u8">
+                            </div>
+                            <div class="mb-3">
+                                <label for="epgFile" class="form-label">EPG File (Optional)</label>
+                                <input type="file" class="form-control" id="epgFile" accept=".xml,.gz">
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- API Integration Tab -->
+                    <div class="tab-pane fade" id="api" role="tabpanel">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> API integration allows automatic synchronization with supported IPTV providers.
+                        </div>
+                        <form id="apiIntegrationForm">
+                            <div class="mb-3">
+                                <label for="provider" class="form-label">Provider</label>
+                                <select class="form-select" id="provider">
+                                    <option value="">Select Provider</option>
+                                    <option value="xtream">Xtream Codes API</option>
+                                    <option value="stalker">Stalker Portal</option>
+                                    <option value="custom">Custom API</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="apiUrl" class="form-label">API URL</label>
+                                <input type="url" class="form-control" id="apiUrl">
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="apiUsername" class="form-label">Username</label>
+                                        <input type="text" class="form-control" id="apiUsername">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="apiPassword" class="form-label">Password</label>
+                                        <input type="password" class="form-control" id="apiPassword">
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- IPTV-org Integration Tab -->
+                    <div class="tab-pane fade" id="iptv-org" role="tabpanel">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> Import free channels from the IPTV-org repository - the world's largest collection of publicly available IPTV channels.
+                        </div>
+                        <form id="iptvOrgForm">
+                            <div class="mb-3">
+                                <label for="iptvOrgCategory" class="form-label">Category</label>
+                                <select class="form-select" id="iptvOrgCategory" onchange="updateIptvOrgPreview()">
+                                    <option value="">All Channels</option>
+                                    <option value="countries">By Country</option>
+                                    <option value="languages">By Language</option>
+                                    <option value="categories">By Category</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3" id="iptvOrgSubcategory" style="display: none;">
+                                <label for="iptvOrgSubSelect" class="form-label" id="subcategoryLabel">Select</label>
+                                <select class="form-select" id="iptvOrgSubSelect" onchange="updateIptvOrgPreview()">
+                                    <option value="">Loading...</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="iptvOrgEpg" checked>
+                                    <label class="form-check-label" for="iptvOrgEpg">
+                                        Include EPG data from IPTV-org
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Available Playlists</label>
+                                <div id="iptvOrgPlaylists" class="list-group" style="max-height: 300px; overflow-y: auto;">
+                                    <a href="#" class="list-group-item list-group-item-action active" data-url="https://iptv-org.github.io/iptv/index.m3u">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1">All Channels</h6>
+                                            <small>~6000+ channels</small>
+                                        </div>
+                                        <p class="mb-1">Complete collection of all available channels</p>
+                                    </a>
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle"></i> <strong>Note:</strong> IPTV-org contains thousands of channels. Consider using category filters to import specific regions or types.
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="addSource()">
+                    <i class="bi bi-plus-circle"></i> Add Source
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Schedule Modal -->
+<div class="modal fade" id="scheduleModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Update Schedule</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="scheduleForm">
+                    <div class="mb-3">
+                        <label class="form-label">Update Times</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="schedule_0" value="00:00">
+                            <label class="form-check-label" for="schedule_0">12:00 AM</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="schedule_6" value="06:00">
+                            <label class="form-check-label" for="schedule_6">6:00 AM</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="schedule_12" value="12:00">
+                            <label class="form-check-label" for="schedule_12">12:00 PM</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="schedule_18" value="18:00">
+                            <label class="form-check-label" for="schedule_18">6:00 PM</label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="retryAttempts" class="form-label">Retry Failed Imports</label>
+                        <input type="number" class="form-control" id="retryAttempts" min="0" max="5" value="3">
+                        <small class="text-muted">Number of retry attempts for failed imports</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveSchedule()">Save Schedule</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Live Import Progress -->
+<div class="import-progress-live" id="liveImportProgress" style="display: none;">
+    <!-- Live progress will be shown here -->
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Include Chart.js for statistics -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+let sources = [];
+let activeImports = new Map();
+let channelChart = null;
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    loadSources();
+    loadStats();
+    loadImportHistory();
+    initializeChart();
+    initWebSocket();
+});
+
+// WebSocket for live updates
+function initWebSocket() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/api/ws?token=${token}`;
+    const websocket = new WebSocket(wsUrl);
+    
+    websocket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === 'import_progress') {
+            updateLiveProgress(data);
+        }
+    };
+    
+    websocket.onerror = (error) => {
+        console.error('WebSocket error:', error);
+    };
+    
+    websocket.onclose = () => {
+        // Reconnect after 5 seconds
+        setTimeout(() => initWebSocket(), 5000);
+    };
+}
+
+// Load sources
+async function loadSources() {
+    try {
+        // Load playlists
+        const playlistsResponse = await axios.get('/api/channels/playlists', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        // Load EPG sources - handle both possible endpoints
+        let epgResponse;
+        try {
+            epgResponse = await axios.get('/api/enhanced-epg/sources', {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+        } catch (error) {
+            // Fallback to regular epg endpoint if enhanced doesn't exist
+            epgResponse = await axios.get('/api/epg/sources', {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+        }
+        
+        sources = [
+            ...playlistsResponse.data.map(p => ({ ...p, type: 'm3u' })),
+            ...epgResponse.data.map(e => ({ ...e, type: 'epg' }))
+        ];
+        
+        displaySources();
+        document.getElementById('totalSources').textContent = sources.length;
+        
+    } catch (error) {
+        console.error('Failed to load sources:', error);
+    }
+}
+
+// Display sources
+function displaySources() {
+    const container = document.getElementById('sourcesList');
+    
+    if (sources.length === 0) {
+        container.innerHTML = `
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> No sources configured yet. Click "Add Source" to get started.
+                </div>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = sources.map(source => `
+        <div class="col-lg-6 col-xl-4">
+            <div class="card source-card">
+                <div class="source-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="source-type ${source.type}">${source.type.toUpperCase()}</span>
+                            <h5 class="mb-0 mt-1">${source.name}</h5>
+                        </div>
+                        <div>
+                            <span class="import-status-indicator ${getStatusClass(source.status)}"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-2">${source.url || 'Uploaded file'}</p>
+                    <div class="row text-center mb-3">
+                        <div class="col-4">
+                            <h6 class="mb-0">${source.channel_count || 0}</h6>
+                            <small class="text-muted">Channels</small>
+                        </div>
+                        <div class="col-4">
+                            <h6 class="mb-0">${source.group_count || 0}</h6>
+                            <small class="text-muted">Groups</small>
+                        </div>
+                        <div class="col-4">
+                            <h6 class="mb-0">${source.update_interval || 24}h</h6>
+                            <small class="text-muted">Interval</small>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-primary flex-fill" onclick="updateSource(${source.id})">
+                            <i class="bi bi-arrow-clockwise"></i> Update
+                        </button>
+                        <button class="btn btn-sm btn-info flex-fill" onclick="previewSource(${source.id})">
+                            <i class="bi bi-eye"></i> Preview
+                        </button>
+                        <button class="btn btn-sm btn-secondary" onclick="editSource(${source.id})">
+                            <i class="bi bi-gear"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteSource(${source.id})">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                    ${source.last_updated ? `
+                        <div class="mt-2 text-center">
+                            <small class="text-muted">Last updated: ${formatRelativeTime(source.last_updated)}</small>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Load statistics
+async function loadStats() {
+    try {
+        const channelsResponse = await axios.get('/api/channels', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        const channels = channelsResponse.data;
+        document.getElementById('totalChannels').textContent = channels.length;
+        
+        // Count groups
+        const groups = [...new Set(channels.map(ch => ch.group_name))];
+        document.getElementById('totalGroups').textContent = groups.length;
+        
+        // Update chart
+        updateChart(channels);
+        
+        // Update filter tags
+        updateFilterTags(groups);
+        
+    } catch (error) {
+        console.error('Failed to load stats:', error);
+    }
+}
+
+// Initialize Chart
+function initializeChart() {
+    const ctx = document.getElementById('channelChart').getContext('2d');
+    channelChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: [],
+            datasets: [{
+                data: [],
+                backgroundColor: [
+                    '#667eea', '#764ba2', '#f093fb', '#f5576c',
+                    '#4facfe', '#00f2fe', '#43e97b', '#38f9d7',
+                    '#fa709a', '#fee140', '#30cfd0', '#330867'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 10,
+                        font: {
+                            size: 11
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Update chart with channel data
+function updateChart(channels) {
+    const groupCounts = {};
+    channels.forEach(ch => {
+        const group = ch.group_name || 'Uncategorized';
+        groupCounts[group] = (groupCounts[group] || 0) + 1;
+    });
+    
+    const sortedGroups = Object.entries(groupCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10); // Top 10 groups
+    
+    channelChart.data.labels = sortedGroups.map(g => g[0]);
+    channelChart.data.datasets[0].data = sortedGroups.map(g => g[1]);
+    channelChart.update();
+}
+
+// Update filter tags
+function updateFilterTags(groups) {
+    const container = document.getElementById('filterTags');
+    container.innerHTML = groups.slice(0, 20).map(group => `
+        <span class="filter-tag" onclick="toggleFilter('${group}')">${group}</span>
+    `).join('');
+}
+
+// Toggle source fields based on type
+function toggleSourceFields() {
+    const type = document.getElementById('sourceType').value;
+    document.getElementById('m3uUrlField').style.display = (type === 'm3u' || type === 'both') ? 'block' : 'none';
+    document.getElementById('epgUrlField').style.display = (type === 'epg' || type === 'both') ? 'block' : 'none';
+}
+
+// IPTV-org functions
+const iptvOrgData = {
+    countries: [
+        { code: 'us', name: 'United States', channels: '~500+' },
+        { code: 'uk', name: 'United Kingdom', channels: '~200+' },
+        { code: 'ca', name: 'Canada', channels: '~150+' },
+        { code: 'de', name: 'Germany', channels: '~200+' },
+        { code: 'fr', name: 'France', channels: '~250+' },
+        { code: 'es', name: 'Spain', channels: '~200+' },
+        { code: 'it', name: 'Italy', channels: '~200+' },
+        { code: 'in', name: 'India', channels: '~300+' },
+        { code: 'br', name: 'Brazil', channels: '~150+' },
+        { code: 'mx', name: 'Mexico', channels: '~100+' }
+    ],
+    languages: [
+        { code: 'eng', name: 'English', channels: '~2000+' },
+        { code: 'spa', name: 'Spanish', channels: '~800+' },
+        { code: 'fra', name: 'French', channels: '~400+' },
+        { code: 'ara', name: 'Arabic', channels: '~300+' },
+        { code: 'por', name: 'Portuguese', channels: '~200+' },
+        { code: 'hin', name: 'Hindi', channels: '~150+' },
+        { code: 'deu', name: 'German', channels: '~200+' },
+        { code: 'ita', name: 'Italian', channels: '~200+' },
+        { code: 'rus', name: 'Russian', channels: '~150+' },
+        { code: 'zho', name: 'Chinese', channels: '~100+' }
+    ],
+    categories: [
+        { slug: 'news', name: 'News', channels: '~300+' },
+        { slug: 'sports', name: 'Sports', channels: '~200+' },
+        { slug: 'movies', name: 'Movies', channels: '~150+' },
+        { slug: 'music', name: 'Music', channels: '~200+' },
+        { slug: 'kids', name: 'Kids', channels: '~100+' },
+        { slug: 'documentary', name: 'Documentary', channels: '~100+' },
+        { slug: 'entertainment', name: 'Entertainment', channels: '~300+' },
+        { slug: 'religious', name: 'Religious', channels: '~200+' },
+        { slug: 'education', name: 'Education', channels: '~50+' },
+        { slug: 'lifestyle', name: 'Lifestyle', channels: '~100+' }
+    ]
+};
+
+function updateIptvOrgPreview() {
+    const category = document.getElementById('iptvOrgCategory').value;
+    const subcategoryDiv = document.getElementById('iptvOrgSubcategory');
+    const subcategorySelect = document.getElementById('iptvOrgSubSelect');
+    const playlistsDiv = document.getElementById('iptvOrgPlaylists');
+    
+    if (!category) {
+        subcategoryDiv.style.display = 'none';
+        playlistsDiv.innerHTML = `
+            <a href="#" class="list-group-item list-group-item-action active" data-url="https://iptv-org.github.io/iptv/index.m3u">
+                <div class="d-flex w-100 justify-content-between">
+                    <h6 class="mb-1">All Channels</h6>
+                    <small>~6000+ channels</small>
+                </div>
+                <p class="mb-1">Complete collection of all available channels</p>
+            </a>
+        `;
+        return;
+    }
+    
+    // Show subcategory selector
+    subcategoryDiv.style.display = 'block';
+    
+    // Update label and options
+    let label = '';
+    let options = '<option value="">Select...</option>';
+    let data = [];
+    
+    switch(category) {
+        case 'countries':
+            label = 'Select Country';
+            data = iptvOrgData.countries;
+            break;
+        case 'languages':
+            label = 'Select Language';
+            data = iptvOrgData.languages;
+            break;
+        case 'categories':
+            label = 'Select Category';
+            data = iptvOrgData.categories;
+            break;
+    }
+    
+    document.getElementById('subcategoryLabel').textContent = label;
+    
+    options += data.map(item => 
+        `<option value="${item.code || item.slug}">${item.name} (${item.channels})</option>`
+    ).join('');
+    
+    subcategorySelect.innerHTML = options;
+    
+    // Update playlists preview
+    updateIptvOrgPlaylists(category, '');
+}
+
+function updateIptvOrgPlaylists(category, subcategory) {
+    const playlistsDiv = document.getElementById('iptvOrgPlaylists');
+    const baseUrl = 'https://iptv-org.github.io/iptv';
+    let playlists = [];
+    
+    if (!category || !subcategory) {
+        if (category === 'countries') {
+            playlists = iptvOrgData.countries.slice(0, 5).map(c => ({
+                url: `${baseUrl}/countries/${c.code}.m3u`,
+                name: c.name,
+                desc: `Channels from ${c.name}`,
+                count: c.channels
+            }));
+        } else if (category === 'languages') {
+            playlists = iptvOrgData.languages.slice(0, 5).map(l => ({
+                url: `${baseUrl}/languages/${l.code}.m3u`,
+                name: l.name,
+                desc: `${l.name} language channels`,
+                count: l.channels
+            }));
+        } else if (category === 'categories') {
+            playlists = iptvOrgData.categories.slice(0, 5).map(c => ({
+                url: `${baseUrl}/categories/${c.slug}.m3u`,
+                name: c.name,
+                desc: `${c.name} channels`,
+                count: c.channels
+            }));
+        }
+    } else {
+        // Specific selection
+        let url = '';
+        let name = '';
+        let desc = '';
+        let count = '';
+        
+        if (category === 'countries') {
+            const country = iptvOrgData.countries.find(c => c.code === subcategory);
+            if (country) {
+                url = `${baseUrl}/countries/${country.code}.m3u`;
+                name = country.name;
+                desc = `All channels from ${country.name}`;
+                count = country.channels;
+            }
+        } else if (category === 'languages') {
+            const lang = iptvOrgData.languages.find(l => l.code === subcategory);
+            if (lang) {
+                url = `${baseUrl}/languages/${lang.code}.m3u`;
+                name = `${lang.name} Channels`;
+                desc = `All ${lang.name} language channels`;
+                count = lang.channels;
+            }
+        } else if (category === 'categories') {
+            const cat = iptvOrgData.categories.find(c => c.slug === subcategory);
+            if (cat) {
+                url = `${baseUrl}/categories/${cat.slug}.m3u`;
+                name = `${cat.name} Channels`;
+                desc = `All ${cat.name} channels`;
+                count = cat.channels;
+            }
+        }
+        
+        if (url) {
+            playlists = [{url, name, desc, count}];
+        }
+    }
+    
+    const html = playlists.map(p => `
+        <a href="#" class="list-group-item list-group-item-action" data-url="${p.url}" onclick="selectIptvOrgPlaylist(this); return false;">
+            <div class="d-flex w-100 justify-content-between">
+                <h6 class="mb-1">${p.name}</h6>
+                <small>${p.count}</small>
+            </div>
+            <p class="mb-1">${p.desc}</p>
+            <small class="text-muted">${p.url}</small>
+        </a>
+    `).join('');
+    
+    playlistsDiv.innerHTML = html || '<div class="text-center text-muted p-3">Select options above</div>';
+}
+
+function selectIptvOrgPlaylist(element) {
+    // Remove active class from all
+    document.querySelectorAll('#iptvOrgPlaylists .list-group-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    // Add active class to selected
+    element.classList.add('active');
+}
+
+// Update subcategory selection
+document.addEventListener('DOMContentLoaded', () => {
+    const subcategorySelect = document.getElementById('iptvOrgSubSelect');
+    if (subcategorySelect) {
+        subcategorySelect.addEventListener('change', (e) => {
+            const category = document.getElementById('iptvOrgCategory').value;
+            updateIptvOrgPlaylists(category, e.target.value);
+        });
+    }
+});
+
+// Add IPTV-org source
+async function addIptvOrgSource() {
+    const selectedPlaylist = document.querySelector('#iptvOrgPlaylists .list-group-item.active');
+    if (!selectedPlaylist) {
+        alert('Please select a playlist');
+        return;
+    }
+    
+    const url = selectedPlaylist.dataset.url;
+    const name = selectedPlaylist.querySelector('h6').textContent;
+    const includeEpg = document.getElementById('iptvOrgEpg').checked;
+    
+    try {
+        // Add the playlist
+        const response = await axios.post('/api/channels/playlists/import', {
+            name: `IPTV-org: ${name}`,
+            url: url,
+            update_interval: 86400, // 24 hours
+            category: 'iptv-org'
+        }, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        // Add EPG source if requested
+        if (includeEpg) {
+            await axios.post('/api/epg/sources', {
+                name: `IPTV-org EPG`,
+                url: 'https://iptv-org.github.io/epg/guides/all.xml',
+                playlist_id: response.data.id
+            }, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+        }
+        
+        showNotification('IPTV-org source added successfully', 'success');
+        bootstrap.Modal.getInstance(document.getElementById('addSourceModal')).hide();
+        loadSources();
+        
+    } catch (error) {
+        alert('Failed to add IPTV-org source: ' + (error.response?.data?.detail || error.message));
+    }
+}
+
+// Show add source modal
+function showAddSourceModal() {
+    const modal = new bootstrap.Modal(document.getElementById('addSourceModal'));
+    modal.show();
+}
+
+// Add source
+async function addSource() {
+    const activeTab = document.querySelector('#sourceTab .nav-link.active').id;
+    
+    if (activeTab === 'url-tab') {
+        await addUrlSource();
+    } else if (activeTab === 'file-tab') {
+        await addFileSource();
+    } else if (activeTab === 'api-tab') {
+        await addApiSource();
+    } else if (activeTab === 'iptv-org-tab') {
+        await addIptvOrgSource();
+    }
+}
+
+// Add URL source
+async function addUrlSource() {
+    const name = document.getElementById('sourceName').value;
+    const type = document.getElementById('sourceType').value;
+    const m3uUrl = document.getElementById('m3uUrl').value;
+    const epgUrl = document.getElementById('epgUrl').value;
+    const updateInterval = document.getElementById('updateInterval').value;
+    const category = document.getElementById('category').value;
+    
+    try {
+        if (type === 'm3u' || type === 'both') {
+            const response = await axios.post('/api/channels/playlists/import', {
+                name: name,
+                url: m3uUrl,
+                epg_url: (type === 'both') ? epgUrl : null,
+                update_interval: parseInt(updateInterval),
+                category: category
+            }, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+            
+            showNotification('Source added successfully', 'success');
+        }
+        
+        if (type === 'epg' && epgUrl) {
+            await axios.post('/api/epg/sources', {
+                name: name,
+                url: epgUrl
+            }, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+        }
+        
+        bootstrap.Modal.getInstance(document.getElementById('addSourceModal')).hide();
+        loadSources();
+        
+    } catch (error) {
+        alert(error.response?.data?.detail || 'Failed to add source');
+    }
+}
+
+// Add file source
+async function addFileSource() {
+    const name = document.getElementById('uploadSourceName').value;
+    const m3uFile = document.getElementById('m3uFile').files[0];
+    const epgFile = document.getElementById('epgFile').files[0];
+    
+    if (!name || !m3uFile) {
+        alert('Please provide a name and select an M3U file');
+        return;
+    }
+    
+    try {
+        const formData = new FormData();
+        formData.append('name', name);
+        formData.append('file', m3uFile);
+        
+        const response = await axios.post('/api/channels/playlists/upload', formData, {
+            headers: { 
+                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+        
+        // If EPG file is provided, upload it too
+        if (epgFile) {
+            const epgFormData = new FormData();
+            epgFormData.append('name', name + ' EPG');
+            epgFormData.append('file', epgFile);
+            epgFormData.append('playlist_id', response.data.id);
+            
+            await axios.post('/api/epg/upload', epgFormData, {
+                headers: { 
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+        }
+        
+        showNotification('File(s) uploaded successfully', 'success');
+        bootstrap.Modal.getInstance(document.getElementById('addSourceModal')).hide();
+        loadSources();
+        
+    } catch (error) {
+        alert(error.response?.data?.detail || 'Failed to upload file');
+    }
+}
+
+// Add API source
+async function addApiSource() {
+    const provider = document.getElementById('provider').value;
+    const apiUrl = document.getElementById('apiUrl').value;
+    const username = document.getElementById('apiUsername').value;
+    const password = document.getElementById('apiPassword').value;
+    
+    if (!provider || !apiUrl) {
+        alert('Please select a provider and enter API URL');
+        return;
+    }
+    
+    try {
+        const response = await axios.post('/api/channels/playlists/import-api', {
+            provider: provider,
+            url: apiUrl,
+            username: username,
+            password: password
+        }, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        showNotification('API source added successfully', 'success');
+        bootstrap.Modal.getInstance(document.getElementById('addSourceModal')).hide();
+        loadSources();
+        
+    } catch (error) {
+        alert(error.response?.data?.detail || 'Failed to add API source');
+    }
+}
+
+// Update source
+async function updateSource(sourceId) {
+    const source = sources.find(s => s.id === sourceId);
+    if (!source) return;
+    
+    try {
+        if (source.type === 'm3u') {
+            await axios.post(`/api/channels/playlists/${sourceId}/refresh`, {}, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+        } else if (source.type === 'epg') {
+            await axios.post(`/api/epg/sources/${sourceId}/refresh`, {}, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+        }
+        
+        showNotification('Update started', 'info');
+        
+    } catch (error) {
+        alert('Failed to update source');
+    }
+}
+
+// Update all sources
+async function updateAllSources() {
+    if (!confirm('Update all sources? This may take some time.')) return;
+    
+    for (const source of sources) {
+        await updateSource(source.id);
+    }
+}
+
+// Preview source
+async function previewSource(sourceId) {
+    const source = sources.find(s => s.id === sourceId);
+    if (!source || source.type !== 'm3u') return;
+    
+    try {
+        const response = await axios.get('/api/channels?playlist_id=' + sourceId, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        const channels = response.data;
+        const groups = {};
+        
+        channels.forEach(ch => {
+            const group = ch.group_name || 'Uncategorized';
+            if (!groups[group]) groups[group] = [];
+            groups[group].push(ch);
+        });
+        
+        const previewHtml = Object.entries(groups).map(([group, chs]) => `
+            <div class="channel-group-header">${group} (${chs.length})</div>
+            ${chs.slice(0, 5).map(ch => `
+                <div class="channel-item">
+                    ${ch.logo_url ? `<img src="${ch.logo_url}" class="channel-logo-small" onerror="this.style.display='none'">` : ''}
+                    <div>
+                        <strong>${ch.name}</strong>
+                        ${ch.number ? `<span class="text-muted ms-2">#${ch.number}</span>` : ''}
+                    </div>
+                </div>
+            `).join('')}
+            ${chs.length > 5 ? `<div class="text-center text-muted">... and ${chs.length - 5} more</div>` : ''}
+        `).join('');
+        
+        showModal('Channel Preview', `
+            <div class="channel-preview">
+                ${previewHtml}
+            </div>
+        `);
+        
+    } catch (error) {
+        alert('Failed to load preview');
+    }
+}
+
+// Delete source
+async function deleteSource(sourceId) {
+    if (!confirm('Delete this source and all its channels?')) return;
+    
+    const source = sources.find(s => s.id === sourceId);
+    if (!source) return;
+    
+    try {
+        if (source.type === 'm3u') {
+            await axios.delete(`/api/channels/playlists/${sourceId}`, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+        } else if (source.type === 'epg') {
+            await axios.delete(`/api/epg/sources/${sourceId}`, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+        }
+        
+        showNotification('Source deleted', 'success');
+        loadSources();
+        loadStats();
+        
+    } catch (error) {
+        alert('Failed to delete source');
+    }
+}
+
+// Update live progress
+function updateLiveProgress(data) {
+    const { import_id, status, progress, message, details } = data;
+    
+    let container = document.getElementById('liveImportProgress');
+    container.style.display = 'block';
+    
+    let progressCard = document.getElementById(`import-${import_id}`);
+    if (!progressCard) {
+        progressCard = document.createElement('div');
+        progressCard.id = `import-${import_id}`;
+        progressCard.className = 'card mb-2';
+        container.appendChild(progressCard);
+    }
+    
+    const statusColors = {
+        'started': 'primary',
+        'progress': 'info',
+        'completed': 'success',
+        'failed': 'danger'
+    };
+    
+    progressCard.innerHTML = `
+        <div class="card-header bg-${statusColors[status]} text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <span>${message}</span>
+                ${status === 'completed' || status === 'failed' ? 
+                    `<button class="btn-close btn-close-white" onclick="closeLiveProgress('${import_id}')"></button>` : 
+                    ''
+                }
+            </div>
+        </div>
+        ${progress > 0 && progress < 100 ? `
+            <div class="card-body p-2">
+                <div class="progress">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                         style="width: ${progress}%">${progress}%</div>
+                </div>
+                ${details ? `<small class="text-muted">${JSON.stringify(details)}</small>` : ''}
+            </div>
+        ` : ''}
+    `;
+    
+    if (status === 'completed') {
+        loadSources();
+        loadStats();
+        setTimeout(() => closeLiveProgress(import_id), 5000);
+    }
+}
+
+// Close live progress
+function closeLiveProgress(import_id) {
+    const card = document.getElementById(`import-${import_id}`);
+    if (card) card.remove();
+    
+    const container = document.getElementById('liveImportProgress');
+    if (container.children.length === 0) {
+        container.style.display = 'none';
+    }
+}
+
+// Load import history
+async function loadImportHistory() {
+    // This would load from a history endpoint
+    const timeline = document.getElementById('importTimeline');
+    
+    // Sample history items
+    const history = [
+        { time: '2 hours ago', source: 'Main Playlist', status: 'success', channels: 500 },
+        { time: '6 hours ago', source: 'EPG Update', status: 'success', programs: 10000 },
+        { time: '1 day ago', source: 'Backup Playlist', status: 'warning', message: 'Partial import' }
+    ];
+    
+    timeline.innerHTML = history.map(item => `
+        <div class="timeline-item">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <strong>${item.source}</strong>
+                    <div class="text-muted small">${item.time}</div>
+                </div>
+                <span class="badge bg-${getStatusBadge(item.status)}">${item.status}</span>
+            </div>
+            ${item.channels ? `<small>${item.channels} channels imported</small>` : ''}
+            ${item.programs ? `<small>${item.programs} programs imported</small>` : ''}
+            ${item.message ? `<small class="text-warning">${item.message}</small>` : ''}
+        </div>
+    `).join('');
+}
+
+// Helper functions
+function getStatusClass(status) {
+    switch(status) {
+        case 'active': return 'success';
+        case 'updating': return 'processing';
+        case 'error': return 'error';
+        default: return 'warning';
+    }
+}
+
+function getStatusBadge(status) {
+    switch(status) {
+        case 'success': return 'success';
+        case 'warning': return 'warning';
+        case 'error': return 'danger';
+        default: return 'secondary';
+    }
+}
+
+function formatRelativeTime(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now - date;
+    
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+    
+    if (minutes < 60) return `${minutes} minutes ago`;
+    if (hours < 24) return `${hours} hours ago`;
+    return `${days} days ago`;
+}
+
+function showModal(title, content) {
+    const modal = document.createElement('div');
+    modal.innerHTML = `
+        <div class="modal fade" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">${title}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        ${content}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    const bsModal = new bootstrap.Modal(modal.querySelector('.modal'));
+    bsModal.show();
+    modal.querySelector('.modal').addEventListener('hidden.bs.modal', () => modal.remove());
+}
+
+// Show notification
+function showNotification(message, type = 'info') {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
+    alertDiv.style.zIndex = '9999';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+
+// Show schedule modal
+function showScheduleModal() {
+    const modal = new bootstrap.Modal(document.getElementById('scheduleModal'));
+    modal.show();
+}
+
+// Save schedule
+function saveSchedule() {
+    const schedule = {
+        times: [],
+        retryAttempts: document.getElementById('retryAttempts').value
+    };
+    
+    ['0', '6', '12', '18'].forEach(hour => {
+        if (document.getElementById(`schedule_${hour}`).checked) {
+            schedule.times.push(document.getElementById(`schedule_${hour}`).value);
+        }
+    });
+    
+    localStorage.setItem('importSchedule', JSON.stringify(schedule));
+    showNotification('Schedule saved', 'success');
+    bootstrap.Modal.getInstance(document.getElementById('scheduleModal')).hide();
+}
+
+// Show filter modal
+function showFilterModal() {
+    // For now, just show a notification
+    showNotification('Filter options coming soon', 'info');
+}
+
+// Toggle filter
+function toggleFilter(group) {
+    // For now, just show a notification
+    showNotification(`Filter by ${group} coming soon`, 'info');
+}
+
+// Edit source
+function editSource(sourceId) {
+    showNotification('Edit source feature coming soon', 'info');
+}
+</script>
+{% endblock %}

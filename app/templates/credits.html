@@ -1,0 +1,348 @@
+{% extends "base.html" %}
+
+{% block title %}Credits - IPTV PVR{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <h2 class="mb-4"><i class="bi bi-coin"></i> Credits & Quotas</h2>
+            
+            <!-- Current Balance Card -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="text-muted">Current Balance</h5>
+                            <h1 class="display-4 text-primary" id="current-credits">0</h1>
+                            <p class="text-muted">Credits</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Current Quotas</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 text-center">
+                                    <h6 class="text-muted">Max Recordings</h6>
+                                    <h3 id="max-recordings">0</h3>
+                                </div>
+                                <div class="col-md-4 text-center">
+                                    <h6 class="text-muted">Max Series</h6>
+                                    <h3 id="max-series">0</h3>
+                                </div>
+                                <div class="col-md-4 text-center">
+                                    <h6 class="text-muted">Max Movies</h6>
+                                    <h3 id="max-movies">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Purchase Credits -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-cart"></i> Purchase Credits</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Select the amount of credits you want to purchase:</p>
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <div class="card credit-option" onclick="purchaseCredits(10)">
+                                <div class="card-body text-center">
+                                    <h3>10</h3>
+                                    <p class="mb-0">Credits</p>
+                                    <p class="text-primary mb-0">$10</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card credit-option" onclick="purchaseCredits(25)">
+                                <div class="card-body text-center">
+                                    <h3>25</h3>
+                                    <p class="mb-0">Credits</p>
+                                    <p class="text-primary mb-0">$25</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card credit-option" onclick="purchaseCredits(50)">
+                                <div class="card-body text-center">
+                                    <h3>50</h3>
+                                    <p class="mb-0">Credits</p>
+                                    <p class="text-primary mb-0">$50</p>
+                                    <span class="badge bg-success">Popular</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card credit-option" onclick="purchaseCredits(100)">
+                                <div class="card-body text-center">
+                                    <h3>100</h3>
+                                    <p class="mb-0">Credits</p>
+                                    <p class="text-primary mb-0">$100</p>
+                                    <span class="badge bg-info">Best Value</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upgrade Quotas -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-arrow-up-circle"></i> Upgrade Quotas</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Use your credits to increase your recording limits:</p>
+                    
+                    <!-- Recordings Upgrade -->
+                    <div class="quota-upgrade mb-4">
+                        <h6><i class="bi bi-record-circle"></i> Recording Slots</h6>
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <p class="mb-1">Increase your maximum number of recordings</p>
+                                <small class="text-muted">Current: <span id="current-recordings">0</span></small>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <button class="btn btn-sm btn-outline-primary me-1" onclick="upgradeQuota('recordings', 1)">
+                                    +1 (1 credit)
+                                </button>
+                                <button class="btn btn-sm btn-outline-primary me-1" onclick="upgradeQuota('recordings', 5)">
+                                    +5 (4 credits)
+                                </button>
+                                <button class="btn btn-sm btn-primary" onclick="upgradeQuota('recordings', 10)">
+                                    +10 (8 credits)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Series Upgrade -->
+                    <div class="quota-upgrade mb-4">
+                        <h6><i class="bi bi-collection-play"></i> Series Slots</h6>
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <p class="mb-1">Increase your maximum number of series recordings</p>
+                                <small class="text-muted">Current: <span id="current-series">0</span></small>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <button class="btn btn-sm btn-outline-primary me-1" onclick="upgradeQuota('recurring_shows', 1)">
+                                    +1 (1 credit)
+                                </button>
+                                <button class="btn btn-sm btn-outline-primary me-1" onclick="upgradeQuota('recurring_shows', 5)">
+                                    +5 (4 credits)
+                                </button>
+                                <button class="btn btn-sm btn-primary" onclick="upgradeQuota('recurring_shows', 10)">
+                                    +10 (8 credits)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Movies Upgrade -->
+                    <div class="quota-upgrade">
+                        <h6><i class="bi bi-film"></i> Movie Slots</h6>
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <p class="mb-1">Increase your maximum number of movie recordings</p>
+                                <small class="text-muted">Current: <span id="current-movies">0</span></small>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <button class="btn btn-sm btn-outline-primary me-1" onclick="upgradeQuota('movies', 1)">
+                                    +1 (1 credit)
+                                </button>
+                                <button class="btn btn-sm btn-outline-primary me-1" onclick="upgradeQuota('movies', 5)">
+                                    +5 (4 credits)
+                                </button>
+                                <button class="btn btn-sm btn-primary" onclick="upgradeQuota('movies', 10)">
+                                    +10 (8 credits)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transaction History -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-clock-history"></i> Transaction History</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Description</th>
+                                    <th class="text-end">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactionHistory">
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">Loading transactions...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.credit-option {
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.credit-option:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.quota-upgrade {
+    padding: 15px;
+    border-radius: 8px;
+    background: #f8f9fa;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentBalance = 0;
+
+async function loadCreditsData() {
+    try {
+        // Load balance
+        const balanceResponse = await axios.get('/api/credits/balance', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        const balance = balanceResponse.data;
+        currentBalance = balance.credits;
+        
+        document.getElementById('current-credits').textContent = balance.credits;
+        document.getElementById('max-recordings').textContent = balance.max_recordings;
+        document.getElementById('max-series').textContent = balance.max_recurring_shows;
+        document.getElementById('max-movies').textContent = balance.max_movies;
+        
+        document.getElementById('current-recordings').textContent = balance.max_recordings;
+        document.getElementById('current-series').textContent = balance.max_recurring_shows;
+        document.getElementById('current-movies').textContent = balance.max_movies;
+        
+        // Load transaction history
+        const transactionsResponse = await axios.get('/api/credits/transactions', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        displayTransactions(transactionsResponse.data);
+        
+    } catch (error) {
+        console.error('Failed to load credits data:', error);
+        alert('Failed to load credits information');
+    }
+}
+
+function displayTransactions(transactions) {
+    const tbody = document.getElementById('transactionHistory');
+    
+    if (transactions.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No transactions yet</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = transactions.map(tx => `
+        <tr>
+            <td>${new Date(tx.created_at).toLocaleString()}</td>
+            <td>
+                <span class="badge bg-${getTransactionTypeBadge(tx.transaction_type)}">
+                    ${tx.transaction_type.replace('_', ' ').toUpperCase()}
+                </span>
+            </td>
+            <td>${tx.description}</td>
+            <td class="text-end">
+                <span class="${tx.amount > 0 ? 'text-success' : 'text-danger'}">
+                    ${tx.amount > 0 ? '+' : ''}${tx.amount}
+                </span>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function getTransactionTypeBadge(type) {
+    switch(type) {
+        case 'purchase': return 'success';
+        case 'upgrade': return 'primary';
+        case 'admin_grant': return 'info';
+        case 'refund': return 'warning';
+        default: return 'secondary';
+    }
+}
+
+async function purchaseCredits(amount) {
+    if (!confirm(`Purchase ${amount} credits for $${amount}? (This is a demo - no real payment)`)) {
+        return;
+    }
+    
+    try {
+        const response = await axios.post('/api/credits/purchase', {
+            amount: amount,
+            payment_method: 'fake_payment'
+        }, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        showNotification(`Successfully purchased ${amount} credits!`, 'success');
+        loadCreditsData();
+        
+    } catch (error) {
+        alert(error.response?.data?.detail || 'Failed to purchase credits');
+    }
+}
+
+async function upgradeQuota(type, amount) {
+    const costMap = { 1: 1, 5: 4, 10: 8 };
+    const cost = costMap[amount];
+    
+    if (currentBalance < cost) {
+        alert(`Not enough credits! You need ${cost} credits but only have ${currentBalance}.`);
+        return;
+    }
+    
+    if (!confirm(`Upgrade ${type.replace('_', ' ')} by ${amount} for ${cost} credits?`)) {
+        return;
+    }
+    
+    try {
+        const response = await axios.post('/api/credits/upgrade-quota', {
+            upgrade_type: type,
+            increase_amount: amount
+        }, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        showNotification('Quota upgraded successfully!', 'success');
+        loadCreditsData();
+        
+    } catch (error) {
+        alert(error.response?.data?.detail || 'Failed to upgrade quota');
+    }
+}
+
+// Load data on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadCreditsData();
+});
+</script>
+{% endblock %}

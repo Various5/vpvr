@@ -1,0 +1,251 @@
+/* Custom styles for IPTV PVR */
+
+:root {
+    --primary-color: #0d6efd;
+    --secondary-color: #6c757d;
+    --success-color: #198754;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #0dcaf0;
+    --dark-color: #212529;
+}
+
+body {
+    background-color: #f8f9fa;
+}
+
+/* Hide skip navigation links that might be added by Bootstrap or accessibility tools */
+a[href="#main-content"],
+.skip-link,
+.skip-navigation,
+.sr-only-focusable,
+a[class*="skip"] {
+    display: none !important;
+    visibility: hidden !important;
+    position: absolute !important;
+    left: -9999px !important;
+}
+
+/* Visual Effects Toggle - Disable all animations */
+body.no-effects * {
+    animation: none !important;
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+    transition: none !important;
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+}
+
+body.no-effects::before,
+body.no-effects::after,
+body.no-effects *::before,
+body.no-effects *::after {
+    animation: none !important;
+    transition: none !important;
+}
+
+/* Remove theme-specific animated backgrounds when effects are off */
+body.no-effects[data-theme="spacecake"]::before,
+body.no-effects[data-theme="spacecake"]::after,
+body.no-effects[data-theme="spacewars"]::before,
+body.no-effects[data-theme="spacewars"]::after,
+body.no-effects[data-theme="dark"]::before,
+body.no-effects[data-theme="dark"]::after {
+    display: none !important;
+}
+
+/* Disable hover transforms when effects are off */
+body.no-effects *:hover {
+    transform: none !important;
+}
+
+/* Keep essential transitions for usability */
+body.no-effects .form-control,
+body.no-effects .form-select,
+body.no-effects .btn,
+body.no-effects a {
+    transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease !important;
+}
+
+.navbar-brand {
+    font-weight: bold;
+}
+
+/* Fix dropdown z-index issues */
+.dropdown-menu {
+    z-index: 1050;
+}
+
+.navbar .dropdown-menu {
+    z-index: 1051;
+}
+
+/* Ensure dropdowns appear above cards and modals */
+.card {
+    position: relative;
+    z-index: 1;
+}
+
+.modal {
+    z-index: 1055;
+}
+
+.modal-backdrop {
+    z-index: 1054;
+}
+
+.channel-card {
+    height: 100%;
+    transition: all 0.3s ease;
+}
+
+.channel-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.channel-logo {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+    border-radius: 5px;
+}
+
+.recording-card {
+    position: relative;
+}
+
+.recording-status {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.recording-status.scheduled {
+    color: var(--warning-color);
+}
+
+.recording-status.recording {
+    color: var(--danger-color);
+    animation: pulse 1s infinite;
+}
+
+.recording-status.completed {
+    color: var(--success-color);
+}
+
+.recording-status.failed {
+    color: var(--danger-color);
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.epg-grid {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: 10px;
+    overflow-x: auto;
+}
+
+.epg-channel {
+    background: #fff;
+    padding: 10px;
+    border: 1px solid #dee2e6;
+    display: flex;
+    align-items: center;
+}
+
+.epg-timeline {
+    display: flex;
+    position: relative;
+    min-height: 60px;
+}
+
+.epg-program {
+    background: #e9ecef;
+    border: 1px solid #dee2e6;
+    padding: 5px;
+    cursor: pointer;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.epg-program:hover {
+    background: #dee2e6;
+}
+
+.epg-program.live {
+    background: #d1ecf1;
+    border-color: #bee5eb;
+}
+
+.epg-program.new {
+    background: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.quota-card {
+    text-align: center;
+    padding: 20px;
+}
+
+.quota-progress {
+    height: 30px;
+    margin: 10px 0;
+}
+
+.credit-balance {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.admin-stat-card {
+    text-align: center;
+    padding: 20px;
+}
+
+.admin-stat-card .stat-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.admin-stat-card .stat-label {
+    color: var(--secondary-color);
+    text-transform: uppercase;
+    font-size: 0.875rem;
+}
+
+/* Video player styles */
+.video-player-container {
+    position: relative;
+    background: #000;
+    width: 100%;
+    max-width: 100%;
+}
+
+#videoPlayer {
+    width: 100%;
+    max-height: 80vh;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .epg-grid {
+        grid-template-columns: 100px 1fr;
+    }
+    
+    .channel-card {
+        margin-bottom: 15px;
+    }
+    
+    .navbar-nav {
+        padding: 10px 0;
+    }
+}

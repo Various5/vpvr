@@ -1,0 +1,508 @@
+{% extends "base.html" %}
+
+{% block title %}Server Settings - IPTV PVR{% endblock %}
+
+{% block extra_css %}
+<style>
+.server-settings-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.info-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.info-card h3 {
+    margin-bottom: 1rem;
+    color: var(--color-primary);
+    font-size: 1.25rem;
+}
+
+.info-group {
+    margin-bottom: 1.5rem;
+}
+
+.info-group:last-child {
+    margin-bottom: 0;
+}
+
+.info-label {
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+    font-size: 0.875rem;
+}
+
+.info-value {
+    font-family: 'Courier New', monospace;
+    background: var(--bg-surface-secondary);
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.375rem;
+    word-break: break-all;
+    font-size: 0.875rem;
+    position: relative;
+}
+
+.copy-button {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.copy-button:hover {
+    background: var(--bg-surface-tertiary);
+}
+
+.copy-button.copied {
+    background: var(--color-success);
+    color: white;
+}
+
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.status-indicator.active {
+    background: rgba(var(--color-success-rgb), 0.1);
+    color: var(--color-success);
+}
+
+.status-indicator.inactive {
+    background: rgba(var(--color-danger-rgb), 0.1);
+    color: var(--color-danger);
+}
+
+.status-indicator i {
+    font-size: 0.75rem;
+}
+
+.setup-step {
+    background: var(--bg-surface-secondary);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-left: 3px solid var(--color-primary);
+}
+
+.setup-step h5 {
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.setup-step ol {
+    margin-bottom: 0;
+    padding-left: 1.25rem;
+}
+
+.setup-step li {
+    margin-bottom: 0.5rem;
+    line-height: 1.6;
+}
+
+.alert-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.network-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+@media (max-width: 768px) {
+    .info-value {
+        font-size: 0.75rem;
+        padding: 0.375rem 0.5rem;
+    }
+    
+    .copy-button {
+        position: static;
+        display: block;
+        width: 100%;
+        margin-top: 0.5rem;
+        transform: none;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid server-settings-container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>HDHomeRun Server Settings</h1>
+        <button class="btn btn-outline-primary" onclick="refreshServerInfo()">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+        </button>
+    </div>
+    
+    <!-- Loading State -->
+    <div id="loadingState" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3 text-muted">Loading server information...</p>
+    </div>
+    
+    <!-- Content (hidden initially) -->
+    <div id="serverContent" style="display: none;">
+        <!-- Status Overview -->
+        <div class="info-card">
+            <h3>Server Status</h3>
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <div class="info-group">
+                        <div class="info-label">HDHomeRun Emulation</div>
+                        <span class="status-indicator active">
+                            <i class="bi bi-check-circle-fill"></i> Active
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="info-group">
+                        <div class="info-label">Active Channels</div>
+                        <div id="activeChannelsCount" class="h4 mb-0">-</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="info-group">
+                        <div class="info-label">Available Tuners</div>
+                        <div id="tunerCount" class="h4 mb-0">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Server URLs -->
+        <div class="info-card">
+            <h3>Server URLs</h3>
+            <div class="info-group">
+                <div class="info-label">Base URL</div>
+                <div class="info-value">
+                    <span id="baseUrl">-</span>
+                    <button class="copy-button" onclick="copyToClipboard('baseUrl', this)">
+                        <i class="bi bi-clipboard"></i> Copy
+                    </button>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="info-group">
+                        <div class="info-label">Device Discovery URL</div>
+                        <div class="info-value">
+                            <span id="discoverUrl">-</span>
+                            <button class="copy-button" onclick="copyToClipboard('discoverUrl', this)">
+                                <i class="bi bi-clipboard"></i> Copy
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-group">
+                        <div class="info-label">Device XML URL</div>
+                        <div class="info-value">
+                            <span id="deviceXmlUrl">-</span>
+                            <button class="copy-button" onclick="copyToClipboard('deviceXmlUrl', this)">
+                                <i class="bi bi-clipboard"></i> Copy
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="info-group">
+                        <div class="info-label">Channel Lineup URL (JSON)</div>
+                        <div class="info-value">
+                            <span id="lineupUrl">-</span>
+                            <button class="copy-button" onclick="copyToClipboard('lineupUrl', this)">
+                                <i class="bi bi-clipboard"></i> Copy
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-group">
+                        <div class="info-label">Channel Lineup URL (XML)</div>
+                        <div class="info-value">
+                            <span id="lineupXmlUrl">-</span>
+                            <button class="copy-button" onclick="copyToClipboard('lineupXmlUrl', this)">
+                                <i class="bi bi-clipboard"></i> Copy
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="info-group">
+                <div class="info-label">EPG URL (XMLTV)</div>
+                <div class="info-value">
+                    <span id="epgXmlUrl">-</span>
+                    <button class="copy-button" onclick="copyToClipboard('epgXmlUrl', this)">
+                        <i class="bi bi-clipboard"></i> Copy
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Device Configuration -->
+        <div class="info-card">
+            <h3>Device Configuration</h3>
+            <div class="network-info">
+                <div class="info-group">
+                    <div class="info-label">Device ID</div>
+                    <div class="info-value" id="deviceId">-</div>
+                </div>
+                <div class="info-group">
+                    <div class="info-label">Device UUID</div>
+                    <div class="info-value" id="deviceUuid">-</div>
+                </div>
+                <div class="info-group">
+                    <div class="info-label">Friendly Name</div>
+                    <div class="info-value" id="friendlyName">-</div>
+                </div>
+                <div class="info-group">
+                    <div class="info-label">Server Host</div>
+                    <div class="info-value" id="serverHost">-</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Setup Instructions -->
+        <div class="info-card">
+            <h3>Setup Instructions</h3>
+            
+            <div class="alert alert-info mb-3">
+                <div class="alert-icon">
+                    <i class="bi bi-info-circle"></i>
+                    <span>This server emulates an HDHomeRun device, allowing you to use it with Plex, Jellyfin, Emby, and other compatible applications.</span>
+                </div>
+            </div>
+            
+            <div class="setup-step">
+                <h5>For Plex:</h5>
+                <ol>
+                    <li>Go to Plex Settings → Live TV & DVR</li>
+                    <li>Click "Set Up" or "Add Device"</li>
+                    <li>Enter the Base URL shown above when prompted for the HDHomeRun IP address</li>
+                    <li>Plex should automatically detect the device and available channels</li>
+                    <li>For EPG data, add the EPG URL as an XMLTV source in Plex</li>
+                </ol>
+            </div>
+            
+            <div class="setup-step">
+                <h5>For Jellyfin:</h5>
+                <ol>
+                    <li>Go to Dashboard → Live TV</li>
+                    <li>Click "Add" under Tuner Devices</li>
+                    <li>Select "HDHomeRun" as the tuner type</li>
+                    <li>Enter the Base URL shown above</li>
+                    <li>Click "Save" and Jellyfin will detect available channels</li>
+                    <li>Add the EPG URL as an XMLTV guide data source</li>
+                </ol>
+            </div>
+            
+            <div class="setup-step">
+                <h5>For Emby:</h5>
+                <ol>
+                    <li>Go to Settings → Live TV</li>
+                    <li>Click "Add" under TV Tuner Devices</li>
+                    <li>Select "HDHomeRun"</li>
+                    <li>Enter the Device Discovery URL or Base URL</li>
+                    <li>Configure the EPG by adding the EPG URL as an XMLTV source</li>
+                </ol>
+            </div>
+        </div>
+        
+        <!-- Troubleshooting -->
+        <div class="info-card">
+            <h3>Troubleshooting</h3>
+            
+            <div class="alert alert-warning">
+                <div class="alert-icon">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <span><strong>Common Issues:</strong></span>
+                </div>
+                <ul class="mb-0 mt-2">
+                    <li>If the device is not detected, ensure your media server can reach this server's IP address</li>
+                    <li>Some applications may require port 5004 to be open for HDHomeRun discovery</li>
+                    <li>If using Docker, ensure proper port mapping is configured</li>
+                    <li>Check that you have active channels configured in the system</li>
+                </ul>
+            </div>
+            
+            <div class="mt-3">
+                <button class="btn btn-outline-secondary" onclick="testConnection()">
+                    <i class="bi bi-wifi"></i> Test Connection
+                </button>
+                <button class="btn btn-outline-secondary ms-2" onclick="viewDeviceXml()">
+                    <i class="bi bi-code-slash"></i> View Device XML
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Device XML Modal -->
+<div class="modal fade" id="deviceXmlModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Device XML</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <pre id="deviceXmlContent" class="bg-dark text-light p-3 rounded">Loading...</pre>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let serverInfo = null;
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    loadServerInfo();
+});
+
+// Load server information
+async function loadServerInfo() {
+    try {
+        const response = await fetch('/api/hdhr/server-info', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        
+        if (response.ok) {
+            serverInfo = await response.json();
+            displayServerInfo();
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('serverContent').style.display = 'block';
+        } else {
+            throw new Error('Failed to load server information');
+        }
+    } catch (error) {
+        console.error('Error loading server info:', error);
+        showNotification('Failed to load server information', 'error');
+    }
+}
+
+// Display server information
+function displayServerInfo() {
+    if (!serverInfo) return;
+    
+    // Status
+    document.getElementById('activeChannelsCount').textContent = serverInfo.configuration.active_channels;
+    document.getElementById('tunerCount').textContent = serverInfo.configuration.tuner_count;
+    
+    // URLs
+    document.getElementById('baseUrl').textContent = serverInfo.server_urls.base_url;
+    document.getElementById('discoverUrl').textContent = serverInfo.server_urls.discover_url;
+    document.getElementById('deviceXmlUrl').textContent = serverInfo.server_urls.device_xml_url;
+    document.getElementById('lineupUrl').textContent = serverInfo.server_urls.lineup_url;
+    document.getElementById('lineupXmlUrl').textContent = serverInfo.server_urls.lineup_xml_url;
+    document.getElementById('epgXmlUrl').textContent = serverInfo.server_urls.epg_xml_url;
+    
+    // Configuration
+    document.getElementById('deviceId').textContent = serverInfo.configuration.device_id;
+    document.getElementById('deviceUuid').textContent = serverInfo.configuration.device_uuid;
+    document.getElementById('friendlyName').textContent = serverInfo.configuration.friendly_name;
+    document.getElementById('serverHost').textContent = serverInfo.network.server_host;
+}
+
+// Copy to clipboard
+async function copyToClipboard(elementId, button) {
+    const text = document.getElementById(elementId).textContent;
+    
+    try {
+        await navigator.clipboard.writeText(text);
+        
+        // Show success state
+        button.innerHTML = '<i class="bi bi-check"></i> Copied!';
+        button.classList.add('copied');
+        
+        // Reset after 2 seconds
+        setTimeout(() => {
+            button.innerHTML = '<i class="bi bi-clipboard"></i> Copy';
+            button.classList.remove('copied');
+        }, 2000);
+    } catch (error) {
+        console.error('Failed to copy:', error);
+        showNotification('Failed to copy to clipboard', 'error');
+    }
+}
+
+// Refresh server info
+async function refreshServerInfo() {
+    document.getElementById('loadingState').style.display = 'block';
+    document.getElementById('serverContent').style.display = 'none';
+    await loadServerInfo();
+}
+
+// Test connection
+async function testConnection() {
+    try {
+        showNotification('Testing connection...', 'info');
+        
+        const response = await fetch('/discover.json');
+        
+        if (response.ok) {
+            const data = await response.json();
+            showNotification('Connection successful! Device is responding correctly.', 'success');
+        } else {
+            throw new Error('Connection test failed');
+        }
+    } catch (error) {
+        showNotification('Connection test failed. Check your network configuration.', 'error');
+    }
+}
+
+// View device XML
+async function viewDeviceXml() {
+    const modal = new bootstrap.Modal(document.getElementById('deviceXmlModal'));
+    const contentElement = document.getElementById('deviceXmlContent');
+    
+    contentElement.textContent = 'Loading...';
+    modal.show();
+    
+    try {
+        const response = await fetch('/device.xml');
+        if (response.ok) {
+            const xml = await response.text();
+            contentElement.textContent = xml;
+        } else {
+            throw new Error('Failed to load device XML');
+        }
+    } catch (error) {
+        contentElement.textContent = 'Error loading device XML';
+        showNotification('Failed to load device XML', 'error');
+    }
+}
+</script>
+{% endblock %}

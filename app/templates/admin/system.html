@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+
+{% block title %}System Status - IPTV PVR{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2 class="mb-4"><i class="bi bi-speedometer2"></i> System Status</h2>
+
+    <!-- System Overview -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-bg-primary">
+                <div class="card-body">
+                    <h6 class="card-title">Total Channels</h6>
+                    <h2 class="mb-0" id="totalChannels">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-bg-success">
+                <div class="card-body">
+                    <h6 class="card-title">Active Streams</h6>
+                    <h2 class="mb-0" id="activeStreams">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-bg-warning">
+                <div class="card-body">
+                    <h6 class="card-title">Recording Jobs</h6>
+                    <h2 class="mb-0" id="recordingJobs">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-bg-info">
+                <div class="card-body">
+                    <h6 class="card-title">Storage Used</h6>
+                    <h2 class="mb-0" id="storageUsed">0 GB</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Playlist Management -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Playlist Management</h5>
+                    <button class="btn btn-sm btn-primary" onclick="showAddPlaylistModal()">
+                        <i class="bi bi-plus"></i> Add Playlist
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="playlistsList">
+                        <!-- Playlists will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- EPG Management -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">EPG Sources</h5>
+                    <button class="btn btn-sm btn-primary" onclick="importEPG()">
+                        <i class="bi bi-arrow-clockwise"></i> Import EPG
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="epgUrl" class="form-label">EPG URL</label>
+                        <input type="text" class="form-control" id="epgUrl" 
+                               value="{{ default_epg_url }}" 
+                               placeholder="http://example.com/epg.xml">
+                    </div>
+                    <div id="epgStatus">
+                        <!-- EPG status will be shown here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- System Information -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">System Information</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tbody>
+                            <tr>
+                                <td>Database Size</td>
+                                <td id="dbSize">Loading...</td>
+                            </tr>
+                            <tr>
+                                <td>Recording Path</td>
+                                <td id="recordingPath">{{ recording_path }}</td>
+                            </tr>
+                            <tr>
+                                <td>HDHomeRun URL</td>
+                                <td id="hdhrUrl">Loading...</td>
+                            </tr>
+                            <tr>
+                                <td>Max Concurrent Recordings</td>
+                                <td id="maxRecordings">{{ max_concurrent_recordings }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Activity</h5>
+                </div>
+                <div class="card-body">
+                    <div id="recentActivity" style="max-height: 300px; overflow-y: auto;">
+                        <!-- Activity will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Playlist Modal -->
+<div class="modal fade" id="playlistModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Playlist</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="playlistForm">
+                    <div class="mb-3">
+                        <label for="playlistName" class="form-label">Playlist Name</label>
+                        <input type="text" class="form-control" id="playlistName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="playlistUrl" class="form-label">M3U URL</label>
+                        <input type="url" class="form-control" id="playlistUrl" required 
+                               placeholder="http://example.com/playlist.m3u">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="addPlaylist()">Add Playlist</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function loadSystemStatus() {
+    try {
+        // Load channels count
+        const channelsResponse = await axios.get('/api/channels?limit=1', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        document.getElementById('totalChannels').textContent = channelsResponse.headers['x-total-count'] || '0';
+        
+        // Load recordings count
+        const recordingsResponse = await axios.get('/api/recordings?status=recording', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        document.getElementById('recordingJobs').textContent = recordingsResponse.data.length;
+        
+        // Load HDHomeRun URL
+        document.getElementById('hdhrUrl').textContent = `${window.location.protocol}//${window.location.hostname}:5004`;
+        
+        // Load recent activity
+        loadRecentActivity();
+        
+    } catch (error) {
+        console.error('Failed to load system status:', error);
+    }
+}
+
+async function loadPlaylists() {
+    try {
+        // For now, we'll show a simple interface
+        const container = document.getElementById('playlistsList');
+        container.innerHTML = `
+            <div class="alert alert-info">
+                <small>Default playlist is configured. Use the API to manage additional playlists.</small>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Failed to load playlists:', error);
+    }
+}
+
+function showAddPlaylistModal() {
+    const modal = new bootstrap.Modal(document.getElementById('playlistModal'));
+    modal.show();
+}
+
+async function addPlaylist() {
+    const name = document.getElementById('playlistName').value;
+    const url = document.getElementById('playlistUrl').value;
+    
+    try {
+        await axios.post('/api/channels/playlists/import', {
+            name: name,
+            url: url
+        }, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        bootstrap.Modal.getInstance(document.getElementById('playlistModal')).hide();
+        document.getElementById('playlistForm').reset();
+        showNotification('Playlist import started', 'success');
+        
+        setTimeout(loadSystemStatus, 5000);
+    } catch (error) {
+        alert(error.response?.data?.detail || 'Failed to add playlist');
+    }
+}
+
+async function importEPG() {
+    const url = document.getElementById('epgUrl').value;
+    if (!url) {
+        alert('Please enter an EPG URL');
+        return;
+    }
+    
+    const statusDiv = document.getElementById('epgStatus');
+    statusDiv.innerHTML = '<div class="alert alert-info">Importing EPG data...</div>';
+    
+    try {
+        await axios.post('/api/epg/import', {
+            url: url
+        }, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        statusDiv.innerHTML = '<div class="alert alert-success">EPG import started successfully</div>';
+    } catch (error) {
+        statusDiv.innerHTML = '<div class="alert alert-danger">Failed to import EPG</div>';
+    }
+}
+
+async function loadRecentActivity() {
+    try {
+        // Load recent recordings
+        const response = await axios.get('/api/recordings?limit=10', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        const container = document.getElementById('recentActivity');
+        
+        if (response.data.length === 0) {
+            container.innerHTML = '<p class="text-muted">No recent activity</p>';
+        } else {
+            container.innerHTML = response.data.map(recording => `
+                <div class="mb-2 pb-2 border-bottom">
+                    <small class="text-muted">${new Date(recording.start_time).toLocaleString()}</small><br>
+                    <strong>${recording.title}</strong> - ${recording.status}
+                </div>
+            `).join('');
+        }
+    } catch (error) {
+        console.error('Failed to load recent activity:', error);
+    }
+}
+
+// Load initial data
+loadSystemStatus();
+loadPlaylists();
+
+// Refresh every 30 seconds
+setInterval(loadSystemStatus, 30000);
+
+// Set default EPG URL if available
+const defaultEpgUrl = '{{ default_epg_url }}';
+if (defaultEpgUrl && defaultEpgUrl !== 'None') {
+    document.getElementById('epgUrl').value = defaultEpgUrl;
+}
+</script>
+{% endblock %}

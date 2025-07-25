@@ -1,0 +1,363 @@
+{% extends "base.html" %}
+
+{% block title %}EPG - IPTV PVR{% endblock %}
+
+{% block extra_css %}
+<style>
+    .epg-container {
+        overflow-x: auto;
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .epg-grid {
+        display: grid;
+        grid-template-columns: 150px repeat(48, 150px);
+        min-width: 100%;
+    }
+    
+    .epg-time-header {
+        position: sticky;
+        top: 0;
+        background: #f8f9fa;
+        z-index: 10;
+        display: grid;
+        grid-template-columns: 150px repeat(48, 150px);
+        border-bottom: 2px solid #dee2e6;
+    }
+    
+    .epg-time-slot {
+        padding: 10px;
+        text-align: center;
+        border-right: 1px solid #dee2e6;
+        font-weight: bold;
+    }
+    
+    .epg-channel {
+        position: sticky;
+        left: 0;
+        background: #f8f9fa;
+        padding: 15px;
+        border-right: 2px solid #dee2e6;
+        border-bottom: 1px solid #dee2e6;
+        z-index: 5;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .epg-channel img {
+        width: 30px;
+        height: 30px;
+        object-fit: contain;
+    }
+    
+    .epg-program {
+        padding: 10px;
+        border-right: 1px solid #e9ecef;
+        border-bottom: 1px solid #e9ecef;
+        cursor: pointer;
+        transition: all 0.2s;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+    
+    .epg-program:hover {
+        background: #e9ecef;
+        transform: scale(1.02);
+    }
+    
+    .epg-program.live {
+        background: #d1ecf1;
+        border-color: #bee5eb;
+    }
+    
+    .epg-program.movie {
+        background: #d4edda;
+        border-color: #c3e6cb;
+    }
+    
+    .epg-program.series {
+        background: #fff3cd;
+        border-color: #ffeaa7;
+    }
+    
+    .no-data {
+        text-align: center;
+        padding: 100px 20px;
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-calendar3"></i> Electronic Program Guide</h2>
+        <div class="d-flex gap-2">
+            <input type="date" class="form-control" id="epgDate" style="width: auto;">
+            <select class="form-select" id="channelFilter" style="width: 200px;">
+                <option value="">All Channels</option>
+            </select>
+            <button class="btn btn-primary" onclick="refreshEPG()">
+                <i class="bi bi-arrow-clockwise"></i> Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- EPG Status -->
+    <div id="epgStatus" class="mb-3"></div>
+
+    <!-- EPG Grid Container -->
+    <div class="epg-container">
+        <div id="epgContent">
+            <!-- EPG will be loaded here -->
+        </div>
+    </div>
+</div>
+
+<!-- Program Details Modal -->
+<div class="modal fade" id="programModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="programTitle">Program Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="programDetails">
+                <!-- Details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-danger" onclick="scheduleRecording()">
+                    <i class="bi bi-record-circle"></i> Record
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let epgData = [];
+let channels = [];
+let selectedProgram = null;
+
+async function loadEPG() {
+    try {
+        showStatus('info', 'Loading EPG data...');
+        
+        // Load channels first
+        const channelsResponse = await axios.get('/api/channels/', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        channels = channelsResponse.data;
+        
+        if (channels.length === 0) {
+            showNoData();
+            return;
+        }
+        
+        // Populate channel filter
+        const filterSelect = document.getElementById('channelFilter');
+        filterSelect.innerHTML = '<option value="">All Channels</option>';
+        channels.forEach(channel => {
+            filterSelect.innerHTML += `<option value="${channel.id}">${channel.name}</option>`;
+        });
+        
+        // Load EPG programs
+        const selectedDate = document.getElementById('epgDate').value;
+        let params = {};
+        if (selectedDate) {
+            const startTime = new Date(selectedDate);
+            const endTime = new Date(selectedDate);
+            endTime.setDate(endTime.getDate() + 1);
+            params.start_time = startTime.toISOString();
+            params.end_time = endTime.toISOString();
+        }
+        
+        const epgResponse = await axios.get('/api/epg/programs', {
+            params: params,
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        epgData = epgResponse.data;
+        
+        if (epgData.length === 0) {
+            showNoData();
+        } else {
+            displayEPG();
+            showStatus('success', `Loaded ${epgData.length} programs`);
+        }
+        
+    } catch (error) {
+        console.error('Failed to load EPG:', error);
+        showStatus('danger', 'Failed to load EPG data');
+        showNoData();
+    }
+}
+
+function showNoData() {
+    const container = document.getElementById('epgContent');
+    container.innerHTML = `
+        <div class="no-data">
+            <i class="bi bi-calendar-x" style="font-size: 48px;"></i>
+            <h4 class="mt-3">No EPG Data Available</h4>
+            <p>EPG data will appear here after importing from the Playlists page.</p>
+            <a href="/admin/playlists" class="btn btn-primary">
+                <i class="bi bi-download"></i> Import EPG Data
+            </a>
+        </div>
+    `;
+}
+
+function displayEPG() {
+    const container = document.getElementById('epgContent');
+    const now = new Date();
+    const startHour = now.getHours();
+    
+    // Create time header
+    let timeHeader = '<div class="epg-time-header"><div class="epg-time-slot">Channel</div>';
+    for (let i = 0; i < 24; i++) {
+        const hour = (startHour + i) % 24;
+        timeHeader += `<div class="epg-time-slot">${hour}:00</div>`;
+        timeHeader += `<div class="epg-time-slot">${hour}:30</div>`;
+    }
+    timeHeader += '</div>';
+    
+    // Group programs by channel
+    const programsByChannel = {};
+    epgData.forEach(program => {
+        if (!programsByChannel[program.channel_id]) {
+            programsByChannel[program.channel_id] = [];
+        }
+        programsByChannel[program.channel_id].push(program);
+    });
+    
+    // Create channel rows
+    let epgGrid = '<div class="epg-grid">';
+    channels.forEach(channel => {
+        if (programsByChannel[channel.id]) {
+            epgGrid += `
+                <div class="epg-channel">
+                    ${channel.logo_url ? `<img src="${channel.logo_url}">` : '<i class="bi bi-tv"></i>'}
+                    <span>${channel.name}</span>
+                </div>
+            `;
+            
+            // Add programs for this channel
+            const channelPrograms = programsByChannel[channel.id];
+            channelPrograms.forEach(program => {
+                const duration = (new Date(program.end_time) - new Date(program.start_time)) / (30 * 60 * 1000); // 30-min slots
+                const gridColumn = Math.ceil(duration);
+                
+                epgGrid += `
+                    <div class="epg-program ${getProgramClass(program)}" 
+                         style="grid-column: span ${gridColumn};"
+                         onclick="showProgramDetails(${program.id})">
+                        <strong>${program.title}</strong><br>
+                        <small>${formatTime(program.start_time)} - ${formatTime(program.end_time)}</small>
+                    </div>
+                `;
+            });
+        }
+    });
+    epgGrid += '</div>';
+    
+    container.innerHTML = timeHeader + epgGrid;
+}
+
+function getProgramClass(program) {
+    if (program.category && program.category.toLowerCase().includes('movie')) return 'movie';
+    if (program.series_id || program.episode_num) return 'series';
+    const now = new Date();
+    const start = new Date(program.start_time);
+    const end = new Date(program.end_time);
+    if (now >= start && now <= end) return 'live';
+    return '';
+}
+
+function formatTime(dateStr) {
+    return new Date(dateStr).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+}
+
+function showProgramDetails(programId) {
+    const program = epgData.find(p => p.id === programId);
+    if (!program) return;
+    
+    selectedProgram = program;
+    document.getElementById('programTitle').textContent = program.title;
+    
+    let details = `
+        <p><strong>Channel:</strong> ${program.channel_name}</p>
+        <p><strong>Time:</strong> ${formatTime(program.start_time)} - ${formatTime(program.end_time)}</p>
+        ${program.category ? `<p><strong>Category:</strong> ${program.category}</p>` : ''}
+        ${program.description ? `<p><strong>Description:</strong> ${program.description}</p>` : ''}
+        ${program.episode_num ? `<p><strong>Episode:</strong> S${program.season_num || '?'}E${program.episode_num}</p>` : ''}
+    `;
+    
+    document.getElementById('programDetails').innerHTML = details;
+    
+    const modal = new bootstrap.Modal(document.getElementById('programModal'));
+    modal.show();
+}
+
+async function scheduleRecording() {
+    if (!selectedProgram) return;
+    
+    try {
+        await axios.post('/api/recordings/schedule', {
+            channel_id: selectedProgram.channel_id,
+            program_id: selectedProgram.id,
+            title: selectedProgram.title,
+            start_time: selectedProgram.start_time,
+            end_time: selectedProgram.end_time
+        }, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        bootstrap.Modal.getInstance(document.getElementById('programModal')).hide();
+        showNotification('Recording scheduled!', 'success');
+    } catch (error) {
+        alert(error.response?.data?.detail || 'Failed to schedule recording');
+    }
+}
+
+function showStatus(type, message) {
+    const statusDiv = document.getElementById('epgStatus');
+    statusDiv.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show" role="alert">
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>`;
+}
+
+function refreshEPG() {
+    loadEPG();
+}
+
+// Set today's date as default
+document.getElementById('epgDate').valueAsDate = new Date();
+
+// Channel filter
+document.getElementById('channelFilter').addEventListener('change', (e) => {
+    const channelId = e.target.value;
+    if (channelId) {
+        const filtered = epgData.filter(p => p.channel_id == channelId);
+        // Redisplay with filtered data
+        // For simplicity, just reload
+        loadEPG();
+    } else {
+        loadEPG();
+    }
+});
+
+// Load EPG on page load
+loadEPG();
+
+// Auto-refresh every 5 minutes
+setInterval(loadEPG, 300000);
+</script>
+{% endblock %}

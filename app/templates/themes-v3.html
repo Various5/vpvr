@@ -1,0 +1,615 @@
+{% extends "base.html" %}
+
+{% block title %}Themes - IPTV PVR{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Theme Gallery Styles */
+.theme-gallery {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.theme-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.theme-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.theme-header p {
+    color: var(--text-secondary);
+    font-size: 1.125rem;
+}
+
+.themes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.theme-card {
+    background: var(--bg-surface);
+    border: 2px solid var(--border-color);
+    border-radius: 1rem;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.theme-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.theme-card.active {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(var(--theme-h), var(--theme-s), var(--theme-l), 0.2);
+}
+
+.theme-preview {
+    height: 200px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Light Theme Preview */
+.theme-light .theme-preview {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+/* Dark Theme Preview */
+.theme-dark .theme-preview {
+    background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+}
+
+/* Spacecake Theme Preview - Trippy! */
+.theme-spacecake .theme-preview {
+    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+    background-size: 400% 400%;
+    animation: gradientShift 15s ease infinite;
+}
+
+/* SpaceWars Theme Preview - Galactic! */
+.theme-spacewars .theme-preview {
+    background: radial-gradient(ellipse at center, #0a0a0f 0%, #12121a 50%, #1a1a25 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.theme-spacewars .theme-preview::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 20% 50%, rgba(138, 43, 226, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 50%, rgba(0, 212, 255, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(255, 0, 102, 0.2) 0%, transparent 70%);
+    animation: nebulaPulse 10s ease-in-out infinite;
+}
+
+.theme-spacewars .theme-preview::after {
+    content: '';
+    position: absolute;
+    width: 200%;
+    height: 200%;
+    top: -50%;
+    left: -50%;
+    background-image: 
+        radial-gradient(2px 2px at 20px 30px, white, transparent),
+        radial-gradient(2px 2px at 40px 70px, #00d4ff, transparent),
+        radial-gradient(1px 1px at 50px 20px, white, transparent),
+        radial-gradient(2px 2px at 80px 10px, #ff0066, transparent),
+        radial-gradient(1px 1px at 110px 60px, white, transparent);
+    background-size: 150px 150px;
+    opacity: 0.8;
+    animation: starDrift 60s linear infinite;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+@keyframes nebulaPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.1); }
+}
+
+@keyframes starDrift {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(-150px, -150px); }
+}
+
+.theme-preview-ui {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    right: 1rem;
+    bottom: 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.preview-navbar {
+    height: 40px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 0.25rem;
+}
+
+.preview-content {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+}
+
+.preview-card {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 0.25rem;
+}
+
+.theme-info {
+    padding: 1.5rem;
+}
+
+.theme-name {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.theme-description {
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
+.theme-features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.theme-feature {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    background: var(--bg-surface-secondary);
+    border-radius: 1rem;
+    font-size: 0.875rem;
+    gap: 0.5rem;
+}
+
+.apply-button {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    border-radius: 0.5rem;
+    transition: all 0.2s;
+}
+
+.apply-button:hover {
+    transform: scale(1.02);
+}
+
+/* Spacecake specific animations */
+.theme-spacecake .theme-card {
+    animation: pulse 4s ease-in-out infinite;
+}
+
+.theme-spacecake .theme-preview-ui {
+    animation: float 6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.theme-spacecake .apply-button {
+    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+    background-size: 400% 400%;
+    animation: gradientShift 3s ease infinite;
+    color: white;
+    border: none;
+}
+
+.theme-spacewars .apply-button {
+    background: linear-gradient(135deg, #8a2be2, #00d4ff);
+    color: white;
+    border: none;
+    box-shadow: 0 0 20px rgba(138, 43, 226, 0.5);
+    transition: all 0.3s;
+}
+
+.theme-spacewars .apply-button:hover {
+    box-shadow: 0 0 30px rgba(0, 212, 255, 0.7);
+    transform: translateY(-2px);
+}
+
+/* Current theme indicator */
+.current-theme-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: var(--color-success);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+/* Visual Effects Toggle */
+.effects-toggle-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.form-check-input:checked {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+}
+
+/* Disable animations when effects are off */
+body.no-effects * {
+    animation: none !important;
+    transition: none !important;
+}
+
+body.no-effects .theme-card:hover {
+    transform: none !important;
+}
+
+body.no-effects::before,
+body.no-effects::after {
+    display: none !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .themes-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .theme-header h1 {
+        font-size: 2rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="theme-gallery">
+    <div class="theme-header">
+        <h1>Choose Your Theme</h1>
+        <p>Select a visual style that suits your preference</p>
+        
+        <!-- Visual Effects Toggle -->
+        <div class="effects-toggle-container mt-4">
+            <div class="form-check form-switch d-inline-flex align-items-center">
+                <input class="form-check-input me-2" type="checkbox" id="visualEffectsToggle" checked>
+                <label class="form-check-label" for="visualEffectsToggle">
+                    <i class="bi bi-magic me-2"></i>Visual Effects
+                    <small class="text-muted ms-2">(Animations & Particles)</small>
+                </label>
+            </div>
+        </div>
+    </div>
+    
+    <div class="themes-grid">
+        <!-- Light Theme -->
+        <div class="theme-card theme-light" onclick="applyTheme('light')" id="theme-light">
+            <div class="theme-preview">
+                <div class="theme-preview-ui">
+                    <div class="preview-navbar"></div>
+                    <div class="preview-content">
+                        <div class="preview-card"></div>
+                        <div class="preview-card"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="theme-info">
+                <h3 class="theme-name">Light</h3>
+                <p class="theme-description">Clean and bright interface with excellent readability for daytime use</p>
+                <div class="theme-features">
+                    <span class="theme-feature">
+                        <i class="bi bi-sun"></i> Day Mode
+                    </span>
+                    <span class="theme-feature">
+                        <i class="bi bi-eye"></i> High Readability
+                    </span>
+                    <span class="theme-feature">
+                        <i class="bi bi-battery-full"></i> Battery Friendly
+                    </span>
+                </div>
+                <button class="btn btn-primary apply-button">Apply Light Theme</button>
+            </div>
+        </div>
+        
+        <!-- Dark Theme -->
+        <div class="theme-card theme-dark" onclick="applyTheme('dark')" id="theme-dark">
+            <div class="theme-preview">
+                <div class="theme-preview-ui">
+                    <div class="preview-navbar"></div>
+                    <div class="preview-content">
+                        <div class="preview-card"></div>
+                        <div class="preview-card"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="theme-info">
+                <h3 class="theme-name">Dark</h3>
+                <p class="theme-description">Easy on the eyes with deep colors perfect for night viewing</p>
+                <div class="theme-features">
+                    <span class="theme-feature">
+                        <i class="bi bi-moon-stars"></i> Night Mode
+                    </span>
+                    <span class="theme-feature">
+                        <i class="bi bi-display"></i> OLED Optimized
+                    </span>
+                    <span class="theme-feature">
+                        <i class="bi bi-shield-check"></i> Eye Protection
+                    </span>
+                </div>
+                <button class="btn btn-dark apply-button">Apply Dark Theme</button>
+            </div>
+        </div>
+        
+        <!-- Spacecake Theme -->
+        <div class="theme-card theme-spacecake" onclick="applyTheme('spacecake')" id="theme-spacecake">
+            <div class="theme-preview">
+                <div class="theme-preview-ui">
+                    <div class="preview-navbar"></div>
+                    <div class="preview-content">
+                        <div class="preview-card"></div>
+                        <div class="preview-card"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="theme-info">
+                <h3 class="theme-name">Spacecake</h3>
+                <p class="theme-description">A trippy, animated experience with vibrant colors and smooth transitions</p>
+                <div class="theme-features">
+                    <span class="theme-feature">
+                        <i class="bi bi-stars"></i> Psychedelic
+                    </span>
+                    <span class="theme-feature">
+                        <i class="bi bi-rainbow"></i> Animated
+                    </span>
+                    <span class="theme-feature">
+                        <i class="bi bi-rocket-takeoff"></i> Far Out
+                    </span>
+                </div>
+                <button class="apply-button">🚀 Take the Trip</button>
+            </div>
+        </div>
+        
+        <!-- SpaceWars Theme -->
+        <div class="theme-card theme-spacewars" onclick="applyTheme('spacewars')" id="theme-spacewars">
+            <div class="theme-preview">
+                <div class="theme-preview-ui">
+                    <div class="preview-navbar"></div>
+                    <div class="preview-content">
+                        <div class="preview-card"></div>
+                        <div class="preview-card"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="theme-info">
+                <h3 class="theme-name">SpaceWars</h3>
+                <p class="theme-description">Journey through the cosmos with animated stars and galactic colors</p>
+                <div class="theme-features">
+                    <span class="theme-feature">
+                        <i class="bi bi-stars"></i> Galactic
+                    </span>
+                    <span class="theme-feature">
+                        <i class="bi bi-lightning-charge"></i> Dynamic
+                    </span>
+                    <span class="theme-feature">
+                        <i class="bi bi-rocket"></i> Futuristic
+                    </span>
+                </div>
+                <button class="apply-button">🚀 Launch to Space</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Current theme
+let currentTheme = localStorage.getItem('theme') || 'light';
+let visualEffectsEnabled = localStorage.getItem('visualEffects') !== 'false';
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    // Ensure function exists before calling
+    if (typeof updateActiveTheme === 'function') {
+        updateActiveTheme();
+    }
+    
+    // Initialize visual effects toggle
+    const toggle = document.getElementById('visualEffectsToggle');
+    if (toggle) {
+        toggle.checked = visualEffectsEnabled;
+        updateVisualEffects(visualEffectsEnabled);
+        
+        toggle.addEventListener('change', (e) => {
+            visualEffectsEnabled = e.target.checked;
+            localStorage.setItem('visualEffects', visualEffectsEnabled);
+            updateVisualEffects(visualEffectsEnabled);
+            
+            showNotification(
+                visualEffectsEnabled ? 'Visual effects enabled' : 'Visual effects disabled',
+                'info'
+            );
+        });
+    }
+});
+
+// Apply theme
+function applyTheme(themeName) {
+    // Add transition for smooth theme change
+    document.body.style.transition = 'all 0.3s ease';
+    
+    // Use the theme manager if available
+    if (window.themeManager) {
+        window.themeManager.applyTheme(themeName);
+    } else {
+        // Fallback: set theme directly
+        document.documentElement.setAttribute('data-theme', themeName);
+        localStorage.setItem('theme', themeName);
+        
+        // Enable/disable theme CSS files
+        const themes = ['light', 'dark', 'spacecake', 'spacewars'];
+        themes.forEach(theme => {
+            const link = document.getElementById(`theme-${theme}-css`);
+            if (link) {
+                link.disabled = theme !== themeName;
+            }
+        });
+    }
+    
+    currentTheme = themeName;
+    
+    // Force style recalculation
+    document.body.offsetHeight;
+    
+    // Update all theme-dependent elements
+    document.querySelectorAll('[class*="bg-"], [class*="text-"], [class*="border-"]').forEach(el => {
+        el.style.transition = 'all 0.3s ease';
+    });
+    
+    // Update UI
+    updateActiveTheme();
+    
+    // Show notification
+    showNotification(`${themeName.charAt(0).toUpperCase() + themeName.slice(1)} theme applied!`, 'success');
+    
+    // Special effects for spacecake (only if visual effects are enabled)
+    if (themeName === 'spacecake' && visualEffectsEnabled) {
+        triggerSpacecakeEffects();
+    }
+    
+    // Special effects for spacewars (only if visual effects are enabled)
+    if (themeName === 'spacewars' && visualEffectsEnabled && window.themeManager) {
+        window.themeManager.activateSpaceWarsMode();
+    }
+    
+    // Remove transition after animation
+    setTimeout(() => {
+        document.body.style.transition = '';
+        document.querySelectorAll('[style*="transition"]').forEach(el => {
+            el.style.transition = '';
+        });
+    }, 500);
+}
+
+// Update active theme indicator
+function updateActiveTheme() {
+    document.querySelectorAll('.theme-card').forEach(card => {
+        card.classList.remove('active');
+        
+        // Remove existing badge
+        const existingBadge = card.querySelector('.current-theme-badge');
+        if (existingBadge) {
+            existingBadge.remove();
+        }
+    });
+    
+    const activeCard = document.getElementById(`theme-${currentTheme}`);
+    if (activeCard) {
+        activeCard.classList.add('active');
+        
+        // Add current badge
+        const badge = document.createElement('div');
+        badge.className = 'current-theme-badge';
+        badge.textContent = 'Current';
+        activeCard.querySelector('.theme-preview').appendChild(badge);
+    }
+}
+
+// Spacecake special effects
+function triggerSpacecakeEffects() {
+    // Create floating particles
+    const particleCount = 20;
+    const container = document.body;
+    
+    for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.style.cssText = `
+            position: fixed;
+            width: ${Math.random() * 10 + 5}px;
+            height: ${Math.random() * 10 + 5}px;
+            background: ${['#ee7752', '#e73c7e', '#23a6d5', '#23d5ab'][Math.floor(Math.random() * 4)]};
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            left: ${Math.random() * window.innerWidth}px;
+            top: ${window.innerHeight + 20}px;
+            animation: floatUp ${Math.random() * 3 + 2}s ease-out forwards;
+        `;
+        
+        container.appendChild(particle);
+        
+        // Remove after animation
+        setTimeout(() => particle.remove(), 5000);
+    }
+    
+    // Add floating animation
+    if (!document.getElementById('spacecake-animations')) {
+        const style = document.createElement('style');
+        style.id = 'spacecake-animations';
+        style.textContent = `
+            @keyframes floatUp {
+                to {
+                    transform: translateY(-${window.innerHeight + 100}px) rotate(360deg);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+}
+
+// Update visual effects state
+function updateVisualEffects(enabled) {
+    if (enabled) {
+        document.body.classList.remove('no-effects');
+        // Re-enable theme-specific animations
+        if (currentTheme === 'spacecake' || currentTheme === 'spacewars') {
+            document.documentElement.setAttribute('data-theme', currentTheme);
+        }
+    } else {
+        document.body.classList.add('no-effects');
+        // Remove any active particle effects
+        document.querySelectorAll('.spacecake-particle, .spacewars-star').forEach(el => el.remove());
+    }
+}
+</script>
+{% endblock %}

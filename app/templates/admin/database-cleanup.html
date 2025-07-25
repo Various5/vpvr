@@ -1,0 +1,776 @@
+{% extends "base.html" %}
+
+{% block title %}Database Cleanup - IPTV PVR{% endblock %}
+
+{% block extra_css %}
+<style>
+.cleanup-dashboard {
+    background: linear-gradient(135deg, #ff6b6b 0%, #c44569 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 15px;
+    margin-bottom: 2rem;
+}
+
+.cleanup-dashboard h1 {
+    color: white;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.cleanup-dashboard p {
+    color: rgba(255, 255, 255, 0.95);
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.stat-card h3, .stat-card p {
+    color: white;
+    margin: 0;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.stat-card h3 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.stat-card p {
+    font-weight: 500;
+    opacity: 1;
+}
+
+.cleanup-section {
+    background: white;
+    border-radius: 10px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.cleanup-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.cleanup-item:last-child {
+    border-bottom: none;
+}
+
+.size-badge {
+    background: #e9ecef;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.sources-table {
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.sources-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    padding: 0.75rem;
+    text-align: left;
+}
+
+.sources-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.source-status {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+}
+
+.source-status.active { background: #28a745; }
+.source-status.inactive { background: #dc3545; }
+.source-status.error { background: #ffc107; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Cleanup Dashboard -->
+    <div class="cleanup-dashboard">
+        <h1 class="display-4 mb-4"><i class="bi bi-trash3"></i> Database Cleanup Center</h1>
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <h3 id="totalChannels">0</h3>
+                    <p>Total Channels</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <h3 id="duplicateChannels">0</h3>
+                    <p>Duplicate Channels</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <h3 id="offlineChannels">0</h3>
+                    <p>Offline Channels</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <h3 id="dbSize">0 MB</h3>
+                    <p>Database Size</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Source Management -->
+    <div class="cleanup-section">
+        <h3 class="mb-4"><i class="bi bi-collection"></i> Import Sources</h3>
+        <div class="alert alert-info mb-3">
+            <i class="bi bi-info-circle"></i> All configured import sources are listed below. You can view details, test connections, and remove sources.
+        </div>
+        
+        <ul class="nav nav-tabs mb-3" id="sourceTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="playlists-tab" data-bs-toggle="tab" data-bs-target="#playlists" type="button">
+                    <i class="bi bi-music-note-list"></i> M3U Playlists (<span id="playlistCount">0</span>)
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="epg-tab" data-bs-toggle="tab" data-bs-target="#epg" type="button">
+                    <i class="bi bi-calendar3"></i> EPG Sources (<span id="epgCount">0</span>)
+                </button>
+            </li>
+        </ul>
+        
+        <div class="tab-content" id="sourceTabContent">
+            <div class="tab-pane fade show active" id="playlists" role="tabpanel">
+                <table class="sources-table" id="playlistsTable">
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Name</th>
+                            <th>URL</th>
+                            <th>Channels</th>
+                            <th>Last Updated</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Playlists will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="tab-pane fade" id="epg" role="tabpanel">
+                <table class="sources-table" id="epgTable">
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Name</th>
+                            <th>URL</th>
+                            <th>Type</th>
+                            <th>Last Updated</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- EPG sources will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cleanup Tools -->
+    <div class="cleanup-section">
+        <h3 class="mb-4"><i class="bi bi-tools"></i> Cleanup Tools</h3>
+        
+        <div class="cleanup-item">
+            <div>
+                <h5>Remove Duplicate Channels</h5>
+                <p class="text-muted mb-0">Find and remove duplicate channels based on name and URL</p>
+            </div>
+            <button class="btn btn-warning" onclick="findDuplicates()">
+                <i class="bi bi-search"></i> Find Duplicates
+            </button>
+        </div>
+        
+        <div class="cleanup-item">
+            <div>
+                <h5>Remove Offline Channels</h5>
+                <p class="text-muted mb-0">Remove channels that have been offline for more than 7 days</p>
+            </div>
+            <button class="btn btn-danger" onclick="removeOfflineChannels()">
+                <i class="bi bi-x-circle"></i> Remove Offline
+            </button>
+        </div>
+        
+        <div class="cleanup-item">
+            <div>
+                <h5>Clear Failed Import Data</h5>
+                <p class="text-muted mb-0">Remove temporary data from failed import attempts</p>
+            </div>
+            <button class="btn btn-warning" onclick="clearFailedImports()">
+                <i class="bi bi-trash"></i> Clear Failed
+            </button>
+        </div>
+        
+        <div class="cleanup-item">
+            <div>
+                <h5>Optimize Database</h5>
+                <p class="text-muted mb-0">Vacuum and analyze database for better performance</p>
+            </div>
+            <button class="btn btn-info" onclick="optimizeDatabase()">
+                <i class="bi bi-speedometer2"></i> Optimize
+            </button>
+        </div>
+        
+        <div class="cleanup-item">
+            <div>
+                <h5>Clear Old EPG Data</h5>
+                <p class="text-muted mb-0">Remove EPG programs older than 7 days</p>
+            </div>
+            <button class="btn btn-warning" onclick="clearOldEpg()">
+                <i class="bi bi-calendar-x"></i> Clear Old EPG
+            </button>
+        </div>
+        
+        <div class="cleanup-item">
+            <div>
+                <h5>Reset All Data</h5>
+                <p class="text-muted mb-0">Remove all channels, groups, and EPG data (keeps users and settings)</p>
+            </div>
+            <button class="btn btn-danger" onclick="resetAllData()">
+                <i class="bi bi-exclamation-triangle"></i> Reset All
+            </button>
+        </div>
+    </div>
+
+    <!-- Backup/Restore -->
+    <div class="cleanup-section">
+        <h3 class="mb-4"><i class="bi bi-arrow-repeat"></i> Backup & Restore</h3>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Backup Database</h5>
+                        <p class="card-text">Create a full backup of all data</p>
+                        <button class="btn btn-primary" onclick="backupDatabase()">
+                            <i class="bi bi-download"></i> Create Backup
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Restore Database</h5>
+                        <p class="card-text">Restore from a previous backup</p>
+                        <input type="file" class="form-control mb-2" id="restoreFile" accept=".json,.sql">
+                        <button class="btn btn-warning" onclick="restoreDatabase()">
+                            <i class="bi bi-upload"></i> Restore Backup
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Progress Modal -->
+<div class="modal fade" id="progressModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="progressTitle">Processing...</h5>
+            </div>
+            <div class="modal-body">
+                <div class="progress mb-3">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                         id="progressBar" style="width: 0%">0%</div>
+                </div>
+                <div id="progressMessage"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let sources = { playlists: [], epg: [] };
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    loadStats();
+    loadSources();
+});
+
+// Load statistics
+async function loadStats() {
+    try {
+        const token = localStorage.getItem('token');
+        
+        // Get channel stats
+        const channelsResponse = await axios.get('/api/channels?limit=10000', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        const channels = channelsResponse.data;
+        document.getElementById('totalChannels').textContent = channels.length;
+        
+        // Count duplicates (simple name-based check)
+        const nameCount = {};
+        let duplicates = 0;
+        channels.forEach(ch => {
+            if (nameCount[ch.name]) {
+                duplicates++;
+            }
+            nameCount[ch.name] = (nameCount[ch.name] || 0) + 1;
+        });
+        document.getElementById('duplicateChannels').textContent = duplicates;
+        
+        // Count offline channels
+        const offline = channels.filter(ch => ch.status === 'offline').length;
+        document.getElementById('offlineChannels').textContent = offline;
+        
+    } catch (error) {
+        console.error('Failed to load stats:', error);
+    }
+}
+
+// Load sources
+async function loadSources() {
+    try {
+        const token = localStorage.getItem('token');
+        
+        // Load playlists
+        const playlistsResponse = await axios.get('/api/channels/playlists', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        sources.playlists = playlistsResponse.data || [];
+        
+        // Load EPG sources
+        try {
+            const epgResponse = await axios.get('/api/epg/sources', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            sources.epg = epgResponse.data || [];
+        } catch (error) {
+            console.warn('EPG sources endpoint not available');
+            sources.epg = [];
+        }
+        
+        // Update counts
+        document.getElementById('playlistCount').textContent = sources.playlists.length;
+        document.getElementById('epgCount').textContent = sources.epg.length;
+        
+        // Display sources
+        displayPlaylists();
+        displayEpgSources();
+        
+    } catch (error) {
+        console.error('Failed to load sources:', error);
+        showNotification('Failed to load sources', 'error');
+    }
+}
+
+// Display playlists
+function displayPlaylists() {
+    const tbody = document.querySelector('#playlistsTable tbody');
+    
+    if (sources.playlists.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center">No playlists configured</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = sources.playlists.map(playlist => `
+        <tr>
+            <td><span class="source-status ${playlist.is_active ? 'active' : 'inactive'}"></span></td>
+            <td><strong>${playlist.name}</strong></td>
+            <td><small>${playlist.url || 'Uploaded file'}</small></td>
+            <td>${playlist.channel_count || 0}</td>
+            <td>${playlist.last_updated ? formatDate(playlist.last_updated) : 'Never'}</td>
+            <td>
+                <button class="btn btn-sm btn-info" onclick="testSource('playlist', ${playlist.id})">
+                    <i class="bi bi-wifi"></i> Test
+                </button>
+                <button class="btn btn-sm btn-warning" onclick="refreshSource('playlist', ${playlist.id})">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                </button>
+                <button class="btn btn-sm btn-danger" onclick="deleteSource('playlist', ${playlist.id})">
+                    <i class="bi bi-trash"></i> Delete
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// Display EPG sources
+function displayEpgSources() {
+    const tbody = document.querySelector('#epgTable tbody');
+    
+    if (sources.epg.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center">No EPG sources configured</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = sources.epg.map(epg => `
+        <tr>
+            <td><span class="source-status ${epg.is_active ? 'active' : 'inactive'}"></span></td>
+            <td><strong>${epg.name}</strong></td>
+            <td><small>${epg.url || 'N/A'}</small></td>
+            <td>${epg.type || 'XMLTV'}</td>
+            <td>${epg.last_updated ? formatDate(epg.last_updated) : 'Never'}</td>
+            <td>
+                <button class="btn btn-sm btn-info" onclick="testSource('epg', ${epg.id})">
+                    <i class="bi bi-wifi"></i> Test
+                </button>
+                <button class="btn btn-sm btn-warning" onclick="refreshSource('epg', ${epg.id})">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                </button>
+                <button class="btn btn-sm btn-danger" onclick="deleteSource('epg', ${epg.id})">
+                    <i class="bi bi-trash"></i> Delete
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// Test source connection
+async function testSource(type, id) {
+    try {
+        showNotification('Testing connection...', 'info');
+        
+        const token = localStorage.getItem('token');
+        const endpoint = type === 'playlist' ? 
+            `/api/channels/playlists/${id}/test` : 
+            `/api/epg/sources/${id}/test`;
+            
+        const response = await axios.post(endpoint, {}, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        showNotification('Connection successful!', 'success');
+    } catch (error) {
+        showNotification('Connection failed: ' + (error.response?.data?.detail || error.message), 'error');
+    }
+}
+
+// Refresh source
+async function refreshSource(type, id) {
+    if (!confirm('Refresh this source now?')) return;
+    
+    try {
+        const token = localStorage.getItem('token');
+        const endpoint = type === 'playlist' ? 
+            `/api/channels/playlists/${id}/refresh` : 
+            `/api/epg/sources/${id}/refresh`;
+            
+        await axios.post(endpoint, {}, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        showNotification('Refresh started', 'success');
+        setTimeout(() => loadSources(), 2000);
+    } catch (error) {
+        showNotification('Refresh failed', 'error');
+    }
+}
+
+// Delete source
+async function deleteSource(type, id) {
+    if (!confirm('Delete this source and all associated data?')) return;
+    
+    try {
+        const token = localStorage.getItem('token');
+        const endpoint = type === 'playlist' ? 
+            `/api/channels/playlists/${id}` : 
+            `/api/epg/sources/${id}`;
+            
+        await axios.delete(endpoint, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        showNotification('Source deleted', 'success');
+        loadSources();
+        loadStats();
+    } catch (error) {
+        showNotification('Delete failed', 'error');
+    }
+}
+
+// Find duplicates
+async function findDuplicates() {
+    showProgress('Finding duplicate channels...');
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await axios.post('/api/admin/cleanup/find-duplicates', {}, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        hideProgress();
+        
+        if (response.data.duplicates && response.data.duplicates.length > 0) {
+            if (confirm(`Found ${response.data.duplicates.length} duplicate channels. Remove them?`)) {
+                await removeDuplicates(response.data.duplicates);
+            }
+        } else {
+            showNotification('No duplicate channels found', 'info');
+        }
+    } catch (error) {
+        hideProgress();
+        showNotification('Failed to find duplicates', 'error');
+    }
+}
+
+// Remove duplicates
+async function removeDuplicates(duplicates) {
+    showProgress('Removing duplicate channels...');
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await axios.post('/api/admin/cleanup/remove-duplicates', 
+            { channel_ids: duplicates.map(d => d.id) }, 
+            { headers: { 'Authorization': `Bearer ${token}` }}
+        );
+        
+        hideProgress();
+        showNotification(`Removed ${response.data.removed} duplicate channels`, 'success');
+        loadStats();
+    } catch (error) {
+        hideProgress();
+        showNotification('Failed to remove duplicates', 'error');
+    }
+}
+
+// Remove offline channels
+async function removeOfflineChannels() {
+    if (!confirm('Remove all channels that have been offline for more than 7 days?')) return;
+    
+    showProgress('Removing offline channels...');
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await axios.post('/api/admin/cleanup/remove-offline', 
+            { days_offline: 7 }, 
+            { headers: { 'Authorization': `Bearer ${token}` }}
+        );
+        
+        hideProgress();
+        showNotification(`Removed ${response.data.removed} offline channels`, 'success');
+        loadStats();
+    } catch (error) {
+        hideProgress();
+        showNotification('Failed to remove offline channels', 'error');
+    }
+}
+
+// Clear failed imports
+async function clearFailedImports() {
+    if (!confirm('Clear all failed import data?')) return;
+    
+    showProgress('Clearing failed imports...');
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await axios.post('/api/admin/cleanup/clear-failed-imports', {}, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        hideProgress();
+        showNotification('Failed import data cleared', 'success');
+    } catch (error) {
+        hideProgress();
+        showNotification('Failed to clear import data', 'error');
+    }
+}
+
+// Optimize database
+async function optimizeDatabase() {
+    if (!confirm('Optimize database? This may take a few minutes.')) return;
+    
+    showProgress('Optimizing database...');
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await axios.post('/api/admin/cleanup/optimize', {}, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        hideProgress();
+        showNotification('Database optimized successfully', 'success');
+    } catch (error) {
+        hideProgress();
+        showNotification('Failed to optimize database', 'error');
+    }
+}
+
+// Clear old EPG
+async function clearOldEpg() {
+    if (!confirm('Remove EPG data older than 7 days?')) return;
+    
+    showProgress('Clearing old EPG data...');
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await axios.post('/api/admin/cleanup/clear-old-epg', 
+            { days_old: 7 }, 
+            { headers: { 'Authorization': `Bearer ${token}` }}
+        );
+        
+        hideProgress();
+        showNotification(`Removed ${response.data.removed} old EPG entries`, 'success');
+    } catch (error) {
+        hideProgress();
+        showNotification('Failed to clear old EPG data', 'error');
+    }
+}
+
+// Reset all data
+async function resetAllData() {
+    if (!confirm('WARNING: This will delete ALL channels, groups, and EPG data. Are you sure?')) return;
+    if (!confirm('This action cannot be undone. Type "RESET" to confirm.')) return;
+    
+    const confirmation = prompt('Type "RESET" to confirm:');
+    if (confirmation !== 'RESET') {
+        showNotification('Reset cancelled', 'info');
+        return;
+    }
+    
+    showProgress('Resetting all data...');
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await axios.post('/api/admin/cleanup/reset-all', {}, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        hideProgress();
+        showNotification('All data has been reset', 'success');
+        setTimeout(() => location.reload(), 2000);
+    } catch (error) {
+        hideProgress();
+        showNotification('Failed to reset data', 'error');
+    }
+}
+
+// Backup database
+async function backupDatabase() {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get('/api/admin/backup', {
+            headers: { 'Authorization': `Bearer ${token}` },
+            responseType: 'blob'
+        });
+        
+        // Create download link
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `vpvr-backup-${new Date().toISOString().split('T')[0]}.json`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        
+        showNotification('Backup created successfully', 'success');
+    } catch (error) {
+        showNotification('Failed to create backup', 'error');
+    }
+}
+
+// Restore database
+async function restoreDatabase() {
+    const fileInput = document.getElementById('restoreFile');
+    if (!fileInput.files[0]) {
+        showNotification('Please select a backup file', 'warning');
+        return;
+    }
+    
+    if (!confirm('This will replace all current data. Continue?')) return;
+    
+    showProgress('Restoring database...');
+    
+    try {
+        const token = localStorage.getItem('token');
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        
+        const response = await axios.post('/api/admin/restore', formData, {
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+        
+        hideProgress();
+        showNotification('Database restored successfully', 'success');
+        setTimeout(() => location.reload(), 2000);
+    } catch (error) {
+        hideProgress();
+        showNotification('Failed to restore database', 'error');
+    }
+}
+
+// Progress modal functions
+function showProgress(title) {
+    document.getElementById('progressTitle').textContent = title;
+    document.getElementById('progressBar').style.width = '100%';
+    document.getElementById('progressMessage').textContent = '';
+    const modal = new bootstrap.Modal(document.getElementById('progressModal'));
+    modal.show();
+}
+
+function hideProgress() {
+    const modal = bootstrap.Modal.getInstance(document.getElementById('progressModal'));
+    if (modal) modal.hide();
+}
+
+// Helper functions
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleString();
+}
+
+function showNotification(message, type = 'info') {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
+    alertDiv.style.zIndex = '9999';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+</script>
+{% endblock %}

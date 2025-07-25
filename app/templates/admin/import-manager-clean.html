@@ -1,0 +1,968 @@
+{% extends "base.html" %}
+
+{% block title %}Import Manager - IPTV PVR{% endblock %}
+
+{% block extra_css %}
+<link href="/static/css/clean-modal-fix.css" rel="stylesheet">
+<link href="/static/css/modal-force-fix.css" rel="stylesheet">
+<style>
+/* Clean, modern import manager styles */
+.import-header {
+    background: linear-gradient(135deg, var(--bs-primary) 0%, var(--bs-indigo) 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 0.5rem;
+    margin-bottom: 2rem;
+}
+
+.import-header h1 {
+    margin: 0;
+    font-weight: 300;
+}
+
+.source-card {
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+    background: var(--bs-body-bg);
+}
+
+.source-card:hover {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transform: translateY(-2px);
+}
+
+.source-card.importing {
+    border-color: var(--bs-primary);
+    background: rgba(13, 110, 253, 0.05);
+}
+
+.source-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 1rem;
+}
+
+.source-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.source-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.875rem;
+    color: var(--bs-secondary);
+    margin-top: 0.25rem;
+}
+
+.source-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.progress-section {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--bs-border-color);
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.progress-phase {
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.progress-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.progress-stat {
+    text-align: center;
+    padding: 0.75rem;
+    background: var(--bs-gray-100);
+    border-radius: 0.375rem;
+}
+
+.progress-stat-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--bs-primary);
+}
+
+.progress-stat-label {
+    font-size: 0.75rem;
+    color: var(--bs-secondary);
+    text-transform: uppercase;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    opacity: 0.3;
+    margin-bottom: 1rem;
+}
+
+.add-source-btn {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+/* Modal improvements */
+.modal-content {
+    border: none;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+    background: var(--bs-gray-100);
+    border-bottom: 1px solid var(--bs-border-color);
+}
+
+.form-label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.form-text {
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+/* Status badges */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    gap: 0.25rem;
+}
+
+.status-badge.success {
+    background: rgba(25, 135, 84, 0.1);
+    color: var(--bs-success);
+}
+
+.status-badge.importing {
+    background: rgba(13, 110, 253, 0.1);
+    color: var(--bs-primary);
+}
+
+.status-badge.failed {
+    background: rgba(220, 53, 69, 0.1);
+    color: var(--bs-danger);
+}
+
+/* Animations */
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.importing-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: var(--bs-primary);
+    border-radius: 50%;
+    animation: pulse 1s infinite;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .import-header {
+        padding: 1.5rem 1rem;
+    }
+    
+    .source-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .source-actions {
+        width: 100%;
+    }
+    
+    .source-actions .btn {
+        flex: 1;
+    }
+    
+    .add-source-btn {
+        bottom: 1rem;
+        right: 1rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="import-header">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h1>Import Manager</h1>
+                <p class="mb-0 opacity-75">Manage your M3U playlists and EPG sources</p>
+            </div>
+            <div>
+                <a href="/admin/import-monitor" class="btn btn-light">
+                    <i class="bi bi-terminal"></i> Import Monitor
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sources List -->
+    <div id="sourcesList">
+        <!-- Sources will be loaded here -->
+    </div>
+    
+    <!-- Empty State -->
+    <div id="emptyState" class="empty-state" style="display: none;">
+        <div class="empty-state-icon">📺</div>
+        <h3>No Import Sources Yet</h3>
+        <p class="text-muted">Add your first M3U playlist or EPG source to get started</p>
+        <button class="btn btn-primary" onclick="importManager.showAddSource()">
+            <i class="bi bi-plus-lg"></i> Add Your First Source
+        </button>
+    </div>
+    
+    <!-- Floating Add Button -->
+    <button class="btn btn-primary add-source-btn" onclick="importManager.showAddSource()" title="Add new source">
+        <i class="bi bi-plus-lg"></i>
+    </button>
+</div>
+
+<!-- Add/Edit Source Modal -->
+<div class="modal fade" id="sourceModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="sourceModalTitle">Add Import Source</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="sourceForm">
+                    <!-- Source Name -->
+                    <div class="mb-3">
+                        <label class="form-label">Source Name</label>
+                        <input type="text" class="form-control" id="sourceName" required>
+                        <div class="form-text">A friendly name to identify this source</div>
+                    </div>
+                    
+                    <!-- Source Type -->
+                    <div class="mb-3">
+                        <label class="form-label">Source Type</label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="sourceType" id="typeUrl" value="url" checked>
+                            <label class="btn btn-outline-primary" for="typeUrl">
+                                <i class="bi bi-link-45deg"></i> URL
+                            </label>
+                            
+                            <input type="radio" class="btn-check" name="sourceType" id="typeUpload" value="upload">
+                            <label class="btn btn-outline-primary" for="typeUpload">
+                                <i class="bi bi-upload"></i> Upload File
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- URL Input -->
+                    <div class="mb-3" id="urlGroup">
+                        <label class="form-label">M3U URL</label>
+                        <input type="url" class="form-control" id="sourceUrl" placeholder="http://example.com/playlist.m3u">
+                        <div class="form-text">Direct link to an M3U/M3U8 playlist file</div>
+                    </div>
+                    
+                    <!-- File Upload -->
+                    <div class="mb-3" id="uploadGroup" style="display: none;">
+                        <label class="form-label">Upload M3U File</label>
+                        <input type="file" class="form-control" id="m3uFile" accept=".m3u,.m3u8">
+                        <div class="form-text">Select an M3U playlist file from your computer</div>
+                    </div>
+                    
+                    <!-- EPG URL (Optional) -->
+                    <div class="mb-3">
+                        <label class="form-label">EPG URL (Optional)</label>
+                        <input type="url" class="form-control" id="epgUrl" placeholder="http://example.com/epg.xml">
+                        <div class="form-text">XMLTV EPG data for program guide information</div>
+                    </div>
+                    
+                    <!-- Auto-refresh -->
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="autoRefresh">
+                            <label class="form-check-label" for="autoRefresh">
+                                Enable automatic refresh
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Refresh Interval -->
+                    <div class="mb-3" id="refreshGroup" style="display: none;">
+                        <label class="form-label">Refresh Interval</label>
+                        <select class="form-select" id="refreshInterval">
+                            <option value="3600">Every hour</option>
+                            <option value="21600">Every 6 hours</option>
+                            <option value="43200">Every 12 hours</option>
+                            <option value="86400" selected>Every 24 hours</option>
+                            <option value="604800">Every week</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="importManager.saveSource()">
+                    <i class="bi bi-check-lg"></i> Save Source
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+class ImportManager {
+    constructor() {
+        this.sources = [];
+        this.activeImports = new Map();
+        this.editingSourceId = null;
+        this.ws = null;
+        this.modal = null;
+        
+        this.init();
+    }
+    
+    // Helper to handle fetch responses
+    async handleFetchResponse(response) {
+        if (!response.ok) {
+            let errorData = {};
+            try {
+                errorData = await response.json();
+            } catch (e) {
+                // Response might not be JSON
+            }
+            
+            const error = new Error(`HTTP ${response.status}: ${response.statusText}`);
+            error.response = {
+                status: response.status,
+                statusText: response.statusText,
+                data: errorData
+            };
+            throw error;
+        }
+        return response;
+    }
+    
+    async init() {
+        // Initialize modal with proper cleanup
+        const modalElement = document.getElementById('sourceModal');
+        this.modal = new bootstrap.Modal(modalElement, {
+            backdrop: 'static',  // Prevent click outside closing
+            keyboard: true,
+            focus: true
+        });
+        
+        // Ensure clean modal state on hide
+        modalElement.addEventListener('hidden.bs.modal', () => {
+            // Clean up any stray backdrops
+            document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+                backdrop.remove();
+            });
+            document.body.classList.remove('modal-open');
+            document.body.style.removeProperty('overflow');
+            document.body.style.removeProperty('padding-right');
+        });
+        
+        // Set up event listeners
+        this.setupEventListeners();
+        
+        // Load sources
+        await this.loadSources();
+        
+        // Connect WebSocket for real-time updates
+        this.connectWebSocket();
+    }
+    
+    setupEventListeners() {
+        // Source type toggle
+        document.querySelectorAll('input[name="sourceType"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                document.getElementById('urlGroup').style.display = 
+                    e.target.value === 'url' ? 'block' : 'none';
+                document.getElementById('uploadGroup').style.display = 
+                    e.target.value === 'upload' ? 'block' : 'none';
+            });
+        });
+        
+        // Auto-refresh toggle
+        const autoRefreshElement = document.getElementById('autoRefresh');
+        if (autoRefreshElement) {
+            autoRefreshElement.addEventListener('change', (e) => {
+                const refreshGroup = document.getElementById('refreshGroup');
+                if (refreshGroup) {
+                    refreshGroup.style.display = e.target.checked ? 'block' : 'none';
+                }
+            });
+        }
+    }
+    
+    async loadSources() {
+        try {
+            const response = await fetch('/api/import-sources/', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            
+            await this.handleFetchResponse(response);
+            
+            const data = await response.json();
+            this.sources = data.sources;
+            this.renderSources();
+            
+        } catch (error) {
+            if (window.handleApiError) {
+                window.handleApiError(error, {
+                    category: 'Import',
+                    retry: () => this.loadSources()
+                });
+            } else {
+                console.error('Error loading sources:', error);
+                showNotification('Failed to load sources', 'error');
+            }
+        }
+    }
+    
+    renderSources() {
+        const container = document.getElementById('sourcesList');
+        const emptyState = document.getElementById('emptyState');
+        
+        if (this.sources.length === 0) {
+            container.style.display = 'none';
+            emptyState.style.display = 'block';
+            return;
+        }
+        
+        container.style.display = 'block';
+        emptyState.style.display = 'none';
+        
+        container.innerHTML = this.sources.map(source => {
+            const isImporting = this.activeImports.has(source.id);
+            const progress = isImporting ? this.activeImports.get(source.id) : null;
+            
+            return `
+                <div class="source-card ${isImporting ? 'importing' : ''}" data-source-id="${source.id}">
+                    <div class="source-header">
+                        <div>
+                            <h3 class="source-title">
+                                ${this.escapeHtml(source.name)}
+                                ${isImporting ? '<span class="importing-indicator ms-2"></span>' : ''}
+                            </h3>
+                            <div class="source-meta">
+                                <span><i class="bi bi-${source.source_type === 'url' ? 'link-45deg' : 'file-earmark'}"></i> ${source.source_type}</span>
+                                <span><i class="bi bi-broadcast"></i> ${source.total_channels || 0} channels</span>
+                                ${source.last_import_at ? 
+                                    `<span><i class="bi bi-clock"></i> ${this.formatDate(source.last_import_at)}</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="source-actions">
+                            ${!isImporting ? `
+                                <button class="btn btn-sm btn-outline-primary" onclick="importManager.importSource(${source.id})">
+                                    <i class="bi bi-arrow-clockwise"></i> Import
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="importManager.editSource(${source.id})">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="importManager.deleteSource(${source.id})">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            ` : `
+                                <button class="btn btn-sm btn-danger" onclick="importManager.cancelImport(${source.id})">
+                                    <i class="bi bi-x-lg"></i> Cancel
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                    
+                    ${source.last_import_status === 'failed' ? `
+                        <div class="alert alert-danger mb-0 mt-3">
+                            <i class="bi bi-exclamation-triangle-fill"></i> ${this.escapeHtml(source.last_import_details?.error || 'Import failed')}
+                        </div>
+                    ` : ''}
+                    
+                    ${isImporting && progress ? this.renderProgress(progress) : ''}
+                </div>
+            `;
+        }).join('');
+    }
+    
+    renderProgress(progress) {
+        // Ensure all progress fields have defaults
+        const safeProgress = {
+            phase: progress.phase || 'initializing',
+            percentage: progress.percentage || 0,
+            current_item: progress.current_item || '',
+            total_items: progress.total_items || 0,
+            processed_items: progress.processed_items || 0,
+            speed_bps: progress.speed_bps || 0,
+            eta_seconds: progress.eta_seconds || null,
+            warnings: progress.warnings || []
+        };
+        
+        return `
+            <div class="progress-section">
+                <div class="progress-header">
+                    <span class="progress-phase">${safeProgress.phase}</span>
+                    <span>${safeProgress.percentage.toFixed(1)}%</span>
+                </div>
+                
+                <div class="progress mb-2">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                         style="width: ${safeProgress.percentage}%"></div>
+                </div>
+                
+                ${safeProgress.current_item ? `
+                    <small class="text-muted">${this.escapeHtml(safeProgress.current_item)}</small>
+                ` : ''}
+                
+                <div class="progress-stats">
+                    ${safeProgress.total_items > 0 ? `
+                        <div class="progress-stat">
+                            <div class="progress-stat-value">${safeProgress.processed_items}</div>
+                            <div class="progress-stat-label">Processed</div>
+                        </div>
+                        <div class="progress-stat">
+                            <div class="progress-stat-value">${safeProgress.total_items}</div>
+                            <div class="progress-stat-label">Total</div>
+                        </div>
+                    ` : ''}
+                    
+                    ${safeProgress.speed_bps > 0 ? `
+                        <div class="progress-stat">
+                            <div class="progress-stat-value">${this.formatSpeed(safeProgress.speed_bps)}</div>
+                            <div class="progress-stat-label">Speed</div>
+                        </div>
+                    ` : ''}
+                    
+                    ${safeProgress.eta_seconds ? `
+                        <div class="progress-stat">
+                            <div class="progress-stat-value">${this.formatDuration(safeProgress.eta_seconds)}</div>
+                            <div class="progress-stat-label">ETA</div>
+                        </div>
+                    ` : ''}
+                </div>
+                
+                ${safeProgress.warnings.length > 0 ? `
+                    <div class="alert alert-warning mt-3 mb-0">
+                        ${safeProgress.warnings.map(w => `<div><i class="bi bi-exclamation-triangle"></i> ${this.escapeHtml(w)}</div>`).join('')}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }
+    
+    showAddSource() {
+        // Clean up any existing backdrops first
+        document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+            backdrop.remove();
+        });
+        document.body.classList.remove('modal-open');
+        document.body.style.removeProperty('overflow');
+        document.body.style.removeProperty('padding-right');
+        
+        this.editingSourceId = null;
+        document.getElementById('sourceModalTitle').textContent = 'Add Import Source';
+        document.getElementById('sourceForm').reset();
+        document.getElementById('typeUrl').checked = true;
+        document.getElementById('urlGroup').style.display = 'block';
+        document.getElementById('uploadGroup').style.display = 'none';
+        
+        // Small delay to ensure DOM is clean
+        setTimeout(() => {
+            this.modal.show();
+        }, 10);
+    }
+    
+    async editSource(sourceId) {
+        const source = this.sources.find(s => s.id === sourceId);
+        if (!source) return;
+        
+        this.editingSourceId = sourceId;
+        document.getElementById('sourceModalTitle').textContent = 'Edit Import Source';
+        
+        // Fill form
+        document.getElementById('sourceName').value = source.name;
+        document.getElementById('epgUrl').value = source.epg_url || '';
+        document.getElementById('autoRefresh').checked = source.auto_refresh;
+        document.getElementById('refreshInterval').value = source.refresh_interval || 86400;
+        
+        if (source.source_type === 'url') {
+            document.getElementById('typeUrl').checked = true;
+            document.getElementById('sourceUrl').value = source.m3u_url || '';
+            document.getElementById('urlGroup').style.display = 'block';
+            document.getElementById('uploadGroup').style.display = 'none';
+        } else {
+            document.getElementById('typeUpload').checked = true;
+            document.getElementById('urlGroup').style.display = 'none';
+            document.getElementById('uploadGroup').style.display = 'block';
+        }
+        
+        document.getElementById('refreshGroup').style.display = 
+            source.auto_refresh ? 'block' : 'none';
+        
+        this.modal.show();
+    }
+    
+    async saveSource() {
+        const form = document.getElementById('sourceForm');
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+        
+        const sourceType = document.querySelector('input[name="sourceType"]:checked').value;
+        
+        try {
+            let response;
+            
+            if (sourceType === 'url') {
+                // URL source - send as JSON
+                const data = {
+                    name: document.getElementById('sourceName').value,
+                    m3u_url: document.getElementById('sourceUrl').value,
+                    epg_url: document.getElementById('epgUrl').value || null,
+                    auto_refresh: document.getElementById('autoRefresh').checked,
+                    refresh_interval: parseInt(document.getElementById('refreshInterval').value),
+                    import_settings: {}
+                };
+                
+                const url = this.editingSourceId 
+                    ? `/api/import-sources/${this.editingSourceId}`
+                    : '/api/import-sources/';
+                
+                response = await fetch(url, {
+                    method: this.editingSourceId ? 'PUT' : 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+            } else {
+                // File upload - send as FormData
+                const fileInput = document.getElementById('m3uFile');
+                if (!this.editingSourceId && (!fileInput.files || !fileInput.files.length)) {
+                    showNotification('Please select a file to upload', 'error');
+                    return;
+                }
+                
+                const formData = new FormData();
+                formData.append('name', document.getElementById('sourceName').value);
+                formData.append('epg_url', document.getElementById('epgUrl').value || '');
+                formData.append('auto_refresh', document.getElementById('autoRefresh').checked);
+                formData.append('refresh_interval', document.getElementById('refreshInterval').value);
+                formData.append('import_settings', '{}');
+                formData.append('auto_import', 'true');
+                
+                if (fileInput.files && fileInput.files.length) {
+                    formData.append('m3u_file', fileInput.files[0]);
+                }
+                
+                const url = this.editingSourceId 
+                    ? `/api/import-sources/${this.editingSourceId}`
+                    : '/api/import-sources/upload';
+                
+                response = await fetch(url, {
+                    method: this.editingSourceId ? 'PUT' : 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: formData
+                });
+            }
+            
+            await this.handleFetchResponse(response);
+            
+            this.modal.hide();
+            showNotification(
+                this.editingSourceId ? 'Source updated successfully' : 'Source created successfully',
+                'success'
+            );
+            
+            await this.loadSources();
+            
+        } catch (error) {
+            window.handleApiError(error, { category: 'Import' });
+        }
+    }
+    
+    async importSource(sourceId) {
+        try {
+            const response = await fetch(`/api/import-sources/${sourceId}/import`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            await this.handleFetchResponse(response);
+            
+            const data = await response.json();
+            showNotification('Import started', 'info');
+            
+            // Track import
+            this.activeImports.set(sourceId, {
+                phase: 'initializing',
+                percentage: 0
+            });
+            
+            this.renderSources();
+            
+        } catch (error) {
+            window.handleApiError(error, { category: 'Import' });
+        }
+    }
+    
+    async cancelImport(sourceId) {
+        try {
+            const response = await fetch(`/api/import-sources/${sourceId}/cancel`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            await this.handleFetchResponse(response);
+            
+            this.activeImports.delete(sourceId);
+            this.renderSources();
+            showNotification('Import cancelled', 'warning');
+            
+        } catch (error) {
+            window.handleApiError(error, { category: 'Import' });
+        }
+    }
+    
+    async deleteSource(sourceId) {
+        if (!confirm('Are you sure you want to delete this source?')) return;
+        
+        try {
+            const response = await fetch(`/api/import-sources/${sourceId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            
+            await this.handleFetchResponse(response);
+            
+            showNotification('Source deleted', 'success');
+            await this.loadSources();
+            
+        } catch (error) {
+            window.handleApiError(error, { category: 'Import' });
+        }
+    }
+    
+    connectWebSocket() {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            console.warn('No auth token available, skipping WebSocket connection');
+            return;
+        }
+        
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/api/ws?token=${encodeURIComponent(token)}`;
+        
+        console.log('Attempting WebSocket connection...');
+        
+        try {
+            this.ws = new WebSocket(wsUrl);
+        } catch (error) {
+            console.error('Failed to create WebSocket:', error);
+            return;
+        }
+        
+        this.ws.onopen = () => {
+            console.log('WebSocket connected successfully');
+            // Send ping every 30 seconds to keep connection alive
+            this.pingInterval = setInterval(() => {
+                if (this.ws.readyState === WebSocket.OPEN) {
+                    this.ws.send('ping');
+                }
+            }, 30000);
+        };
+        
+        this.ws.onmessage = (event) => {
+            try {
+                // Handle pong response
+                if (event.data === 'pong') {
+                    return;
+                }
+                
+                const data = JSON.parse(event.data);
+                
+                if (data.type === 'import_update') {
+                    this.handleImportUpdate(data);
+                }
+            } catch (error) {
+                console.error('Error processing WebSocket message:', error);
+            }
+        };
+        
+        this.ws.onerror = (error) => {
+            console.error('WebSocket error occurred');
+            // The error event doesn't provide much detail, check the close event for more info
+        };
+        
+        this.ws.onclose = (event) => {
+            console.log('WebSocket closed:', {
+                code: event.code,
+                reason: event.reason || 'No reason provided',
+                wasClean: event.wasClean
+            });
+            
+            // Clear ping interval
+            if (this.pingInterval) {
+                clearInterval(this.pingInterval);
+                this.pingInterval = null;
+            }
+            
+            // Specific handling for common close codes
+            if (event.code === 1008) {
+                console.error('WebSocket authentication failed:', event.reason);
+                // Token might be invalid, don't auto-reconnect
+                return;
+            }
+            
+            // Reconnect after 5 seconds for other errors
+            setTimeout(() => this.connectWebSocket(), 5000);
+        };
+    }
+    
+    handleImportUpdate(data) {
+        const { source_id, status, progress } = data;
+        
+        if (status === 'completed' || status === 'failed') {
+            this.activeImports.delete(source_id);
+            this.loadSources(); // Reload to get updated stats
+        } else {
+            this.activeImports.set(source_id, progress);
+            this.renderSources();
+        }
+    }
+    
+    // Utility methods
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    formatDate(dateString) {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diff = now - date;
+        
+        if (diff < 60000) return 'just now';
+        if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
+        if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
+        
+        return date.toLocaleDateString();
+    }
+    
+    formatSpeed(bps) {
+        if (bps > 1048576) return (bps / 1048576).toFixed(1) + ' MB/s';
+        if (bps > 1024) return (bps / 1024).toFixed(1) + ' KB/s';
+        return bps.toFixed(0) + ' B/s';
+    }
+    
+    formatDuration(seconds) {
+        if (seconds < 60) return seconds + 's';
+        if (seconds < 3600) return Math.floor(seconds / 60) + 'm';
+        return Math.floor(seconds / 3600) + 'h ' + Math.floor((seconds % 3600) / 60) + 'm';
+    }
+}
+
+// Initialize
+const importManager = new ImportManager();
+
+// Global modal fix - Force proper z-index on all modals
+document.addEventListener('shown.bs.modal', function(e) {
+    // Force cleanup of multiple backdrops
+    const backdrops = document.querySelectorAll('.modal-backdrop');
+    if (backdrops.length > 1) {
+        for (let i = 1; i < backdrops.length; i++) {
+            backdrops[i].remove();
+        }
+    }
+    
+    // Force proper z-index
+    const modal = e.target;
+    const backdrop = document.querySelector('.modal-backdrop');
+    
+    if (backdrop) {
+        backdrop.style.zIndex = '1040';
+    }
+    
+    if (modal) {
+        modal.style.zIndex = '1050';
+        const dialog = modal.querySelector('.modal-dialog');
+        if (dialog) {
+            dialog.style.zIndex = '1060';
+        }
+        const content = modal.querySelector('.modal-content');
+        if (content) {
+            content.style.zIndex = '1070';
+        }
+    }
+    
+    // Ensure body has modal-open class
+    document.body.classList.add('modal-open');
+});
+
+// Fix for Bootstrap modal backdrop issues
+const originalShow = bootstrap.Modal.prototype.show;
+bootstrap.Modal.prototype.show = function() {
+    // Remove any existing backdrops first
+    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+    
+    // Call original show method
+    originalShow.call(this);
+};
+</script>
+{% endblock %}

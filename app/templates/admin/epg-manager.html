@@ -1,0 +1,641 @@
+{% extends "base.html" %}
+
+{% block title %}EPG Manager - IPTV PVR{% endblock %}
+
+{% block extra_css %}
+<style>
+.epg-status-card {
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+}
+
+.epg-status-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.channel-epg-status {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 5px;
+    background: var(--bs-gray-100);
+}
+
+.channel-epg-status.has-epg {
+    background: var(--bs-success-bg-subtle);
+}
+
+.channel-epg-status.no-epg {
+    background: var(--bs-danger-bg-subtle);
+}
+
+.epg-source-card {
+    border: 2px solid var(--bs-border-color);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.epg-source-card.active {
+    border-color: var(--bs-success);
+}
+
+.epg-source-card.importing {
+    border-color: var(--bs-warning);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.8; }
+    100% { opacity: 1; }
+}
+
+.mapping-confidence {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.mapping-confidence.high {
+    background: var(--bs-success-bg-subtle);
+    color: var(--bs-success);
+}
+
+.mapping-confidence.medium {
+    background: var(--bs-warning-bg-subtle);
+    color: var(--bs-warning);
+}
+
+.mapping-confidence.low {
+    background: var(--bs-danger-bg-subtle);
+    color: var(--bs-danger);
+}
+
+.auto-map-results {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.mapping-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid var(--bs-border-color);
+}
+
+.priority-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: var(--bs-primary);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-broadcast"></i> EPG Manager</h2>
+        <div class="btn-group">
+            <button class="btn btn-primary" onclick="showAddEPGSourceModal()">
+                <i class="bi bi-plus-circle"></i> Add EPG Source
+            </button>
+            <button class="btn btn-info" onclick="refreshEPGStatus()">
+                <i class="bi bi-arrow-clockwise"></i> Refresh Status
+            </button>
+        </div>
+    </div>
+
+    <!-- EPG Overview Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="epg-status-card card text-center">
+                <div class="card-body">
+                    <h3 class="mb-0" id="totalChannels">0</h3>
+                    <p class="text-muted mb-0">Total Channels</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="epg-status-card card text-center">
+                <div class="card-body">
+                    <h3 class="mb-0 text-success" id="channelsWithEPG">0</h3>
+                    <p class="text-muted mb-0">Channels with EPG</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="epg-status-card card text-center">
+                <div class="card-body">
+                    <h3 class="mb-0 text-danger" id="channelsWithoutEPG">0</h3>
+                    <p class="text-muted mb-0">Channels without EPG</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="epg-status-card card text-center">
+                <div class="card-body">
+                    <h3 class="mb-0 text-info" id="totalEPGSources">0</h3>
+                    <p class="text-muted mb-0">EPG Sources</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- EPG Sources Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-database"></i> EPG Sources</h5>
+        </div>
+        <div class="card-body" id="epgSourcesContainer">
+            <!-- EPG sources will be loaded here -->
+        </div>
+    </div>
+
+    <!-- Channel EPG Status -->
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-tv"></i> Channel EPG Status</h5>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-secondary" onclick="filterChannels('all')">All</button>
+                    <button class="btn btn-outline-success" onclick="filterChannels('with-epg')">With EPG</button>
+                    <button class="btn btn-outline-danger" onclick="filterChannels('without-epg')">Without EPG</button>
+                    <button class="btn btn-outline-warning" onclick="filterChannels('auto-mapped')">Auto-mapped</button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="input-group mb-3">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control" id="channelSearch" placeholder="Search channels..." onkeyup="searchChannels()">
+            </div>
+            <div id="channelListContainer" style="max-height: 600px; overflow-y: auto;">
+                <!-- Channel list will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add EPG Source Modal -->
+<div class="modal fade" id="addEPGSourceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add EPG Source</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addEPGSourceForm">
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-control" id="sourceName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">URL</label>
+                        <input type="url" class="form-control" id="sourceUrl" placeholder="http://example.com/epg.xml">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Type</label>
+                        <select class="form-select" id="sourceType">
+                            <option value="xmltv">XMLTV</option>
+                            <option value="json">JSON</option>
+                            <option value="api">API</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Priority</label>
+                        <input type="number" class="form-control" id="sourcePriority" value="0" min="0" max="100">
+                        <small class="form-text text-muted">Higher priority sources are preferred for channel mapping</small>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input type="checkbox" class="form-check-input" id="sourceAutoMap" checked>
+                        <label class="form-check-label" for="sourceAutoMap">
+                            Enable automatic channel mapping
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="addEPGSource()">Add Source</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Auto Map Results Modal -->
+<div class="modal fade" id="autoMapResultsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Auto-Mapping Results</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="autoMapSummary" class="mb-3"></div>
+                <div id="autoMapResults" class="auto-map-results"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Manual Mapping Modal -->
+<div class="modal fade" id="manualMappingModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Manual EPG Mapping</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="manualMappingInfo"></div>
+                <div class="mb-3">
+                    <label class="form-label">EPG Source</label>
+                    <select class="form-select" id="mappingSourceSelect"></select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">EPG Channel</label>
+                    <select class="form-select" id="mappingChannelSelect">
+                        <option value="">Select a source first</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveManualMapping()">Save Mapping</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let epgStatus = null;
+let currentChannelId = null;
+let channelFilter = 'all';
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    refreshEPGStatus();
+    loadEPGSources();
+});
+
+async function refreshEPGStatus() {
+    try {
+        const response = await axios.get('/api/enhanced-epg/status', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        epgStatus = response.data;
+        updateStatusCards();
+        updateChannelList();
+    } catch (error) {
+        console.error('Error loading EPG status:', error);
+        showNotification('Error loading EPG status', 'error');
+    }
+}
+
+function updateStatusCards() {
+    if (!epgStatus) return;
+    
+    document.getElementById('totalChannels').textContent = epgStatus.summary.total_channels;
+    document.getElementById('channelsWithEPG').textContent = epgStatus.summary.channels_with_epg;
+    document.getElementById('channelsWithoutEPG').textContent = epgStatus.summary.channels_without_epg;
+    document.getElementById('totalEPGSources').textContent = epgStatus.summary.total_epg_sources;
+}
+
+function updateChannelList() {
+    if (!epgStatus) return;
+    
+    const container = document.getElementById('channelListContainer');
+    let channels = epgStatus.channels;
+    
+    // Apply filter
+    if (channelFilter === 'with-epg') {
+        channels = channels.filter(c => c.has_epg);
+    } else if (channelFilter === 'without-epg') {
+        channels = channels.filter(c => !c.has_epg);
+    } else if (channelFilter === 'auto-mapped') {
+        channels = channels.filter(c => c.epg_auto_mapped);
+    }
+    
+    // Apply search
+    const searchTerm = document.getElementById('channelSearch').value.toLowerCase();
+    if (searchTerm) {
+        channels = channels.filter(c => 
+            c.channel_name.toLowerCase().includes(searchTerm) ||
+            (c.channel_number && c.channel_number.includes(searchTerm))
+        );
+    }
+    
+    container.innerHTML = channels.map(channel => `
+        <div class="channel-epg-status ${channel.has_epg ? 'has-epg' : 'no-epg'}">
+            <div class="flex-grow-1">
+                <strong>${channel.channel_number || '-'} - ${channel.channel_name}</strong>
+                ${channel.epg_auto_mapped ? '<span class="badge bg-info ms-2">Auto-mapped</span>' : ''}
+                ${channel.epg_mapping_locked ? '<span class="badge bg-warning ms-2">Locked</span>' : ''}
+                ${channel.mapping_count > 0 ? `<span class="badge bg-secondary ms-2">${channel.mapping_count} source${channel.mapping_count > 1 ? 's' : ''}</span>` : ''}
+            </div>
+            <div>
+                <button class="btn btn-sm btn-outline-primary" onclick="showChannelMappings(${channel.channel_id})">
+                    <i class="bi bi-link-45deg"></i> Mappings
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="showManualMapping(${channel.channel_id}, '${channel.channel_name}')">
+                    <i class="bi bi-pencil"></i> Map
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function loadEPGSources() {
+    try {
+        const response = await axios.get('/api/enhanced-epg/sources', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        const container = document.getElementById('epgSourcesContainer');
+        const sources = response.data;
+        
+        if (sources.length === 0) {
+            container.innerHTML = '<p class="text-muted text-center">No EPG sources configured</p>';
+            return;
+        }
+        
+        container.innerHTML = sources.map(source => `
+            <div class="epg-source-card ${source.is_active ? 'active' : ''} ${source.import_status === 'importing' ? 'importing' : ''}">
+                ${source.priority > 0 ? `<span class="priority-badge">Priority: ${source.priority}</span>` : ''}
+                <h5>${source.name}</h5>
+                <p class="mb-2">
+                    <span class="badge bg-secondary">${source.type.toUpperCase()}</span>
+                    ${source.auto_map ? '<span class="badge bg-info ms-1">Auto-map</span>' : ''}
+                    ${!source.is_active ? '<span class="badge bg-danger ms-1">Inactive</span>' : ''}
+                </p>
+                <p class="text-muted mb-2">${source.url || 'No URL configured'}</p>
+                <div class="row text-center mb-3">
+                    <div class="col">
+                        <strong>${source.channel_count || 0}</strong><br>
+                        <small class="text-muted">Channels</small>
+                    </div>
+                    <div class="col">
+                        <strong>${source.program_count || 0}</strong><br>
+                        <small class="text-muted">Programs</small>
+                    </div>
+                    <div class="col">
+                        <strong>${source.last_updated ? new Date(source.last_updated).toLocaleDateString() : 'Never'}</strong><br>
+                        <small class="text-muted">Last Updated</small>
+                    </div>
+                </div>
+                <div class="btn-group btn-group-sm w-100">
+                    <button class="btn btn-outline-primary" onclick="importEPGData(${source.id})" 
+                            ${source.import_status === 'importing' ? 'disabled' : ''}>
+                        <i class="bi bi-download"></i> Import
+                    </button>
+                    <button class="btn btn-outline-success" onclick="autoMapChannels(${source.id})">
+                        <i class="bi bi-magic"></i> Auto-map
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="editEPGSource(${source.id})">
+                        <i class="bi bi-pencil"></i> Edit
+                    </button>
+                    <button class="btn btn-outline-danger" onclick="deleteEPGSource(${source.id})">
+                        <i class="bi bi-trash"></i> Delete
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading EPG sources:', error);
+        showNotification('Error loading EPG sources', 'error');
+    }
+}
+
+function showAddEPGSourceModal() {
+    document.getElementById('addEPGSourceForm').reset();
+    new bootstrap.Modal(document.getElementById('addEPGSourceModal')).show();
+}
+
+async function addEPGSource() {
+    const data = {
+        name: document.getElementById('sourceName').value,
+        url: document.getElementById('sourceUrl').value || null,
+        type: document.getElementById('sourceType').value,
+        priority: parseInt(document.getElementById('sourcePriority').value),
+        auto_map: document.getElementById('sourceAutoMap').checked
+    };
+    
+    try {
+        await axios.post('/api/enhanced-epg/sources', data, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        bootstrap.Modal.getInstance(document.getElementById('addEPGSourceModal')).hide();
+        showNotification('EPG source added successfully', 'success');
+        loadEPGSources();
+    } catch (error) {
+        console.error('Error adding EPG source:', error);
+        showNotification('Error adding EPG source', 'error');
+    }
+}
+
+async function importEPGData(sourceId) {
+    if (!confirm('Import EPG data from this source? This may take several minutes.')) return;
+    
+    try {
+        await axios.post(`/api/enhanced-epg/sources/${sourceId}/import`, {}, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        showNotification('EPG import started', 'info');
+        
+        // Refresh sources to show importing status
+        setTimeout(() => loadEPGSources(), 1000);
+        
+        // Keep refreshing while importing
+        const interval = setInterval(async () => {
+            await loadEPGSources();
+            const response = await axios.get('/api/enhanced-epg/sources', {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+            const source = response.data.find(s => s.id === sourceId);
+            if (source && source.import_status !== 'importing') {
+                clearInterval(interval);
+                showNotification('EPG import completed', 'success');
+                refreshEPGStatus();
+            }
+        }, 5000);
+    } catch (error) {
+        console.error('Error importing EPG data:', error);
+        showNotification('Error importing EPG data', 'error');
+    }
+}
+
+async function autoMapChannels(sourceId, force = false) {
+    if (!confirm(`${force ? 'Force ' : ''}auto-map channels to this EPG source?`)) return;
+    
+    try {
+        const response = await axios.post(`/api/enhanced-epg/sources/${sourceId}/auto-map`, 
+            { force }, 
+            {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            }
+        );
+        
+        const result = response.data;
+        
+        // Show results
+        const summaryHtml = `
+            <div class="alert alert-info">
+                <h6>Auto-mapping Summary</h6>
+                <p class="mb-1">Total channels processed: ${result.total_channels}</p>
+                <p class="mb-1">Successfully mapped: ${result.mapped}</p>
+                <p class="mb-1">Updated mappings: ${result.updated}</p>
+                <p class="mb-0">Failed to map: ${result.failed}</p>
+            </div>
+        `;
+        
+        const resultsHtml = result.mappings.map(m => `
+            <div class="mapping-item">
+                <div>
+                    <strong>${m.channel_name}</strong> → ${m.epg_channel_name}
+                </div>
+                <div>
+                    <span class="mapping-confidence ${m.confidence >= 0.9 ? 'high' : m.confidence >= 0.8 ? 'medium' : 'low'}">
+                        ${Math.round(m.confidence * 100)}% (${m.method})
+                    </span>
+                </div>
+            </div>
+        `).join('');
+        
+        document.getElementById('autoMapSummary').innerHTML = summaryHtml;
+        document.getElementById('autoMapResults').innerHTML = resultsHtml || '<p class="text-muted">No mappings created</p>';
+        
+        new bootstrap.Modal(document.getElementById('autoMapResultsModal')).show();
+        
+        // Refresh status
+        refreshEPGStatus();
+    } catch (error) {
+        console.error('Error auto-mapping channels:', error);
+        showNotification('Error auto-mapping channels', 'error');
+    }
+}
+
+async function deleteEPGSource(sourceId) {
+    if (!confirm('Delete this EPG source? All associated mappings will be removed.')) return;
+    
+    try {
+        await axios.delete(`/api/enhanced-epg/sources/${sourceId}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        showNotification('EPG source deleted', 'success');
+        loadEPGSources();
+        refreshEPGStatus();
+    } catch (error) {
+        console.error('Error deleting EPG source:', error);
+        showNotification('Error deleting EPG source', 'error');
+    }
+}
+
+function filterChannels(filter) {
+    channelFilter = filter;
+    updateChannelList();
+}
+
+function searchChannels() {
+    updateChannelList();
+}
+
+function showChannelMappings(channelId) {
+    const channel = epgStatus.channels.find(c => c.channel_id === channelId);
+    if (!channel) return;
+    
+    // TODO: Show channel mappings in a modal
+    console.log('Show mappings for channel:', channel);
+}
+
+function showManualMapping(channelId, channelName) {
+    currentChannelId = channelId;
+    document.getElementById('manualMappingInfo').innerHTML = `
+        <p>Mapping channel: <strong>${channelName}</strong></p>
+    `;
+    
+    // Load EPG sources
+    loadMappingSources();
+    
+    new bootstrap.Modal(document.getElementById('manualMappingModal')).show();
+}
+
+async function loadMappingSources() {
+    try {
+        const response = await axios.get('/api/enhanced-epg/sources', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        const select = document.getElementById('mappingSourceSelect');
+        select.innerHTML = '<option value="">Select EPG source</option>' + 
+            response.data.map(source => 
+                `<option value="${source.id}">${source.name}</option>`
+            ).join('');
+    } catch (error) {
+        console.error('Error loading mapping sources:', error);
+    }
+}
+
+document.getElementById('mappingSourceSelect').addEventListener('change', async function() {
+    const sourceId = this.value;
+    if (!sourceId) {
+        document.getElementById('mappingChannelSelect').innerHTML = '<option value="">Select a source first</option>';
+        return;
+    }
+    
+    // TODO: Load channels from EPG source
+    // For now, show placeholder
+    document.getElementById('mappingChannelSelect').innerHTML = '<option value="">Loading channels...</option>';
+});
+
+async function saveManualMapping() {
+    const sourceId = document.getElementById('mappingSourceSelect').value;
+    const epgChannelId = document.getElementById('mappingChannelSelect').value;
+    
+    if (!sourceId || !epgChannelId) {
+        showNotification('Please select both source and channel', 'warning');
+        return;
+    }
+    
+    try {
+        await axios.post('/api/enhanced-epg/mappings', {
+            channel_id: currentChannelId,
+            epg_source_id: parseInt(sourceId),
+            epg_channel_id: epgChannelId
+        }, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        bootstrap.Modal.getInstance(document.getElementById('manualMappingModal')).hide();
+        showNotification('Channel mapped successfully', 'success');
+        refreshEPGStatus();
+    } catch (error) {
+        console.error('Error saving manual mapping:', error);
+        showNotification('Error saving manual mapping', 'error');
+    }
+}
+</script>
+{% endblock %}

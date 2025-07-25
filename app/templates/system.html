@@ -1,0 +1,548 @@
+{% extends "base.html" %}
+
+{% block title %}System Status - IPTV PVR{% endblock %}
+
+{% block extra_css %}
+<style>
+    .system-card {
+        transition: transform 0.2s;
+        height: 100%;
+    }
+    
+    .system-card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--primary-color);
+    }
+    
+    .stat-label {
+        color: var(--secondary-color);
+        text-transform: uppercase;
+        font-size: 0.875rem;
+    }
+    
+    .progress-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .system-info-item {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid var(--bs-border-color);
+    }
+    
+    .system-info-item:last-child {
+        border-bottom: none;
+    }
+    
+    .database-chart {
+        max-height: 300px;
+    }
+    
+    .service-status {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 0.5rem;
+    }
+    
+    .service-status.online {
+        background-color: var(--bs-success);
+    }
+    
+    .service-status.offline {
+        background-color: var(--bs-danger);
+    }
+    
+    .service-status.warning {
+        background-color: var(--bs-warning);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-speedometer2"></i> System Status</h2>
+        <button class="btn btn-primary" onclick="refreshSystemStatus()">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+        </button>
+    </div>
+
+    <!-- System Overview Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card system-card">
+                <div class="card-body text-center">
+                    <i class="bi bi-cpu fs-1 text-primary mb-2"></i>
+                    <div class="stat-value" id="cpuUsage">0%</div>
+                    <div class="stat-label">CPU Usage</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card system-card">
+                <div class="card-body text-center">
+                    <i class="bi bi-memory fs-1 text-info mb-2"></i>
+                    <div class="stat-value" id="memoryUsage">0%</div>
+                    <div class="stat-label">Memory Usage</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card system-card">
+                <div class="card-body text-center">
+                    <i class="bi bi-hdd fs-1 text-success mb-2"></i>
+                    <div class="stat-value" id="diskUsage">0%</div>
+                    <div class="stat-label">Disk Usage</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card system-card">
+                <div class="card-body text-center">
+                    <i class="bi bi-clock-history fs-1 text-warning mb-2"></i>
+                    <div class="stat-value" id="uptime">0h</div>
+                    <div class="stat-label">Uptime</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Database Statistics -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-database"></i> Database Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <div class="system-info-item">
+                                <strong>Total Channels:</strong>
+                                <span class="float-end" id="totalChannels">0</span>
+                            </div>
+                            <div class="system-info-item">
+                                <strong>Total Playlists:</strong>
+                                <span class="float-end" id="totalPlaylists">0</span>
+                            </div>
+                            <div class="system-info-item">
+                                <strong>Total EPG Sources:</strong>
+                                <span class="float-end" id="totalEpgSources">0</span>
+                            </div>
+                            <div class="system-info-item">
+                                <strong>Total Programs:</strong>
+                                <span class="float-end" id="totalPrograms">0</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="system-info-item">
+                                <strong>Total Users:</strong>
+                                <span class="float-end" id="totalUsers">0</span>
+                            </div>
+                            <div class="system-info-item">
+                                <strong>Total Recordings:</strong>
+                                <span class="float-end" id="totalRecordings">0</span>
+                            </div>
+                            <div class="system-info-item">
+                                <strong>Active Recordings:</strong>
+                                <span class="float-end" id="activeRecordings">0</span>
+                            </div>
+                            <div class="system-info-item">
+                                <strong>Database Size:</strong>
+                                <span class="float-end" id="dbSize">0 MB</span>
+                            </div>
+                        </div>
+                    </div>
+                    <canvas id="dbChart" class="database-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Service Status -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-activity"></i> Service Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="system-info-item">
+                        <span class="service-status online" id="apiStatus"></span>
+                        <strong>API Server</strong>
+                        <span class="float-end text-success">Online</span>
+                    </div>
+                    <div class="system-info-item">
+                        <span class="service-status" id="hdhrStatus"></span>
+                        <strong>HDHomeRun Emulation</strong>
+                        <span class="float-end" id="hdhrStatusText">Checking...</span>
+                    </div>
+                    <div class="system-info-item">
+                        <span class="service-status" id="websocketStatus"></span>
+                        <strong>WebSocket Server</strong>
+                        <span class="float-end" id="websocketStatusText">Checking...</span>
+                    </div>
+                    <div class="system-info-item">
+                        <span class="service-status" id="schedulerStatus"></span>
+                        <strong>Task Scheduler</strong>
+                        <span class="float-end" id="schedulerStatusText">Checking...</span>
+                    </div>
+                    
+                    <h6 class="mt-4 mb-3">System Information</h6>
+                    <div class="system-info-item">
+                        <strong>Python Version:</strong>
+                        <span class="float-end" id="pythonVersion">-</span>
+                    </div>
+                    <div class="system-info-item">
+                        <strong>FastAPI Version:</strong>
+                        <span class="float-end" id="fastapiVersion">-</span>
+                    </div>
+                    <div class="system-info-item">
+                        <strong>Server Time:</strong>
+                        <span class="float-end" id="serverTime">-</span>
+                    </div>
+                    <div class="system-info-item">
+                        <strong>Time Zone:</strong>
+                        <span class="float-end" id="timeZone">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Storage Information -->
+    <div class="row">
+        <div class="col-lg-12 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-hdd-stack"></i> Storage Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Recording Storage</h6>
+                            <div class="mb-2">
+                                <div class="d-flex justify-content-between">
+                                    <span class="progress-label">Used: <span id="recordingUsed">0 GB</span></span>
+                                    <span class="progress-label">Free: <span id="recordingFree">0 GB</span></span>
+                                </div>
+                                <div class="progress" style="height: 25px;">
+                                    <div class="progress-bar" role="progressbar" id="recordingProgress" 
+                                         style="width: 0%">0%</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>System Storage</h6>
+                            <div class="mb-2">
+                                <div class="d-flex justify-content-between">
+                                    <span class="progress-label">Used: <span id="systemUsed">0 GB</span></span>
+                                    <span class="progress-label">Free: <span id="systemFree">0 GB</span></span>
+                                </div>
+                                <div class="progress" style="height: 25px;">
+                                    <div class="progress-bar bg-info" role="progressbar" id="systemProgress" 
+                                         style="width: 0%">0%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-clock-history"></i> Recent Activity</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Type</th>
+                                    <th>Action</th>
+                                    <th>User</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="activityLog">
+                                <tr>
+                                    <td colspan="5" class="text-center">Loading activity...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let dbChart;
+
+async function loadSystemStatus() {
+    try {
+        // Get system statistics
+        const response = await axios.get('/api/system/status', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        const data = response.data;
+        
+        // Update system metrics
+        document.getElementById('cpuUsage').textContent = `${data.cpu_usage}%`;
+        document.getElementById('memoryUsage').textContent = `${data.memory_usage}%`;
+        document.getElementById('diskUsage').textContent = `${data.disk_usage}%`;
+        document.getElementById('uptime').textContent = formatUptime(data.uptime);
+        
+        // Update database statistics
+        document.getElementById('totalChannels').textContent = data.db_stats.total_channels;
+        document.getElementById('totalPlaylists').textContent = data.db_stats.total_playlists;
+        document.getElementById('totalEpgSources').textContent = data.db_stats.total_epg_sources;
+        document.getElementById('totalPrograms').textContent = data.db_stats.total_programs;
+        document.getElementById('totalUsers').textContent = data.db_stats.total_users;
+        document.getElementById('totalRecordings').textContent = data.db_stats.total_recordings;
+        document.getElementById('activeRecordings').textContent = data.db_stats.active_recordings;
+        document.getElementById('dbSize').textContent = `${(data.db_stats.db_size / 1024 / 1024).toFixed(2)} MB`;
+        
+        // Update service status
+        updateServiceStatus('hdhr', data.services.hdhr);
+        updateServiceStatus('websocket', data.services.websocket);
+        updateServiceStatus('scheduler', data.services.scheduler);
+        
+        // Update system info
+        document.getElementById('pythonVersion').textContent = data.system_info.python_version;
+        document.getElementById('fastapiVersion').textContent = data.system_info.fastapi_version;
+        document.getElementById('serverTime').textContent = new Date(data.system_info.server_time).toLocaleString();
+        document.getElementById('timeZone').textContent = data.system_info.timezone;
+        
+        // Update storage
+        updateStorageInfo('recording', data.storage.recording);
+        updateStorageInfo('system', data.storage.system);
+        
+        // Update database chart
+        updateDatabaseChart(data.db_stats);
+        
+        // Load recent activity
+        loadRecentActivity();
+        
+    } catch (error) {
+        console.error('Failed to load system status:', error);
+        if (typeof showNotification === 'function') {
+            showNotification('Failed to load system status', 'error');
+        }
+    }
+}
+
+// Show notification function
+function showNotification(message, type = 'info') {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
+    alertDiv.style.zIndex = '9999';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+
+function updateServiceStatus(service, isOnline) {
+    const statusElement = document.getElementById(`${service}Status`);
+    const textElement = document.getElementById(`${service}StatusText`);
+    
+    if (isOnline) {
+        statusElement.className = 'service-status online';
+        textElement.textContent = 'Online';
+        textElement.className = 'float-end text-success';
+    } else {
+        statusElement.className = 'service-status offline';
+        textElement.textContent = 'Offline';
+        textElement.className = 'float-end text-danger';
+    }
+}
+
+function updateStorageInfo(type, storage) {
+    const used = storage.used / (1024 * 1024 * 1024); // Convert to GB
+    const free = storage.free / (1024 * 1024 * 1024);
+    const total = used + free;
+    const percentage = (used / total) * 100;
+    
+    document.getElementById(`${type}Used`).textContent = `${used.toFixed(2)} GB`;
+    document.getElementById(`${type}Free`).textContent = `${free.toFixed(2)} GB`;
+    
+    const progressBar = document.getElementById(`${type}Progress`);
+    progressBar.style.width = `${percentage}%`;
+    progressBar.textContent = `${percentage.toFixed(1)}%`;
+    
+    // Change color based on usage
+    if (percentage > 90) {
+        progressBar.className = 'progress-bar bg-danger';
+    } else if (percentage > 75) {
+        progressBar.className = 'progress-bar bg-warning';
+    } else {
+        progressBar.className = type === 'recording' ? 'progress-bar' : 'progress-bar bg-info';
+    }
+}
+
+function updateDatabaseChart(stats) {
+    const ctx = document.getElementById('dbChart').getContext('2d');
+    
+    if (dbChart) {
+        dbChart.destroy();
+    }
+    
+    dbChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Channels', 'Programs', 'Recordings', 'Users'],
+            datasets: [{
+                data: [
+                    stats.total_channels,
+                    Math.min(stats.total_programs, 1000), // Cap at 1000 for visualization
+                    stats.total_recordings,
+                    stats.total_users
+                ],
+                backgroundColor: [
+                    'rgba(13, 110, 253, 0.8)',
+                    'rgba(25, 135, 84, 0.8)',
+                    'rgba(255, 193, 7, 0.8)',
+                    'rgba(220, 53, 69, 0.8)'
+                ],
+                borderColor: [
+                    'rgba(13, 110, 253, 1)',
+                    'rgba(25, 135, 84, 1)',
+                    'rgba(255, 193, 7, 1)',
+                    'rgba(220, 53, 69, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                }
+            }
+        }
+    });
+}
+
+async function loadRecentActivity() {
+    try {
+        const response = await axios.get('/api/system/activity', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        const tbody = document.getElementById('activityLog');
+        tbody.innerHTML = '';
+        
+        if (response.data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center">No recent activity</td></tr>';
+            return;
+        }
+        
+        response.data.forEach(activity => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${new Date(activity.timestamp).toLocaleString()}</td>
+                <td><span class="badge bg-${getActivityTypeBadge(activity.type)}">${activity.type}</span></td>
+                <td>${activity.action}</td>
+                <td>${activity.user || 'System'}</td>
+                <td><span class="badge bg-${getActivityStatusBadge(activity.status)}">${activity.status}</span></td>
+            `;
+            tbody.appendChild(row);
+        });
+        
+    } catch (error) {
+        console.error('Failed to load activity:', error);
+    }
+}
+
+function getActivityTypeBadge(type) {
+    const badges = {
+        'import': 'primary',
+        'recording': 'success',
+        'auth': 'info',
+        'system': 'secondary',
+        'error': 'danger'
+    };
+    return badges[type] || 'secondary';
+}
+
+function getActivityStatusBadge(status) {
+    const badges = {
+        'success': 'success',
+        'completed': 'success',
+        'failed': 'danger',
+        'in_progress': 'warning',
+        'pending': 'secondary'
+    };
+    return badges[status] || 'secondary';
+}
+
+function formatUptime(seconds) {
+    const days = Math.floor(seconds / 86400);
+    const hours = Math.floor((seconds % 86400) / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    
+    if (days > 0) {
+        return `${days}d ${hours}h`;
+    } else if (hours > 0) {
+        return `${hours}h ${minutes}m`;
+    } else {
+        return `${minutes}m`;
+    }
+}
+
+function refreshSystemStatus() {
+    const btn = event.target.closest('button');
+    const icon = btn.querySelector('i');
+    icon.className = 'bi bi-arrow-clockwise spin';
+    
+    loadSystemStatus().finally(() => {
+        icon.className = 'bi bi-arrow-clockwise';
+    });
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    // Load on page load
+    loadSystemStatus();
+    
+    // Auto-refresh every 30 seconds
+    setInterval(loadSystemStatus, 30000);
+});
+</script>
+
+<style>
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.spin {
+    animation: spin 1s linear infinite;
+}
+</style>
+{% endblock %}

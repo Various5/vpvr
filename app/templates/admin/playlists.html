@@ -1,0 +1,1021 @@
+{% extends "base.html" %}
+
+{% block title %}Playlist Management - IPTV PVR{% endblock %}
+
+{% block extra_css %}
+<style>
+#importProgressContainer {
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+#importProgressContainer .card {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.1em;
+}
+
+#importProgressContainer .progress {
+    background-color: #f0f0f0;
+}
+
+#importProgressContainer .card-header {
+    font-weight: 600;
+}
+
+#importProgressContainer .btn-close-white {
+    filter: invert(1);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Import Progress Container - Always visible when importing -->
+    <div id="importProgressContainer" style="display: none; position: fixed; top: 80px; right: 20px; width: 400px; z-index: 1050;">
+        <!-- Progress notifications will be added here -->
+    </div>
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-collection-play"></i> Playlist Management</h2>
+        <div class="btn-group">
+            <button class="btn btn-primary" onclick="showAddPlaylistModal()">
+                <i class="bi bi-link"></i> Add from URL
+            </button>
+            <button class="btn btn-success" onclick="showUploadModal()">
+                <i class="bi bi-upload"></i> Upload M3U File
+            </button>
+            <button class="btn btn-danger" onclick="clearAllData()">
+                <i class="bi bi-trash3"></i> Clear All Data
+            </button>
+        </div>
+    </div>
+
+    <!-- Import Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="text-muted">Total Playlists</h6>
+                    <h3 class="mb-0" id="totalPlaylists">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="text-muted">Total Channels</h6>
+                    <h3 class="mb-0" id="totalChannels">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="text-muted">Active Channels</h6>
+                    <h3 class="mb-0" id="activeChannels">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="text-muted">Channel Groups</h6>
+                    <h3 class="mb-0" id="channelGroups">0</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- M3U Playlists Section -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-file-music"></i> M3U Playlists</h5>
+                </div>
+                <div class="card-body">
+                    <div id="playlistsList">
+                        <!-- Playlists will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- EPG Sources Section -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-calendar3"></i> EPG Sources</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Active EPG Source</label>
+                        <div class="input-group">
+                            <input type="url" class="form-control" id="epgUrl" 
+                                   placeholder="http://example.com/epg.xml">
+                            <button class="btn btn-primary" onclick="importEPG()">
+                                <i class="bi bi-arrow-down-circle"></i> Import
+                            </button>
+                        </div>
+                    </div>
+                    <div id="epgStatus">
+                        <!-- EPG status will be shown here -->
+                    </div>
+                    <hr>
+                    <button class="btn btn-outline-success btn-sm" onclick="showEPGUploadModal()">
+                        <i class="bi bi-upload"></i> Upload EPG File
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import History -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-clock-history"></i> Import History</h5>
+        </div>
+        <div class="card-body">
+            <div id="importHistory">
+                <!-- Import history will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Playlist from URL Modal -->
+<div class="modal fade" id="addPlaylistModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Playlist from URL</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addPlaylistForm">
+                    <div class="mb-3">
+                        <label for="playlistName" class="form-label">Playlist Name</label>
+                        <input type="text" class="form-control" id="playlistName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="playlistUrl" class="form-label">M3U URL</label>
+                        <input type="url" class="form-control" id="playlistUrl" required 
+                               placeholder="http://example.com/playlist.m3u">
+                    </div>
+                    <div class="mb-3">
+                        <label for="epgUrl" class="form-label">EPG URL (Optional)</label>
+                        <input type="url" class="form-control" id="epgUrl" 
+                               placeholder="http://example.com/epg.xml">
+                        <small class="text-muted">Optional XMLTV EPG URL for this playlist</small>
+                    </div>
+                    <div class="alert alert-info">
+                        <small>
+                            <strong>Supported formats:</strong> M3U, M3U8, M3U_PLUS<br>
+                            <strong>EPG formats:</strong> XMLTV (XML, GZ)<br>
+                            The playlist will be imported in the background.
+                        </small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="addPlaylistFromURL()">
+                    <i class="bi bi-download"></i> Import Playlist
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload M3U File Modal -->
+<div class="modal fade" id="uploadModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Upload M3U File</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="uploadForm">
+                    <div class="mb-3">
+                        <label for="uploadPlaylistName" class="form-label">Playlist Name</label>
+                        <input type="text" class="form-control" id="uploadPlaylistName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="m3uFile" class="form-label">M3U File</label>
+                        <input type="file" class="form-control" id="m3uFile" accept=".m3u,.m3u8" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="epgFile" class="form-label">EPG File (Optional)</label>
+                        <input type="file" class="form-control" id="epgFile" accept=".xml,.gz">
+                        <small class="text-muted">Optional XMLTV EPG file for this playlist</small>
+                    </div>
+                    <div class="alert alert-info">
+                        <small>Max file size: 10MB for M3U, 50MB for EPG. Supported formats: .m3u, .m3u8, .xml, .gz</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="uploadM3U()">
+                    <i class="bi bi-upload"></i> Upload
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload EPG File Modal -->
+<div class="modal fade" id="epgUploadModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Upload EPG File</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="epgUploadForm">
+                    <div class="mb-3">
+                        <label for="epgFile" class="form-label">EPG XML File</label>
+                        <input type="file" class="form-control" id="epgFile" accept=".xml,.gz" required>
+                    </div>
+                    <div class="alert alert-info">
+                        <small>Supported formats: .xml, .xml.gz (compressed)</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="uploadEPG()">
+                    <i class="bi bi-upload"></i> Upload
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- EPG Sources Modal -->
+<div class="modal fade" id="epgSourcesModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Manage EPG Sources</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <h6 id="epgPlaylistName"></h6>
+                </div>
+                <div id="epgSourcesList">
+                    <!-- EPG sources will be loaded here -->
+                </div>
+                <hr>
+                <h6>Add New EPG Source</h6>
+                <form id="addEpgSourceForm">
+                    <div class="mb-3">
+                        <label for="epgSourceName" class="form-label">Source Name</label>
+                        <input type="text" class="form-control" id="epgSourceName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="epgSourceUrl" class="form-label">EPG URL</label>
+                        <input type="url" class="form-control" id="epgSourceUrl" required 
+                               placeholder="http://example.com/epg.xml">
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Add EPG Source
+                    </button>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let playlists = [];
+let websocket = null;
+let currentImports = new Map();
+
+// Initialize WebSocket connection
+function initWebSocket() {
+    const userId = localStorage.getItem('user_id');
+    if (!userId) return;
+    
+    const wsUrl = `ws://${window.location.host}/api/ws/${userId}`;
+    websocket = new WebSocket(wsUrl);
+    
+    websocket.onopen = () => {
+        console.log('WebSocket connected');
+        // Send ping every 30 seconds to keep connection alive
+        setInterval(() => {
+            if (websocket.readyState === WebSocket.OPEN) {
+                websocket.send('ping');
+            }
+        }, 30000);
+    };
+    
+    websocket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === 'import_progress') {
+            updateImportProgress(data);
+        }
+    };
+    
+    websocket.onerror = (error) => {
+        console.error('WebSocket error:', error);
+    };
+    
+    websocket.onclose = () => {
+        console.log('WebSocket disconnected');
+        // Reconnect after 5 seconds
+        setTimeout(initWebSocket, 5000);
+    };
+}
+
+function updateImportProgress(data) {
+    const { import_id, status, progress, message, details } = data;
+    
+    // Show container
+    const container = document.getElementById('importProgressContainer');
+    container.style.display = 'block';
+    
+    // Create or update progress UI
+    let progressDiv = document.getElementById(`progress-${import_id}`);
+    if (!progressDiv) {
+        progressDiv = document.createElement('div');
+        progressDiv.id = `progress-${import_id}`;
+        progressDiv.className = 'card mb-2';
+        container.appendChild(progressDiv);
+    }
+    
+    let statusClass = 'primary';
+    let statusIcon = 'spinner-border spinner-border-sm';
+    let headerClass = 'text-primary';
+    
+    if (status === 'completed') {
+        statusClass = 'success';
+        statusIcon = 'bi bi-check-circle-fill';
+        headerClass = 'text-success';
+    }
+    if (status === 'failed') {
+        statusClass = 'danger';
+        statusIcon = 'bi bi-x-circle-fill';
+        headerClass = 'text-danger';
+    }
+    
+    // Create detailed error message if failed
+    let errorDetails = '';
+    if (status === 'failed' && details && details.error) {
+        const error = details.error;
+        errorDetails = '<div class="mt-2 p-2 bg-light rounded">';
+        errorDetails += '<strong>What went wrong:</strong><br>';
+        
+        if (error.includes('UNIQUE constraint failed')) {
+            errorDetails += '⚠️ <strong>Duplicate Channel IDs</strong><br>';
+            errorDetails += 'Some channels have duplicate IDs. The system will automatically generate unique IDs.<br>';
+            errorDetails += '<strong>Solution:</strong> Try importing again - the issue should be resolved.';
+        } else if (error.includes('Connection timeout') || error.includes('timed out')) {
+            errorDetails += '⏱️ <strong>Connection Timeout</strong><br>';
+            errorDetails += 'The server took too long to respond.<br>';
+            errorDetails += '<strong>Solutions:</strong><br>';
+            errorDetails += '• Check if the URL is correct<br>';
+            errorDetails += '• Verify your internet connection<br>';
+            errorDetails += '• The server might be overloaded - try again later';
+        } else if (error.includes('Empty file') || error.includes('Downloaded file is empty')) {
+            errorDetails += '📄 <strong>Empty Playlist</strong><br>';
+            errorDetails += 'The server returned an empty file.<br>';
+            errorDetails += '<strong>Solutions:</strong><br>';
+            errorDetails += '• Check if the URL requires authentication<br>';
+            errorDetails += '• Verify the username/password in the URL<br>';
+            errorDetails += '• The playlist might have expired';
+        } else if (error.includes('Invalid M3U')) {
+            errorDetails += '❌ <strong>Invalid Playlist Format</strong><br>';
+            errorDetails += 'The file is not a valid M3U playlist.<br>';
+            errorDetails += '<strong>Solutions:</strong><br>';
+            errorDetails += '• Verify the URL points to an M3U/M3U8 file<br>';
+            errorDetails += '• Check if you need a different URL format';
+        } else if (error.includes('404') || error.includes('Not Found')) {
+            errorDetails += '🔍 <strong>Playlist Not Found</strong><br>';
+            errorDetails += 'The URL could not be found on the server.<br>';
+            errorDetails += '<strong>Solutions:</strong><br>';
+            errorDetails += '• Double-check the URL for typos<br>';
+            errorDetails += '• The playlist might have been moved or deleted';
+        } else {
+            errorDetails += '❓ <strong>Unexpected Error</strong><br>';
+            errorDetails += `${error}<br>`;
+            errorDetails += '<strong>Solution:</strong> Check the server logs for more details.';
+        }
+        
+        errorDetails += '</div>';
+    }
+    
+    progressDiv.innerHTML = `
+        <div class="card-header ${headerClass} d-flex justify-content-between align-items-center">
+            <span>
+                <i class="${statusIcon}"></i> Import Progress
+            </span>
+            <div>
+                ${status === 'progress' || status === 'started' ? 
+                    `<button type="button" class="btn btn-sm btn-danger me-2" onclick="cancelImport('${import_id}')">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </button>` : 
+                    ''
+                }
+                ${status === 'completed' || status === 'failed' ? 
+                    `<button type="button" class="btn-close btn-close-white" onclick="removeImportProgress('${import_id}')"></button>` : 
+                    ''
+                }
+            </div>
+        </div>
+        <div class="card-body">
+            <h6 class="card-title">${message}</h6>
+            ${progress > 0 && progress < 100 ? `
+                <div class="progress mb-2" style="height: 20px;">
+                    <div class="progress-bar bg-${statusClass} progress-bar-striped progress-bar-animated" 
+                         role="progressbar" 
+                         style="width: ${progress}%">
+                        ${progress}%
+                    </div>
+                </div>
+            ` : ''}
+            ${details && details.processed ? `
+                <small class="text-muted">
+                    Channels: ${details.processed || 0}${details.total ? `/${details.total}` : ''} 
+                    ${details.groups ? `| Groups: ${details.groups}` : ''}
+                </small>
+            ` : ''}
+            ${errorDetails}
+            ${status === 'failed' ? `
+                <div class="mt-3">
+                    <button class="btn btn-sm btn-primary" onclick="retryImport('${import_id}')">
+                        <i class="bi bi-arrow-clockwise"></i> Retry Import
+                    </button>
+                </div>
+            ` : ''}
+        </div>
+    `;
+    
+    // Store import status
+    currentImports.set(import_id, { status, progress, message, details });
+    
+    // Auto-hide success after 10 seconds
+    if (status === 'completed') {
+        loadStats();
+        loadPlaylists();
+        setTimeout(() => {
+            removeImportProgress(import_id);
+        }, 10000);
+    }
+}
+
+function removeImportProgress(import_id) {
+    const progressDiv = document.getElementById(`progress-${import_id}`);
+    if (progressDiv) {
+        progressDiv.remove();
+    }
+    currentImports.delete(import_id);
+    
+    // Hide container if no more imports
+    if (currentImports.size === 0) {
+        document.getElementById('importProgressContainer').style.display = 'none';
+    }
+}
+
+function retryImport(import_id) {
+    // Find the import details and retry
+    const importData = currentImports.get(import_id);
+    if (importData && importData.details && importData.details.url) {
+        // Extract playlist name from message or use default
+        const name = importData.message.match(/Starting import of (.+)\.\.\./)?.[1] || 'Retry Import';
+        
+        // Remove old progress
+        removeImportProgress(import_id);
+        
+        // Start new import
+        addPlaylistFromURL(name, importData.details.url);
+    }
+}
+
+async function cancelImport(import_id) {
+    if (!confirm('Are you sure you want to cancel this import?')) return;
+    
+    try {
+        // Extract playlist ID from import_id (format: "playlist_123")
+        const playlistId = import_id.split('_')[1];
+        
+        // Send cancel request to backend
+        await axios.post(`/api/channels/playlists/${playlistId}/cancel`, {}, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        // Update UI to show cancelled status
+        updateImportProgress({
+            import_id: import_id,
+            status: 'failed',
+            progress: 0,
+            message: 'Import cancelled by user',
+            details: { error_type: 'cancelled' }
+        });
+        
+        showNotification('Import cancelled', 'warning');
+        
+        // Reload playlists to refresh the UI
+        setTimeout(loadPlaylists, 1000);
+        
+    } catch (error) {
+        console.error('Failed to cancel import:', error);
+        alert('Failed to cancel import');
+    }
+}
+
+// Initialize WebSocket on page load
+initWebSocket();
+
+async function loadStats() {
+    try {
+        // Load channel statistics
+        const channelsResponse = await axios.get('/api/channels?active_only=false', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        const channels = channelsResponse.data;
+        document.getElementById('totalChannels').textContent = channels.length;
+        document.getElementById('activeChannels').textContent = channels.filter(c => c.is_active).length;
+        
+        // Load groups
+        const groupsResponse = await axios.get('/api/channels/groups', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        document.getElementById('channelGroups').textContent = groupsResponse.data.length;
+        
+    } catch (error) {
+        console.error('Failed to load stats:', error);
+    }
+}
+
+async function loadPlaylists() {
+    try {
+        const response = await axios.get('/api/channels/playlists', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        playlists = response.data;
+        const container = document.getElementById('playlistsList');
+        
+        if (playlists.length === 0) {
+            container.innerHTML = `
+                <div class="alert alert-info mb-0">
+                    <i class="bi bi-info-circle"></i> No playlists imported yet. 
+                    Click "Add from URL" or "Upload M3U File" to get started.
+                </div>
+            `;
+        } else {
+            container.innerHTML = playlists.map(playlist => `
+                <div class="card mb-2">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">${playlist.name}</h6>
+                                <small class="text-muted">${playlist.url || 'Uploaded file'}</small>
+                                <div class="mt-1">
+                                    <span class="badge bg-secondary">${playlist.channel_count} channels</span>
+                                    ${playlist.epg_sources && playlist.epg_sources.length > 0 ? 
+                                        `<span class="badge bg-info ms-1">${playlist.epg_sources.length} EPG sources</span>` : 
+                                        ''
+                                    }
+                                    ${playlist.last_updated ? 
+                                        `<small class="text-muted ms-2">Updated: ${new Date(playlist.last_updated).toLocaleString()}</small>` : 
+                                        '<small class="text-muted ms-2">Not yet updated</small>'
+                                    }
+                                </div>
+                            </div>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-info" onclick="showEPGSourcesModal(${playlist.id})" title="Manage EPG Sources">
+                                    <i class="bi bi-calendar-plus"></i>
+                                </button>
+                                <button class="btn btn-outline-primary" onclick="refreshPlaylist(${playlist.id})" title="Refresh">
+                                    <i class="bi bi-arrow-clockwise"></i>
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="deletePlaylist(${playlist.id})" title="Delete">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        document.getElementById('totalPlaylists').textContent = playlists.length;
+        
+    } catch (error) {
+        console.error('Failed to load playlists:', error);
+        document.getElementById('playlistsList').innerHTML = `
+            <div class="alert alert-danger">
+                Failed to load playlists: ${error.response?.data?.detail || error.message}
+            </div>
+        `;
+    }
+}
+
+function showAddPlaylistModal() {
+    document.getElementById('addPlaylistForm').reset();
+    const modal = new bootstrap.Modal(document.getElementById('addPlaylistModal'));
+    modal.show();
+}
+
+function showUploadModal() {
+    document.getElementById('uploadForm').reset();
+    const modal = new bootstrap.Modal(document.getElementById('uploadModal'));
+    modal.show();
+}
+
+function showEPGUploadModal() {
+    document.getElementById('epgUploadForm').reset();
+    const modal = new bootstrap.Modal(document.getElementById('epgUploadModal'));
+    modal.show();
+}
+
+async function addPlaylistFromURL(playlistName = null, playlistUrl = null) {
+    const name = playlistName || document.getElementById('playlistName').value;
+    const url = playlistUrl || document.getElementById('playlistUrl').value;
+    const epgUrl = document.getElementById('epgUrl')?.value || null;
+    
+    if (!name || !url) {
+        alert('Please provide both name and URL');
+        return;
+    }
+    
+    try {
+        const response = await axios.post('/api/channels/playlists/import', {
+            name: name,
+            url: url,
+            epg_url: epgUrl
+        }, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        // Close modal if it's open
+        const modal = bootstrap.Modal.getInstance(document.getElementById('addPlaylistModal'));
+        if (modal) modal.hide();
+        
+        // Show import progress
+        const importId = response.data.import_id;
+        if (importId) {
+            updateImportProgress({
+                import_id: importId,
+                status: 'started',
+                progress: 0,
+                message: `Starting import of ${name}...`,
+                details: { url: url }
+            });
+        }
+        
+        // Add to local list
+        playlists.push({
+            id: response.data.playlist_id,
+            name: name,
+            url: url
+        });
+        
+        loadPlaylists();
+        
+    } catch (error) {
+        alert(error.response?.data?.detail || 'Failed to import playlist');
+    }
+}
+
+async function uploadM3U() {
+    const name = document.getElementById('uploadPlaylistName').value;
+    const fileInput = document.getElementById('m3uFile');
+    const file = fileInput.files[0];
+    const epgFileInput = document.getElementById('epgFile');
+    const epgFile = epgFileInput?.files[0] || null;
+    
+    if (!file) {
+        alert('Please select a file');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('file', file);
+    if (epgFile) {
+        formData.append('epg_file', epgFile);
+    }
+    
+    try {
+        const response = await axios.post('/api/channels/playlists/upload', formData, {
+            headers: { 
+                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+        
+        bootstrap.Modal.getInstance(document.getElementById('uploadModal')).hide();
+        showNotification('M3U file uploaded successfully!', 'success');
+        
+        playlists.push({
+            id: response.data.playlist_id,
+            name: name,
+            url: null
+        });
+        
+        loadPlaylists();
+        setTimeout(loadStats, 5000);
+        
+    } catch (error) {
+        alert(error.response?.data?.detail || 'Failed to upload file');
+    }
+}
+
+async function importEPG() {
+    const url = document.getElementById('epgUrl').value;
+    if (!url) {
+        alert('Please enter an EPG URL');
+        return;
+    }
+    
+    const statusDiv = document.getElementById('epgStatus');
+    statusDiv.innerHTML = '<div class="alert alert-info"><i class="bi bi-hourglass-split"></i> Importing EPG data...</div>';
+    
+    try {
+        await axios.post('/api/epg/import', {
+            url: url
+        }, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        statusDiv.innerHTML = '<div class="alert alert-success"><i class="bi bi-check-circle"></i> EPG import started successfully!</div>';
+        setTimeout(() => {
+            statusDiv.innerHTML = '';
+        }, 5000);
+        
+    } catch (error) {
+        statusDiv.innerHTML = '<div class="alert alert-danger"><i class="bi bi-x-circle"></i> Failed to import EPG</div>';
+    }
+}
+
+async function uploadEPG() {
+    const fileInput = document.getElementById('epgFile');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        alert('Please select a file');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    try {
+        const response = await axios.post('/api/epg/upload', formData, {
+            headers: { 
+                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+        
+        bootstrap.Modal.getInstance(document.getElementById('epgUploadModal')).hide();
+        showNotification('EPG file uploaded successfully!', 'success');
+        
+    } catch (error) {
+        alert(error.response?.data?.detail || 'Failed to upload EPG file');
+    }
+}
+
+async function refreshPlaylist(playlistId) {
+    try {
+        const response = await axios.post(`/api/channels/playlists/${playlistId}/refresh`, {}, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        // Show import progress
+        const importId = response.data.import_id;
+        if (importId) {
+            updateImportProgress({
+                import_id: importId,
+                status: 'started',
+                progress: 0,
+                message: 'Starting playlist refresh...'
+            });
+        }
+        
+        showNotification('Playlist refresh started!', 'info');
+        
+    } catch (error) {
+        alert(error.response?.data?.detail || 'Failed to refresh playlist');
+    }
+}
+
+async function deletePlaylist(playlistId) {
+    if (!confirm('Are you sure? This will remove all channels from this playlist.')) return;
+    
+    try {
+        await axios.delete(`/api/channels/playlists/${playlistId}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        showNotification('Playlist deleted successfully', 'success');
+        loadPlaylists();
+        loadStats();
+        
+    } catch (error) {
+        alert(error.response?.data?.detail || 'Failed to delete playlist');
+    }
+}
+
+async function clearAllData() {
+    if (!confirm('Are you sure you want to delete ALL playlists and channels? This action cannot be undone!')) return;
+    if (!confirm('This will remove ALL imported data. Are you absolutely sure?')) return;
+    
+    try {
+        // Get all playlists
+        const playlistsResponse = await axios.get('/api/channels/playlists', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        const playlists = playlistsResponse.data;
+        
+        // Delete all playlists
+        for (const playlist of playlists) {
+            await axios.delete(`/api/channels/playlists/${playlist.id}`, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+        }
+        
+        showNotification('All data cleared successfully', 'success');
+        loadPlaylists();
+        loadStats();
+        
+    } catch (error) {
+        alert('Failed to clear all data: ' + (error.response?.data?.detail || error.message));
+    }
+}
+
+// EPG Sources Management
+let currentPlaylistId = null;
+
+async function showEPGSourcesModal(playlistId) {
+    currentPlaylistId = playlistId;
+    const playlist = playlists.find(p => p.id === playlistId);
+    document.getElementById('epgPlaylistName').textContent = `EPG Sources for: ${playlist.name}`;
+    
+    // Load EPG sources
+    await loadEPGSources(playlistId);
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('epgSourcesModal'));
+    modal.show();
+}
+
+async function loadEPGSources(playlistId) {
+    try {
+        const response = await axios.get(`/api/epg/sources?playlist_id=${playlistId}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        const sources = response.data;
+        const container = document.getElementById('epgSourcesList');
+        
+        if (sources.length === 0) {
+            container.innerHTML = `
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> No EPG sources added yet.
+                </div>
+            `;
+        } else {
+            container.innerHTML = sources.map(source => `
+                <div class="card mb-2">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">${source.name}</h6>
+                                <small class="text-muted">${source.url}</small>
+                                ${source.last_updated ? 
+                                    `<div class="mt-1"><small class="text-muted">Last updated: ${new Date(source.last_updated).toLocaleString()}</small></div>` : 
+                                    ''
+                                }
+                            </div>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" onclick="refreshEPGSource(${source.id})" title="Refresh">
+                                    <i class="bi bi-arrow-clockwise"></i>
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="deleteEPGSource(${source.id})" title="Delete">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+    } catch (error) {
+        console.error('Failed to load EPG sources:', error);
+        document.getElementById('epgSourcesList').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="bi bi-x-circle"></i> Failed to load EPG sources
+            </div>
+        `;
+    }
+}
+
+// Add EPG source form submission
+document.getElementById('addEpgSourceForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const name = document.getElementById('epgSourceName').value;
+    const url = document.getElementById('epgSourceUrl').value;
+    
+    try {
+        await axios.post('/api/epg/sources', {
+            name: name,
+            url: url,
+            playlist_id: currentPlaylistId
+        }, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        showNotification('EPG source added successfully', 'success');
+        
+        // Reload sources
+        await loadEPGSources(currentPlaylistId);
+        
+        // Clear form
+        e.target.reset();
+        
+        // Reload playlists to update EPG count
+        loadPlaylists();
+        
+    } catch (error) {
+        alert(error.response?.data?.detail || 'Failed to add EPG source');
+    }
+});
+
+async function refreshEPGSource(sourceId) {
+    if (!confirm('Are you sure you want to refresh this EPG source?')) return;
+    
+    try {
+        await axios.post(`/api/epg/sources/${sourceId}/refresh`, {}, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        showNotification('EPG refresh started', 'success');
+        
+    } catch (error) {
+        alert('Failed to refresh EPG source');
+    }
+}
+
+async function deleteEPGSource(sourceId) {
+    if (!confirm('Are you sure you want to delete this EPG source?')) return;
+    
+    try {
+        await axios.delete(`/api/epg/sources/${sourceId}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        showNotification('EPG source deleted', 'success');
+        
+        // Reload sources
+        await loadEPGSources(currentPlaylistId);
+        
+        // Reload playlists to update EPG count
+        loadPlaylists();
+        
+    } catch (error) {
+        alert('Failed to delete EPG source');
+    }
+}
+
+// Load initial data
+loadStats();
+loadPlaylists();
+
+// Set default EPG URL if available
+const urlParams = new URLSearchParams(window.location.search);
+const defaultEpgUrl = urlParams.get('epg_url') || '';
+document.getElementById('epgUrl').value = defaultEpgUrl;
+</script>
+{% endblock %}

@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile - IPTV PVR{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <h2 class="mb-4"><i class="bi bi-person-circle"></i> My Profile</h2>
+            
+            <!-- Profile Information Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Account Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-4 text-muted">Username</div>
+                        <div class="col-md-8" id="profile-username">Loading...</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4 text-muted">Email</div>
+                        <div class="col-md-8" id="profile-email">Loading...</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4 text-muted">Role</div>
+                        <div class="col-md-8">
+                            <span class="badge bg-primary" id="profile-role">Loading...</span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4 text-muted">Account Created</div>
+                        <div class="col-md-8" id="profile-created">Loading...</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 text-muted">Credits</div>
+                        <div class="col-md-8">
+                            <span class="fs-5 text-primary" id="profile-credits">0</span>
+                            <a href="/credits" class="btn btn-sm btn-outline-primary ms-2">
+                                <i class="bi bi-plus-circle"></i> Get More
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recording Quotas Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-record-circle"></i> Recording Quotas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-4 text-muted">Max Recordings</div>
+                        <div class="col-md-8">
+                            <span id="quota-recordings">0</span>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar" role="progressbar" id="progress-recordings" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4 text-muted">Max Series</div>
+                        <div class="col-md-8">
+                            <span id="quota-series">0</span>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar" role="progressbar" id="progress-series" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 text-muted">Max Movies</div>
+                        <div class="col-md-8">
+                            <span id="quota-movies">0</span>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar" role="progressbar" id="progress-movies" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Change Password Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-key"></i> Change Password</h5>
+                </div>
+                <div class="card-body">
+                    <form id="changePasswordForm">
+                        <div class="mb-3">
+                            <label for="currentPassword" class="form-label">Current Password</label>
+                            <input type="password" class="form-control" id="currentPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label">New Password</label>
+                            <input type="password" class="form-control" id="newPassword" required minlength="6">
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label">Confirm New Password</label>
+                            <input type="password" class="form-control" id="confirmPassword" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Update Password
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function loadProfile() {
+    try {
+        // Load user profile
+        const response = await axios.get('/api/auth/me', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        const user = response.data;
+        
+        // Update profile information
+        document.getElementById('profile-username').textContent = user.username;
+        document.getElementById('profile-email').textContent = user.email;
+        document.getElementById('profile-role').textContent = user.role.toUpperCase();
+        document.getElementById('profile-created').textContent = new Date(user.created_at).toLocaleDateString();
+        document.getElementById('profile-credits').textContent = user.credits;
+        
+        // Load credit balance and quotas
+        const balanceResponse = await axios.get('/api/credits/balance', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        const balance = balanceResponse.data;
+        
+        // Update quotas
+        document.getElementById('quota-recordings').textContent = `${user.active_recordings || 0} / ${balance.max_recordings}`;
+        document.getElementById('quota-series').textContent = `${user.active_series || 0} / ${balance.max_recurring_shows}`;
+        document.getElementById('quota-movies').textContent = `${user.active_movies || 0} / ${balance.max_movies}`;
+        
+        // Update progress bars
+        const recordingsPercent = (user.active_recordings || 0) / balance.max_recordings * 100;
+        const seriesPercent = (user.active_series || 0) / balance.max_recurring_shows * 100;
+        const moviesPercent = (user.active_movies || 0) / balance.max_movies * 100;
+        
+        document.getElementById('progress-recordings').style.width = recordingsPercent + '%';
+        document.getElementById('progress-series').style.width = seriesPercent + '%';
+        document.getElementById('progress-movies').style.width = moviesPercent + '%';
+        
+    } catch (error) {
+        console.error('Failed to load profile:', error);
+        alert('Failed to load profile information');
+    }
+}
+
+// Handle password change
+document.getElementById('changePasswordForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const currentPassword = document.getElementById('currentPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    
+    if (newPassword !== confirmPassword) {
+        alert('New passwords do not match');
+        return;
+    }
+    
+    try {
+        await axios.post('/api/auth/change-password', {
+            current_password: currentPassword,
+            new_password: newPassword
+        }, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        alert('Password updated successfully');
+        document.getElementById('changePasswordForm').reset();
+        
+    } catch (error) {
+        alert(error.response?.data?.detail || 'Failed to update password');
+    }
+});
+
+// Load profile on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadProfile();
+});
+</script>
+{% endblock %}

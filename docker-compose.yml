@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  iptv-pvr:
+    build: .
+    container_name: iptv-pvr
+    ports:
+      - "8000:8000"    # Web interface
+      - "5004:5004"    # HDHomeRun port
+    volumes:
+      - ./recordings:/app/recordings
+      - ./iptv_pvr.db:/app/iptv_pvr.db
+    environment:
+      - DATABASE_URL=sqlite:///./iptv_pvr.db
+      - SECRET_KEY=change-this-in-production-to-a-secure-key
+      - DEFAULT_M3U_URL=
+      - DEFAULT_EPG_URL=
+    restart: unless-stopped
+    networks:
+      - iptv-net
+
+  # Optional: PostgreSQL database for production
+  postgres:
+    image: postgres:15-alpine
+    container_name: iptv-postgres
+    environment:
+      - POSTGRES_USER=iptv
+      - POSTGRES_PASSWORD=iptv123
+      - POSTGRES_DB=iptvpvr
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    networks:
+      - iptv-net
+    profiles:
+      - postgres
+
+networks:
+  iptv-net:
+    driver: bridge
+
+volumes:
+  postgres_data:

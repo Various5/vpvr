@@ -1,0 +1,586 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - IPTV PVR{% endblock %}
+
+{% block extra_css %}
+<style>
+.settings-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.settings-nav {
+    background: var(--bg-surface-secondary);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 2rem;
+}
+
+.settings-nav .nav-link {
+    color: var(--text-primary);
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.375rem;
+    transition: all 0.2s;
+}
+
+.settings-nav .nav-link:hover {
+    background: var(--bg-surface-tertiary);
+}
+
+.settings-nav .nav-link.active {
+    background: var(--color-primary);
+    color: var(--color-primary-contrast);
+}
+
+.settings-section {
+    display: none;
+}
+
+.settings-section.active {
+    display: block;
+}
+
+.setting-group {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.setting-item {
+    margin-bottom: 1.5rem;
+}
+
+.setting-item:last-child {
+    margin-bottom: 0;
+}
+
+.setting-label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.setting-help {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+}
+
+.save-button {
+    position: sticky;
+    bottom: 2rem;
+    float: right;
+    box-shadow: var(--shadow-lg);
+}
+
+@media (max-width: 768px) {
+    .settings-nav {
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid settings-container">
+    <h1 class="mb-4">Settings</h1>
+    
+    <!-- Settings Navigation -->
+    <nav class="settings-nav">
+        <ul class="nav nav-pills">
+            <li class="nav-item">
+                <a class="nav-link active" href="#general" onclick="showSection('general')">
+                    <i class="bi bi-gear"></i> General
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#recording" onclick="showSection('recording')">
+                    <i class="bi bi-record-circle"></i> Recording
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#network" onclick="showSection('network')">
+                    <i class="bi bi-wifi"></i> Network
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#advanced" onclick="showSection('advanced')">
+                    <i class="bi bi-sliders"></i> Advanced
+                </a>
+            </li>
+        </ul>
+    </nav>
+    
+    <!-- General Settings -->
+    <div id="general-section" class="settings-section active">
+        <div class="setting-group">
+            <h3>System Information</h3>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="setting-item">
+                        <div class="setting-label">System Name</div>
+                        <input type="text" class="form-control" id="systemName" value="IPTV PVR">
+                        <div class="setting-help">Name displayed in the UI and HDHomeRun emulation</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="setting-item">
+                        <div class="setting-label">Device ID</div>
+                        <input type="text" class="form-control" id="deviceId" readonly value="Loading...">
+                        <div class="setting-help">Unique identifier for this system</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="setting-group">
+            <h3>User Interface</h3>
+            <div class="setting-item">
+                <div class="setting-label">Theme</div>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="currentTheme" readonly>
+                    <a href="/themes" class="btn btn-outline-primary">
+                        <i class="bi bi-palette"></i> Change Theme
+                    </a>
+                </div>
+                <div class="setting-help">Visit the theme gallery to customize appearance</div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="animations" checked>
+                    <label class="form-check-label" for="animations">
+                        Enable animations
+                    </label>
+                </div>
+                <div class="setting-help">Disable for better performance on slower devices</div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="autoplay" checked>
+                    <label class="form-check-label" for="autoplay">
+                        Autoplay channels on selection
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recording Settings -->
+    <div id="recording-section" class="settings-section">
+        <div class="setting-group">
+            <h3>Storage</h3>
+            <div class="setting-item">
+                <div class="setting-label">Recording Path</div>
+                <input type="text" class="form-control" id="recordingPath" value="/recordings">
+                <div class="setting-help">Where recordings will be saved</div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-label">Storage Limit</div>
+                <div class="input-group">
+                    <input type="number" class="form-control" id="storageLimit" value="500">
+                    <span class="input-group-text">GB</span>
+                </div>
+                <div class="setting-help">Maximum storage to use for recordings (0 = unlimited)</div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="autoDelete" checked>
+                    <label class="form-check-label" for="autoDelete">
+                        Auto-delete old recordings when storage is full
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="setting-group">
+            <h3>Recording Options</h3>
+            <div class="setting-item">
+                <div class="setting-label">Pre-recording Buffer</div>
+                <div class="input-group">
+                    <input type="number" class="form-control" id="preBuffer" value="2">
+                    <span class="input-group-text">minutes</span>
+                </div>
+                <div class="setting-help">Start recording this many minutes before scheduled time</div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-label">Post-recording Buffer</div>
+                <div class="input-group">
+                    <input type="number" class="form-control" id="postBuffer" value="5">
+                    <span class="input-group-text">minutes</span>
+                </div>
+                <div class="setting-help">Continue recording this many minutes after scheduled end</div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-label">Max Concurrent Recordings</div>
+                <input type="number" class="form-control" id="maxConcurrent" value="4" min="1" max="10">
+                <div class="setting-help">Maximum number of simultaneous recordings</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Network Settings -->
+    <div id="network-section" class="settings-section">
+        <div class="setting-group">
+            <h3>HDHomeRun Emulation</h3>
+            <div class="setting-item">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="hdhrEnabled" checked>
+                    <label class="form-check-label" for="hdhrEnabled">
+                        Enable HDHomeRun emulation
+                    </label>
+                </div>
+                <div class="setting-help">Allow other apps to discover and use this as an HDHomeRun device</div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="setting-item">
+                        <div class="setting-label">Device ID</div>
+                        <input type="text" class="form-control" id="hdhrDeviceId" value="IPTV-PVR">
+                        <div class="setting-help">HDHomeRun device identifier</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="setting-item">
+                        <div class="setting-label">Discovery Port</div>
+                        <input type="number" class="form-control" id="hdhrPort" value="5004" min="1" max="65535">
+                        <div class="setting-help">Port for HDHomeRun discovery (default: 5004)</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-label">Number of Tuners</div>
+                <input type="number" class="form-control" id="hdhrTuners" value="4" min="1" max="8">
+                <div class="setting-help">Virtual tuners available for streaming</div>
+            </div>
+        </div>
+        
+        <div class="setting-group">
+            <h3>Stream Settings</h3>
+            <div class="setting-item">
+                <div class="setting-label">Stream Timeout</div>
+                <div class="input-group">
+                    <input type="number" class="form-control" id="streamTimeout" value="30">
+                    <span class="input-group-text">seconds</span>
+                </div>
+                <div class="setting-help">How long to wait for a stream to start</div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-label">Buffer Size</div>
+                <div class="input-group">
+                    <input type="number" class="form-control" id="bufferSize" value="4">
+                    <span class="input-group-text">MB</span>
+                </div>
+                <div class="setting-help">Stream buffer size for smooth playback</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Advanced Settings -->
+    <div id="advanced-section" class="settings-section">
+        <div class="setting-group">
+            <h3>Playlist Updates</h3>
+            <div class="setting-item">
+                <div class="setting-label">Default Update Interval</div>
+                <div class="input-group">
+                    <input type="number" class="form-control" id="updateInterval" value="72" min="1" max="168">
+                    <span class="input-group-text">hours</span>
+                </div>
+                <div class="setting-help">How often to check and update playlists (default: 72 hours)</div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-label">Update Time</div>
+                <input type="time" class="form-control" id="updateTime" value="03:00">
+                <div class="setting-help">Preferred time of day to run automatic updates</div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="enableAutoUpdate" checked>
+                    <label class="form-check-label" for="enableAutoUpdate">
+                        Enable automatic playlist updates
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="setting-group">
+            <h3>Account</h3>
+            <div class="setting-item">
+                <button class="btn btn-outline-primary" onclick="showPasswordModal()">
+                    <i class="bi bi-key"></i> Change Password
+                </button>
+            </div>
+        </div>
+        
+        <div class="setting-group">
+            <h3>Debug Options</h3>
+            <div class="setting-item">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="debugMode">
+                    <label class="form-check-label" for="debugMode">
+                        Enable debug mode
+                    </label>
+                </div>
+                <div class="setting-help">Shows additional debugging information</div>
+            </div>
+            
+            <div class="setting-item">
+                <button class="btn btn-outline-secondary" onclick="downloadLogs()">
+                    <i class="bi bi-file-text"></i> Download Debug Logs
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Save Button -->
+    <button class="btn btn-primary save-button" onclick="saveSettings()">
+        <i class="bi bi-check-lg"></i> Save Settings
+    </button>
+</div>
+
+<!-- Password Change Modal -->
+<div class="modal fade" id="passwordModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Change Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="passwordForm">
+                    <div class="mb-3">
+                        <label class="form-label">Current Password</label>
+                        <input type="password" class="form-control" id="currentPassword" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">New Password</label>
+                        <input type="password" class="form-control" id="newPassword" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Confirm New Password</label>
+                        <input type="password" class="form-control" id="confirmPassword" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="changePassword()">
+                    <i class="bi bi-lock"></i> Change Password
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Current settings
+let currentSettings = {};
+
+// Initialize
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadSettings();
+    setupEventListeners();
+});
+
+// Load settings
+async function loadSettings() {
+    try {
+        // Load current theme
+        const theme = localStorage.getItem('theme') || 'blue';
+        document.getElementById('currentTheme').value = theme.charAt(0).toUpperCase() + theme.slice(1);
+        
+        // Load system info
+        const sysResponse = await fetch('/api/system/info', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        
+        if (sysResponse.ok) {
+            const sysInfo = await sysResponse.json();
+            document.getElementById('deviceId').value = sysInfo.device_id || 'Unknown';
+        }
+        
+        // Load user settings
+        const response = await fetch('/api/auth/me', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        
+        if (response.ok) {
+            const userData = await response.json();
+            // Apply any saved settings
+            currentSettings = userData.settings || {};
+            applySettings();
+        }
+    } catch (error) {
+        console.error('Failed to load settings:', error);
+    }
+}
+
+// Apply settings to UI
+function applySettings() {
+    // Apply saved values if they exist
+    if (currentSettings.system_name) {
+        document.getElementById('systemName').value = currentSettings.system_name;
+    }
+    
+    if (currentSettings.recording_path) {
+        document.getElementById('recordingPath').value = currentSettings.recording_path;
+    }
+    
+    // Apply other settings as needed
+}
+
+// Show section
+function showSection(section) {
+    // Update nav
+    document.querySelectorAll('.settings-nav .nav-link').forEach(link => {
+        link.classList.toggle('active', link.getAttribute('href') === `#${section}`);
+    });
+    
+    // Update sections
+    document.querySelectorAll('.settings-section').forEach(sec => {
+        sec.classList.toggle('active', sec.id === `${section}-section`);
+    });
+}
+
+// Setup event listeners
+function setupEventListeners() {
+    // Add any real-time preview listeners here
+}
+
+// Save settings
+async function saveSettings() {
+    const settings = {
+        // General
+        system_name: document.getElementById('systemName').value,
+        animations: document.getElementById('animations').checked,
+        autoplay: document.getElementById('autoplay').checked,
+        
+        // Recording
+        recording_path: document.getElementById('recordingPath').value,
+        storage_limit: parseInt(document.getElementById('storageLimit').value),
+        auto_delete: document.getElementById('autoDelete').checked,
+        pre_buffer: parseInt(document.getElementById('preBuffer').value),
+        post_buffer: parseInt(document.getElementById('postBuffer').value),
+        max_concurrent: parseInt(document.getElementById('maxConcurrent').value),
+        
+        // Network
+        hdhr_enabled: document.getElementById('hdhrEnabled').checked,
+        hdhr_device_id: document.getElementById('hdhrDeviceId').value,
+        hdhr_port: parseInt(document.getElementById('hdhrPort').value),
+        hdhr_tuners: parseInt(document.getElementById('hdhrTuners').value),
+        stream_timeout: parseInt(document.getElementById('streamTimeout').value),
+        buffer_size: parseInt(document.getElementById('bufferSize').value),
+        
+        // Advanced
+        update_interval: parseInt(document.getElementById('updateInterval').value),
+        update_time: document.getElementById('updateTime').value,
+        enable_auto_update: document.getElementById('enableAutoUpdate').checked,
+        debug_mode: document.getElementById('debugMode').checked
+    };
+    
+    try {
+        const response = await fetch('/api/system/settings', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(settings)
+        });
+        
+        if (response.ok) {
+            showNotification('Settings saved successfully', 'success');
+        } else {
+            throw new Error('Failed to save settings');
+        }
+    } catch (error) {
+        window.handleApiError(error, { category: 'Settings' });
+    }
+}
+
+// Show password modal
+function showPasswordModal() {
+    const modal = new bootstrap.Modal(document.getElementById('passwordModal'));
+    document.getElementById('passwordForm').reset();
+    modal.show();
+}
+
+// Change password
+async function changePassword() {
+    const current = document.getElementById('currentPassword').value;
+    const newPass = document.getElementById('newPassword').value;
+    const confirm = document.getElementById('confirmPassword').value;
+    
+    if (newPass !== confirm) {
+        showNotification('New passwords do not match', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/users/me/password', {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                current_password: current,
+                new_password: newPass
+            })
+        });
+        
+        if (response.ok) {
+            showNotification('Password changed successfully', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('passwordModal')).hide();
+        } else {
+            const error = await response.json();
+            showNotification(error.detail || 'Failed to change password', 'error');
+        }
+    } catch (error) {
+        window.handleApiError(error, { category: 'Account' });
+    }
+}
+
+// Download logs
+async function downloadLogs() {
+    try {
+        const response = await fetch('/api/system/logs/download', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        
+        if (response.ok) {
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `iptv-pvr-logs-${new Date().toISOString().split('T')[0]}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    } catch (error) {
+        window.handleApiError(error, { category: 'Logs' });
+    }
+}
+</script>
+{% endblock %}

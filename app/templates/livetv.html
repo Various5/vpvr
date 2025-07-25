@@ -1,0 +1,1184 @@
+{% extends "base.html" %}
+
+{% block title %}Live TV - IPTV PVR{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Dark theme support */
+    [data-bs-theme="dark"] {
+        --channel-bg: #1a1a1a;
+        --channel-hover: #2a2a2a;
+        --channel-active: #333;
+        --channel-border: #444;
+        --filter-bg: #2a2a2a;
+        --filter-active: #0d6efd;
+        --text-muted: #999;
+    }
+    
+    [data-bs-theme="light"] {
+        --channel-bg: #fff;
+        --channel-hover: #f8f9fa;
+        --channel-active: #e9ecef;
+        --channel-border: #dee2e6;
+        --filter-bg: #f8f9fa;
+        --filter-active: #0d6efd;
+        --text-muted: #6c757d;
+    }
+    
+    .tv-container {
+        background: #000;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+    
+    #videoPlayer {
+        width: 100%;
+        height: auto;
+        max-height: 70vh;
+        background: #000;
+    }
+    
+    .channel-list {
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+    
+    .channel-item {
+        cursor: pointer;
+        transition: all 0.2s;
+        border-left: 3px solid transparent;
+        background: var(--channel-bg);
+    }
+    
+    .channel-item:hover {
+        background-color: var(--channel-hover);
+    }
+    
+    .channel-item.active {
+        background-color: var(--channel-active);
+        border-left-color: var(--filter-active);
+    }
+    
+    .channel-logo {
+        width: 40px;
+        height: 40px;
+        object-fit: contain;
+    }
+    
+    .controls-bar {
+        background: rgba(0,0,0,0.8);
+        color: white;
+        padding: 10px;
+    }
+    
+    .epg-info {
+        background: var(--channel-bg);
+        border-radius: 5px;
+        padding: 10px;
+        margin-top: 10px;
+        border: 1px solid var(--channel-border);
+    }
+    
+    .volume-slider {
+        width: 100px;
+    }
+    
+    .video-loading {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-size: 1.5rem;
+        z-index: 10;
+        display: none;
+    }
+    
+    .tv-container-wrapper {
+        position: relative;
+    }
+    
+    /* Filters and controls */
+    .filter-section {
+        background: var(--filter-bg);
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 15px;
+    }
+    
+    .filter-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 8px;
+    }
+    
+    .filter-tag {
+        padding: 4px 12px;
+        border-radius: 20px;
+        background: var(--channel-bg);
+        border: 1px solid var(--channel-border);
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.875rem;
+    }
+    
+    .filter-tag:hover {
+        border-color: var(--filter-active);
+        color: var(--filter-active);
+    }
+    
+    .filter-tag.active {
+        background: var(--filter-active);
+        color: white;
+        border-color: var(--filter-active);
+    }
+    
+    .channel-info-bar {
+        padding: 10px 15px;
+        background: var(--filter-bg);
+        border-radius: 8px;
+        margin-bottom: 10px;
+        font-size: 0.875rem;
+        color: var(--text-muted);
+    }
+    
+    .pagination-container {
+        padding: 15px 0;
+        border-top: 1px solid var(--channel-border);
+        margin-top: auto;
+    }
+    
+    .pagination .page-link {
+        background: var(--channel-bg);
+        border-color: var(--channel-border);
+        color: var(--bs-body-color);
+    }
+    
+    .pagination .page-link:hover {
+        background: var(--channel-hover);
+        border-color: var(--filter-active);
+        color: var(--filter-active);
+    }
+    
+    .pagination .page-item.active .page-link {
+        background: var(--filter-active);
+        border-color: var(--filter-active);
+        color: white;
+    }
+    
+    .pagination .page-item.disabled .page-link {
+        background: var(--channel-bg);
+        border-color: var(--channel-border);
+        color: var(--text-muted);
+    }
+    
+    .channel-list-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+    
+    .channel-list-content {
+        flex: 1;
+        overflow-y: auto;
+        min-height: 0;
+    }
+    
+    .quality-badge {
+        font-size: 0.7rem;
+        padding: 2px 6px;
+        border-radius: 3px;
+        background: rgba(0,0,0,0.1);
+        margin-left: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Video Player Column -->
+        <div class="col-lg-8">
+            <div class="tv-container-wrapper">
+                <div class="tv-container">
+                    <video id="videoPlayer" controls autoplay></video>
+                    <div class="video-loading" id="videoLoading">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="controls-bar d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <button class="btn btn-sm btn-light" onclick="togglePlay()">
+                            <i class="bi bi-play-fill" id="playIcon"></i>
+                        </button>
+                        <button class="btn btn-sm btn-light" onclick="toggleMute()">
+                            <i class="bi bi-volume-up-fill" id="muteIcon"></i>
+                        </button>
+                        <input type="range" class="form-range volume-slider" id="volumeSlider" 
+                               min="0" max="100" value="100" onchange="setVolume(this.value)">
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-danger" onclick="recordChannel()">
+                            <i class="bi bi-record-circle"></i> Record
+                        </button>
+                        <button class="btn btn-sm btn-light" onclick="toggleFullscreen()">
+                            <i class="bi bi-fullscreen"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            </div>
+            
+            <!-- Current Program Info -->
+            <div class="epg-info" id="currentProgramInfo">
+                <h5 id="currentChannelName">Select a channel to start watching</h5>
+                <div id="programDetails"></div>
+            </div>
+        </div>
+        
+        <!-- Channel List Column -->
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Channels</h5>
+                        <button class="btn btn-sm btn-outline-primary" onclick="refreshChannels()">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                    </div>
+                    <input type="text" class="form-control form-control-sm mt-2" 
+                           id="channelSearch" placeholder="Search channels...">
+                    
+                    <!-- Filters -->
+                    <div class="filter-section mt-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <small class="text-muted">Group Filter</small>
+                            <small class="text-muted" id="activeFilters"></small>
+                        </div>
+                        <div class="filter-tags" id="groupFilters">
+                            <span class="filter-tag active" data-filter="all">All Groups</span>
+                            <!-- Groups will be loaded dynamically -->
+                        </div>
+                    </div>
+                    
+                    <div class="filter-section">
+                        <small class="text-muted">Status</small>
+                        <div class="filter-tags" id="statusFilters">
+                            <span class="filter-tag active" data-filter="all">All</span>
+                            <span class="filter-tag" data-filter="online">Online</span>
+                            <span class="filter-tag" data-filter="offline">Offline</span>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-section">
+                        <small class="text-muted">Quality</small>
+                        <div class="filter-tags" id="qualityFilters">
+                            <span class="filter-tag active" data-filter="all">All</span>
+                            <span class="filter-tag" data-filter="HD">HD</span>
+                            <span class="filter-tag" data-filter="SD">SD</span>
+                            <span class="filter-tag" data-filter="FHD">FHD</span>
+                            <span class="filter-tag" data-filter="4K">4K</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Controls -->
+                    <div class="d-flex gap-2 mt-3">
+                        <select class="form-select form-select-sm" id="sortSelect">
+                            <option value="name-asc">Name (A-Z)</option>
+                            <option value="name-desc">Name (Z-A)</option>
+                            <option value="number-asc">Number (Low-High)</option>
+                            <option value="number-desc">Number (High-Low)</option>
+                            <option value="group-asc">Group (A-Z)</option>
+                            <option value="quality-desc">Quality (High-Low)</option>
+                        </select>
+                        <select class="form-select form-select-sm" id="perPageSelect" style="width: auto;">
+                            <option value="25">25</option>
+                            <option value="50" selected>50</option>
+                            <option value="100">100</option>
+                            <option value="500">500</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body p-0 channel-list-container">
+                    <div class="channel-info-bar">
+                        <span id="channelCountInfo">Loading channels...</span>
+                    </div>
+                    <div class="channel-list-content">
+                        <div class="channel-list" id="channelList">
+                            <!-- Channels will be loaded here -->
+                        </div>
+                    </div>
+                    <!-- Pagination -->
+                    <div class="pagination-container px-3">
+                        <nav aria-label="Channel pagination">
+                            <ul class="pagination pagination-sm justify-content-center mb-0" id="paginationControls">
+                                <!-- Pagination will be generated here -->
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Record Modal -->
+<div class="modal fade" id="recordModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Record Channel</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Record <strong id="recordChannelName"></strong></p>
+                <div class="mb-3">
+                    <label for="recordDuration" class="form-label">Duration (minutes)</label>
+                    <input type="number" class="form-control" id="recordDuration" value="60" min="1" max="480">
+                </div>
+                <div class="alert alert-info">
+                    <small>The recording will start immediately and continue for the specified duration.</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="startRecording()">
+                    <i class="bi bi-record-circle"></i> Start Recording
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let channels = [];
+let filteredChannels = [];
+let currentChannel = null;
+let player = null;
+let hls = null;
+let groups = [];
+
+// Pagination and filtering state
+let currentPage = 1;
+let itemsPerPage = 50;
+let currentSort = 'name-asc';
+let currentSearch = '';
+let currentFilters = {
+    group: 'all',
+    status: 'all',
+    quality: 'all'
+};
+
+// Helper function to make authenticated requests with auto-refresh
+async function fetchWithAuth(url, options = {}) {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = '/login';
+        return null;
+    }
+    
+    const headers = {
+        ...options.headers,
+        'Authorization': `Bearer ${token}`
+    };
+    
+    let response = await fetch(url, { ...options, headers });
+    
+    // If we get 401, try to refresh the token
+    if (response.status === 401) {
+        try {
+            const refreshResponse = await fetch('/api/auth/refresh', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (refreshResponse.ok) {
+                const data = await refreshResponse.json();
+                localStorage.setItem('token', data.access_token);
+                
+                // Retry the original request with new token
+                headers['Authorization'] = `Bearer ${data.access_token}`;
+                response = await fetch(url, { ...options, headers });
+            } else {
+                // Refresh failed, redirect to login
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+                return null;
+            }
+        } catch (error) {
+            console.error('Token refresh failed:', error);
+            localStorage.removeItem('token');
+            window.location.href = '/login';
+            return null;
+        }
+    }
+    
+    return response;
+}
+
+async function loadChannels() {
+    try {
+        const response = await fetchWithAuth('/api/channels');
+        if (!response || !response.ok) throw new Error('Failed to fetch channels');
+        
+        channels = await response.json();
+        
+        // Extract unique groups
+        const uniqueGroups = [...new Set(channels.map(ch => ch.group).filter(g => g))];
+        groups = uniqueGroups.sort();
+        
+        // Load groups into filter
+        loadGroupFilters();
+        
+        // Apply filters and display
+        applyFiltersAndDisplay();
+    } catch (error) {
+        console.error('Failed to load channels:', error);
+        showNotification('Failed to load channels', 'error');
+    }
+}
+
+function loadGroupFilters() {
+    const container = document.getElementById('groupFilters');
+    container.innerHTML = '<span class="filter-tag active" data-filter="all">All Groups</span>';
+    
+    groups.forEach(group => {
+        const tag = document.createElement('span');
+        tag.className = 'filter-tag';
+        tag.dataset.filter = group;
+        tag.textContent = group;
+        tag.onclick = () => setGroupFilter(group);
+        container.appendChild(tag);
+    });
+}
+
+function setGroupFilter(group) {
+    currentFilters.group = group;
+    document.querySelectorAll('#groupFilters .filter-tag').forEach(tag => {
+        tag.classList.toggle('active', tag.dataset.filter === group);
+    });
+    currentPage = 1;
+    applyFiltersAndDisplay();
+    updateURL();
+}
+
+function setStatusFilter(status) {
+    currentFilters.status = status;
+    document.querySelectorAll('#statusFilters .filter-tag').forEach(tag => {
+        tag.classList.toggle('active', tag.dataset.filter === status);
+    });
+    currentPage = 1;
+    applyFiltersAndDisplay();
+    updateURL();
+}
+
+function setQualityFilter(quality) {
+    currentFilters.quality = quality;
+    document.querySelectorAll('#qualityFilters .filter-tag').forEach(tag => {
+        tag.classList.toggle('active', tag.dataset.filter === quality);
+    });
+    currentPage = 1;
+    applyFiltersAndDisplay();
+    updateURL();
+}
+
+function applyFiltersAndDisplay() {
+    // Apply search filter
+    filteredChannels = channels.filter(channel => {
+        if (currentSearch && !channel.name.toLowerCase().includes(currentSearch.toLowerCase()) &&
+            !(channel.number && channel.number.includes(currentSearch))) {
+            return false;
+        }
+        
+        // Group filter
+        if (currentFilters.group !== 'all' && channel.group !== currentFilters.group) {
+            return false;
+        }
+        
+        // Status filter
+        if (currentFilters.status !== 'all') {
+            const status = channel.status || 'offline';
+            if (status !== currentFilters.status) {
+                return false;
+            }
+        }
+        
+        // Quality filter
+        if (currentFilters.quality !== 'all') {
+            const quality = extractQuality(channel.name);
+            if (quality !== currentFilters.quality) {
+                return false;
+            }
+        }
+        
+        return true;
+    });
+    
+    // Apply sorting
+    sortChannels();
+    
+    // Display with pagination
+    displayChannels();
+}
+
+function extractQuality(channelName) {
+    if (channelName.includes('4K') || channelName.includes('UHD')) return '4K';
+    if (channelName.includes('FHD') || channelName.includes('1080')) return 'FHD';
+    if (channelName.includes('HD') || channelName.includes('720')) return 'HD';
+    return 'SD';
+}
+
+function sortChannels() {
+    const [field, order] = currentSort.split('-');
+    
+    filteredChannels.sort((a, b) => {
+        let valueA, valueB;
+        
+        switch(field) {
+            case 'name':
+                valueA = a.name.toLowerCase();
+                valueB = b.name.toLowerCase();
+                break;
+            case 'number':
+                valueA = parseInt(a.number) || 999999;
+                valueB = parseInt(b.number) || 999999;
+                break;
+            case 'group':
+                valueA = (a.group || '').toLowerCase();
+                valueB = (b.group || '').toLowerCase();
+                break;
+            case 'quality':
+                const qualityOrder = {'4K': 4, 'FHD': 3, 'HD': 2, 'SD': 1};
+                valueA = qualityOrder[extractQuality(a.name)] || 0;
+                valueB = qualityOrder[extractQuality(b.name)] || 0;
+                break;
+            default:
+                return 0;
+        }
+        
+        if (order === 'asc') {
+            return valueA < valueB ? -1 : valueA > valueB ? 1 : 0;
+        } else {
+            return valueA > valueB ? -1 : valueA < valueB ? 1 : 0;
+        }
+    });
+}
+
+function displayChannels() {
+    const container = document.getElementById('channelList');
+    container.innerHTML = '';
+    
+    // Calculate pagination
+    const totalChannels = filteredChannels.length;
+    const totalPages = Math.ceil(totalChannels / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = Math.min(startIndex + itemsPerPage, totalChannels);
+    const paginatedChannels = filteredChannels.slice(startIndex, endIndex);
+    
+    // Update channel count info
+    const channelCountInfo = document.getElementById('channelCountInfo');
+    if (totalChannels > 0) {
+        channelCountInfo.textContent = `Showing ${startIndex + 1}-${endIndex} of ${totalChannels} channels`;
+    } else {
+        channelCountInfo.textContent = 'No channels found';
+    }
+    
+    // Keep currently playing channel visible
+    let currentChannelInPage = false;
+    
+    paginatedChannels.forEach(channel => {
+        const channelDiv = document.createElement('div');
+        channelDiv.className = 'channel-item p-3 border-bottom';
+        channelDiv.onclick = () => playChannel(channel, channelDiv);
+        channelDiv.innerHTML = `
+            <div class="d-flex align-items-center">
+                ${channel.logo_url ? 
+                    `<img src="${channel.logo_url}" class="channel-logo me-3">` : 
+                    '<i class="bi bi-tv fs-3 me-3"></i>'
+                }
+                <div class="flex-grow-1">
+                    <h6 class="mb-0">
+                        ${channel.number ? channel.number + ' - ' : ''}${channel.name}
+                        <span class="quality-badge">${extractQuality(channel.name)}</span>
+                    </h6>
+                    <small class="text-muted">
+                        <span id="epg-${channel.id}">Loading...</span>
+                        ${channel.group ? ` • ${channel.group}` : ''}
+                    </small>
+                </div>
+                <i class="bi bi-play-circle fs-4 text-primary"></i>
+            </div>
+        `;
+        container.appendChild(channelDiv);
+        
+        // Check if this is the current channel
+        if (currentChannel && currentChannel.id === channel.id) {
+            channelDiv.classList.add('active');
+            currentChannelInPage = true;
+        }
+        
+        // Load EPG info
+        loadChannelEPG(channel.id);
+    });
+    
+    // If current channel is not in view, show a notice
+    if (currentChannel && !currentChannelInPage) {
+        const notice = document.createElement('div');
+        notice.className = 'alert alert-info m-3';
+        notice.innerHTML = `
+            <small><i class="bi bi-info-circle"></i> Currently playing: <strong>${currentChannel.name}</strong> 
+            <a href="#" onclick="jumpToCurrentChannel(); return false;">Jump to channel</a></small>
+        `;
+        container.insertBefore(notice, container.firstChild);
+    }
+    
+    // Render pagination
+    renderPagination(totalPages);
+}
+
+function renderPagination(totalPages) {
+    const container = document.getElementById('paginationControls');
+    container.innerHTML = '';
+    
+    if (totalPages <= 1) return;
+    
+    // Previous button
+    const prevItem = document.createElement('li');
+    prevItem.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+    prevItem.innerHTML = `<a class="page-link" href="#" data-page="${currentPage - 1}">Previous</a>`;
+    container.appendChild(prevItem);
+    
+    // Page numbers
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    if (endPage - startPage < maxVisiblePages - 1) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+    
+    // First page and ellipsis
+    if (startPage > 1) {
+        const firstItem = document.createElement('li');
+        firstItem.className = 'page-item';
+        firstItem.innerHTML = `<a class="page-link" href="#" data-page="1">1</a>`;
+        container.appendChild(firstItem);
+        
+        if (startPage > 2) {
+            const ellipsisItem = document.createElement('li');
+            ellipsisItem.className = 'page-item disabled';
+            ellipsisItem.innerHTML = '<span class="page-link">...</span>';
+            container.appendChild(ellipsisItem);
+        }
+    }
+    
+    // Page numbers
+    for (let i = startPage; i <= endPage; i++) {
+        const pageItem = document.createElement('li');
+        pageItem.className = `page-item ${i === currentPage ? 'active' : ''}`;
+        pageItem.innerHTML = `<a class="page-link" href="#" data-page="${i}">${i}</a>`;
+        container.appendChild(pageItem);
+    }
+    
+    // Last page and ellipsis
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+            const ellipsisItem = document.createElement('li');
+            ellipsisItem.className = 'page-item disabled';
+            ellipsisItem.innerHTML = '<span class="page-link">...</span>';
+            container.appendChild(ellipsisItem);
+        }
+        
+        const lastItem = document.createElement('li');
+        lastItem.className = 'page-item';
+        lastItem.innerHTML = `<a class="page-link" href="#" data-page="${totalPages}">${totalPages}</a>`;
+        container.appendChild(lastItem);
+    }
+    
+    // Next button
+    const nextItem = document.createElement('li');
+    nextItem.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+    nextItem.innerHTML = `<a class="page-link" href="#" data-page="${currentPage + 1}">Next</a>`;
+    container.appendChild(nextItem);
+    
+    // Add click handlers
+    container.querySelectorAll('.page-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const page = parseInt(e.target.dataset.page);
+            if (page && !e.target.parentElement.classList.contains('disabled')) {
+                changePage(page);
+            }
+        });
+    });
+}
+
+function changePage(page) {
+    currentPage = page;
+    displayChannels();
+    updateURL();
+    
+    // Scroll to top of channel list
+    document.querySelector('.channel-list').scrollTop = 0;
+}
+
+function jumpToCurrentChannel() {
+    if (!currentChannel) return;
+    
+    // Find the page containing the current channel
+    const channelIndex = filteredChannels.findIndex(ch => ch.id === currentChannel.id);
+    if (channelIndex === -1) {
+        // Channel not in filtered results, reset filters
+        currentFilters = { group: 'all', status: 'all', quality: 'all' };
+        currentSearch = '';
+        document.getElementById('channelSearch').value = '';
+        applyFiltersAndDisplay();
+        
+        // Try again
+        const newIndex = filteredChannels.findIndex(ch => ch.id === currentChannel.id);
+        if (newIndex !== -1) {
+            currentPage = Math.floor(newIndex / itemsPerPage) + 1;
+            displayChannels();
+        }
+    } else {
+        currentPage = Math.floor(channelIndex / itemsPerPage) + 1;
+        displayChannels();
+    }
+}
+
+function updateURL() {
+    const params = new URLSearchParams();
+    
+    if (currentPage > 1) params.set('page', currentPage);
+    if (currentSort !== 'name-asc') params.set('sort', currentSort);
+    if (itemsPerPage !== 50) params.set('per_page', itemsPerPage);
+    if (currentSearch) params.set('search', currentSearch);
+    if (currentFilters.group !== 'all') params.set('group', currentFilters.group);
+    if (currentFilters.status !== 'all') params.set('status', currentFilters.status);
+    if (currentFilters.quality !== 'all') params.set('quality', currentFilters.quality);
+    
+    const newURL = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+    window.history.replaceState({}, '', newURL);
+}
+
+function loadStateFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    
+    currentPage = parseInt(params.get('page')) || 1;
+    currentSort = params.get('sort') || 'name-asc';
+    itemsPerPage = parseInt(params.get('per_page')) || 50;
+    currentSearch = params.get('search') || '';
+    currentFilters.group = params.get('group') || 'all';
+    currentFilters.status = params.get('status') || 'all';
+    currentFilters.quality = params.get('quality') || 'all';
+    
+    // Update UI elements
+    document.getElementById('sortSelect').value = currentSort;
+    document.getElementById('perPageSelect').value = itemsPerPage;
+    document.getElementById('channelSearch').value = currentSearch;
+}
+
+async function loadChannelEPG(channelId) {
+    try {
+        const response = await fetchWithAuth(`/api/epg/now-next/${channelId}`);
+        if (!response || !response.ok) throw new Error('Failed to fetch EPG');
+        const data = await response.json();
+        
+        const epgDiv = document.getElementById(`epg-${channelId}`);
+        if (data.now) {
+            epgDiv.textContent = data.now.title;
+        } else {
+            epgDiv.textContent = 'No program info';
+        }
+    } catch (error) {
+        document.getElementById(`epg-${channelId}`).textContent = 'No EPG data';
+    }
+}
+
+async function playChannel(channel, channelElement) {
+    try {
+        currentChannel = channel;
+        
+        // Show loading indicator
+        document.getElementById('videoLoading').style.display = 'block';
+        
+        // Update UI
+        document.querySelectorAll('.channel-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        if (channelElement) {
+            channelElement.classList.add('active');
+        }
+        
+        // Update player
+        player = document.getElementById('videoPlayer');
+        
+        // Try different streaming methods
+        const streamMethods = [
+            { url: `/api/stream-proxy/channels/${channel.id}/stream`, type: 'direct' },
+            { url: `/api/stream-proxy/channels/${channel.id}/stream?transcode=true`, type: 'transcoded' },
+            { url: `/api/channels/${channel.id}/stream-url`, type: 'original' }
+        ];
+        
+        let streamSuccess = false;
+        
+        for (const method of streamMethods) {
+            try {
+                if (method.type === 'original') {
+                    // Get original stream URL
+                    const response = await fetchWithAuth(method.url);
+                    if (!response || !response.ok) continue;
+                    const data = await response.json();
+                    const streamUrl = data.stream_url;
+                    
+                    // Check if it's an HLS stream
+                    if (streamUrl.endsWith('.m3u8') || streamUrl.includes('m3u8')) {
+                        if (Hls.isSupported()) {
+                            // Use HLS.js for HLS streams
+                            if (hls) {
+                                hls.destroy();
+                            }
+                            hls = new Hls({
+                                enableWorker: true,
+                                lowLatencyMode: true,
+                                backBufferLength: 90
+                            });
+                            hls.loadSource(streamUrl);
+                            hls.attachMedia(player);
+                            hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                                player.play().catch(e => console.log('Autoplay failed:', e));
+                            });
+                            hls.on(Hls.Events.ERROR, function(event, data) {
+                                if (data.fatal) {
+                                    console.error('HLS fatal error:', data);
+                                    if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+                                        hls.startLoad();
+                                    } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+                                        hls.recoverMediaError();
+                                    }
+                                }
+                            });
+                            streamSuccess = true;
+                            break;
+                        } else if (player.canPlayType('application/vnd.apple.mpegurl')) {
+                            // Native HLS support (Safari)
+                            player.src = streamUrl;
+                            player.play().catch(e => console.log('Autoplay failed:', e));
+                            streamSuccess = true;
+                            break;
+                        }
+                    } else {
+                        // Try direct playback for non-HLS streams
+                        player.src = streamUrl;
+                        await player.play();
+                        streamSuccess = true;
+                        break;
+                    }
+                } else {
+                    // Use proxy stream
+                    const proxyUrl = method.url;
+                    const authHeader = { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
+                    
+                    if (hls) {
+                        hls.destroy();
+                        hls = null;
+                    }
+                    
+                    // For transcoded streams, we need to handle them differently
+                    if (method.type === 'transcoded') {
+                        player.src = proxyUrl;
+                        // Add auth token as query parameter for video element
+                        player.src = `${proxyUrl}&token=${localStorage.getItem('token')}`;
+                    } else {
+                        player.src = `${proxyUrl}?token=${localStorage.getItem('token')}`;
+                    }
+                    
+                    await player.play();
+                    streamSuccess = true;
+                    break;
+                }
+            } catch (e) {
+                console.error(`Failed with ${method.type} method:`, e);
+                continue;
+            }
+        }
+        
+        if (!streamSuccess) {
+            throw new Error('All streaming methods failed');
+        }
+        
+        // Update channel info
+        document.getElementById('currentChannelName').textContent = channel.name;
+        
+        // Load current program info
+        loadCurrentProgram(channel.id);
+        
+    } catch (error) {
+        console.error('Failed to play channel:', error);
+        document.getElementById('videoLoading').style.display = 'none';
+        alert('Failed to play channel. The stream may be incompatible or unavailable.');
+    }
+}
+
+async function loadCurrentProgram(channelId) {
+    try {
+        const response = await fetchWithAuth(`/api/epg/now-next/${channelId}`);
+        if (!response || !response.ok) throw new Error('Failed to fetch program info');
+        const data = await response.json();
+        
+        const programDiv = document.getElementById('programDetails');
+        
+        if (data.now) {
+            const now = data.now;
+            const startTime = new Date(now.start_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            const endTime = new Date(now.end_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            programDiv.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Now Playing:</strong> ${now.title}<br>
+                        <small class="text-muted">${startTime} - ${endTime}</small>
+                        ${now.description ? `<p class="mt-2 small">${now.description}</p>` : ''}
+                    </div>
+                    ${data.next ? `
+                        <div class="col-md-6">
+                            <strong>Up Next:</strong> ${data.next.title}<br>
+                            <small class="text-muted">${new Date(data.next.start_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        } else {
+            programDiv.innerHTML = '<p class="text-muted">No program information available</p>';
+        }
+    } catch (error) {
+        console.error('Failed to load program info:', error);
+    }
+}
+
+// Player controls
+function togglePlay() {
+    if (player) {
+        if (player.paused) {
+            player.play();
+            document.getElementById('playIcon').className = 'bi bi-pause-fill';
+        } else {
+            player.pause();
+            document.getElementById('playIcon').className = 'bi bi-play-fill';
+        }
+    }
+}
+
+function toggleMute() {
+    if (player) {
+        player.muted = !player.muted;
+        document.getElementById('muteIcon').className = player.muted ? 
+            'bi bi-volume-mute-fill' : 'bi bi-volume-up-fill';
+    }
+}
+
+function setVolume(value) {
+    if (player) {
+        player.volume = value / 100;
+    }
+}
+
+function toggleFullscreen() {
+    if (player) {
+        if (player.requestFullscreen) {
+            player.requestFullscreen();
+        } else if (player.webkitRequestFullscreen) {
+            player.webkitRequestFullscreen();
+        }
+    }
+}
+
+// Recording
+function recordChannel() {
+    if (!currentChannel) {
+        alert('Please select a channel first');
+        return;
+    }
+    
+    document.getElementById('recordChannelName').textContent = currentChannel.name;
+    const modal = new bootstrap.Modal(document.getElementById('recordModal'));
+    modal.show();
+}
+
+async function startRecording() {
+    if (!currentChannel) return;
+    
+    const duration = document.getElementById('recordDuration').value;
+    
+    try {
+        const response = await fetchWithAuth(`/api/recordings/record-now?channel_id=${currentChannel.id}&duration_minutes=${duration}`, {
+            method: 'POST'
+        });
+        if (!response || !response.ok) {
+            const error = response ? await response.json() : { detail: 'Network error' };
+            throw new Error(error.detail || 'Failed to start recording');
+        }
+        
+        bootstrap.Modal.getInstance(document.getElementById('recordModal')).hide();
+        showNotification('Recording started!', 'success');
+    } catch (error) {
+        alert(error.message || 'Failed to start recording');
+    }
+}
+
+// Channel search
+document.getElementById('channelSearch').addEventListener('input', (e) => {
+    currentSearch = e.target.value;
+    currentPage = 1;
+    applyFiltersAndDisplay();
+    updateURL();
+});
+
+// Sort select
+document.getElementById('sortSelect').addEventListener('change', (e) => {
+    currentSort = e.target.value;
+    applyFiltersAndDisplay();
+    updateURL();
+});
+
+// Items per page select
+document.getElementById('perPageSelect').addEventListener('change', (e) => {
+    itemsPerPage = parseInt(e.target.value);
+    currentPage = 1;
+    applyFiltersAndDisplay();
+    updateURL();
+});
+
+// Setup filter event listeners
+document.addEventListener('DOMContentLoaded', () => {
+    // Group filters will be added dynamically
+    
+    // Status filters
+    document.querySelectorAll('#statusFilters .filter-tag').forEach(tag => {
+        tag.addEventListener('click', () => setStatusFilter(tag.dataset.filter));
+    });
+    
+    // Quality filters
+    document.querySelectorAll('#qualityFilters .filter-tag').forEach(tag => {
+        tag.addEventListener('click', () => setQualityFilter(tag.dataset.filter));
+    });
+});
+
+// Initialize player events
+document.addEventListener('DOMContentLoaded', () => {
+    // Load state from URL
+    loadStateFromURL();
+    
+    player = document.getElementById('videoPlayer');
+    
+    player.addEventListener('play', () => {
+        document.getElementById('playIcon').className = 'bi bi-pause-fill';
+    });
+    
+    player.addEventListener('pause', () => {
+        document.getElementById('playIcon').className = 'bi bi-play-fill';
+    });
+    
+    player.addEventListener('volumechange', () => {
+        document.getElementById('volumeSlider').value = player.volume * 100;
+        document.getElementById('muteIcon').className = player.muted ? 
+            'bi bi-volume-mute-fill' : 'bi bi-volume-up-fill';
+    });
+    
+    // Add error handling
+    player.addEventListener('error', (e) => {
+        console.error('Video error:', e);
+        document.getElementById('videoLoading').style.display = 'none';
+        const error = player.error;
+        if (error) {
+            let errorMsg = 'Unknown error';
+            switch(error.code) {
+                case error.MEDIA_ERR_ABORTED:
+                    errorMsg = 'Playback aborted';
+                    break;
+                case error.MEDIA_ERR_NETWORK:
+                    errorMsg = 'Network error';
+                    break;
+                case error.MEDIA_ERR_DECODE:
+                    errorMsg = 'Decode error';
+                    break;
+                case error.MEDIA_ERR_SRC_NOT_SUPPORTED:
+                    errorMsg = 'Media format not supported';
+                    break;
+            }
+            console.error('Video error details:', errorMsg);
+        }
+    });
+    
+    // Add loading state handlers
+    player.addEventListener('loadstart', () => {
+        console.log('Loading stream...');
+        document.getElementById('videoLoading').style.display = 'block';
+    });
+    
+    player.addEventListener('canplay', () => {
+        console.log('Stream ready to play');
+        document.getElementById('videoLoading').style.display = 'none';
+    });
+    
+    player.addEventListener('playing', () => {
+        console.log('Playing');
+        document.getElementById('videoLoading').style.display = 'none';
+    });
+    
+    player.addEventListener('stalled', () => {
+        console.log('Stream stalled');
+    });
+    
+    player.addEventListener('waiting', () => {
+        console.log('Buffering...');
+        document.getElementById('videoLoading').style.display = 'block';
+    });
+});
+
+function refreshChannels() {
+    currentPage = 1;
+    loadChannels();
+}
+
+// Helper function for notifications
+function showNotification(message, type = 'info') {
+    // Check if there's a global notification function
+    if (typeof window.showNotification === 'function') {
+        window.showNotification(message, type);
+        return;
+    }
+    
+    // Fallback to simple alert
+    if (type === 'error') {
+        console.error(message);
+        alert('Error: ' + message);
+    } else {
+        console.log(message);
+        if (type === 'success') {
+            alert(message);
+        }
+    }
+}
+
+// Load channels on page load
+loadChannels();
+
+// Auto-refresh EPG every 5 minutes
+setInterval(() => {
+    if (currentChannel) {
+        loadCurrentProgram(currentChannel.id);
+    }
+}, 300000);
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+{% endblock %}

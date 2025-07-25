@@ -1,0 +1,304 @@
+/* Light Theme - Clean, Modern, and Professional */
+
+[data-theme="light"] {
+    /* Primary colors */
+    --theme-h: 210;
+    --theme-s: 100%;
+    --theme-l: 40%;
+    
+    /* Bootstrap color overrides */
+    --bs-primary: #0066cc;
+    --bs-primary-rgb: 0, 102, 204;
+    --bs-secondary: #6c757d;
+    --bs-success: #28a745;
+    --bs-danger: #dc3545;
+    --bs-warning: #ffc107;
+    --bs-info: #17a2b8;
+    --bs-light: #f8f9fa;
+    --bs-dark: #343a40;
+    
+    /* Backgrounds */
+    --bg-body: #ffffff;
+    --bg-surface: #ffffff;
+    --bg-surface-secondary: #f8f9fa;
+    --bg-surface-tertiary: #e9ecef;
+    --bs-body-bg: #ffffff;
+    --bs-body-bg-rgb: 255, 255, 255;
+    
+    /* Text colors */
+    --text-primary: #212529;
+    --text-secondary: #6c757d;
+    --text-disabled: #adb5bd;
+    --text-heading: #000000;
+    --bs-body-color: #212529;
+    --bs-body-color-rgb: 33, 37, 41;
+    
+    /* Borders */
+    --border-color: #dee2e6;
+    --border-color-strong: #ced4da;
+    --bs-border-color: #dee2e6;
+    
+    /* Components */
+    --navbar-bg: #ffffff;
+    --navbar-border: #dee2e6;
+    --card-bg: #ffffff;
+    --modal-bg: #ffffff;
+    --bs-card-bg: #ffffff;
+    --bs-modal-bg: #ffffff;
+    
+    /* Form inputs - HIGH CONTRAST */
+    --bs-input-bg: #ffffff;
+    --bs-input-color: #212529;
+    --bs-input-border-color: #ced4da;
+    --bs-input-focus-bg: #ffffff;
+    --bs-input-focus-border-color: #86b7fe;
+    --bs-input-focus-color: #212529;
+    --bs-input-placeholder-color: #6c757d;
+    --bs-input-disabled-bg: #e9ecef;
+    
+    /* Shadows */
+    --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    --shadow-md: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    --bs-box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    --bs-box-shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.05);
+    --bs-box-shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+    
+    /* Grays */
+    --bs-gray-100: #f8f9fa;
+    --bs-gray-200: #e9ecef;
+    --bs-gray-300: #dee2e6;
+    --bs-gray-400: #ced4da;
+    --bs-gray-500: #adb5bd;
+    --bs-gray-600: #6c757d;
+    --bs-gray-700: #495057;
+    --bs-gray-800: #343a40;
+    --bs-gray-900: #212529;
+    
+    /* Links */
+    --bs-link-color: #0066cc;
+    --bs-link-hover-color: #0052a3;
+    
+    /* Transitions */
+    --transition-base: all 0.2s ease-in-out;
+    --transition-fade: opacity 0.15s linear;
+    --transition-collapse: height 0.35s ease;
+}
+
+/* Light theme specific styles */
+[data-theme="light"] {
+    /* Ensure form inputs are clearly visible */
+    .form-control,
+    .form-select,
+    .form-control:focus,
+    .form-select:focus,
+    input[type="text"],
+    input[type="url"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"],
+    textarea,
+    select {
+        background-color: #ffffff !important;
+        color: #212529 !important;
+        border: 1px solid #ced4da !important;
+    }
+    
+    .form-control:focus,
+    .form-select:focus,
+    input:focus,
+    textarea:focus,
+    select:focus {
+        border-color: #86b7fe !important;
+        box-shadow: 0 0 0 0.25rem rgba(0, 102, 204, 0.25) !important;
+        outline: 0 !important;
+    }
+    
+    .form-control::placeholder,
+    input::placeholder,
+    textarea::placeholder {
+        color: #6c757d !important;
+        opacity: 1 !important;
+    }
+    
+    .form-label,
+    label {
+        color: #212529 !important;
+        font-weight: 500;
+    }
+    
+    .form-text,
+    .text-muted {
+        color: #6c757d !important;
+    }
+    
+    /* Card improvements */
+    .card {
+        background-color: #ffffff;
+        border: 1px solid #dee2e6;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.05);
+        transition: all 0.2s ease-in-out;
+    }
+    
+    .card:hover {
+        box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+    
+    /* Button improvements */
+    .btn {
+        transition: all 0.2s ease-in-out;
+        font-weight: 500;
+    }
+    
+    .btn-primary {
+        background-color: #0066cc;
+        border-color: #0066cc;
+        color: #ffffff;
+    }
+    
+    .btn-primary:hover {
+        background-color: #0052a3;
+        border-color: #0052a3;
+        transform: translateY(-1px);
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 102, 204, 0.25);
+    }
+    
+    /* Modal improvements */
+    .modal-content {
+        background-color: #ffffff;
+        border: none;
+        box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+    }
+    
+    .modal-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    /* Table improvements */
+    .table {
+        color: #212529;
+    }
+    
+    .table > :not(caption) > * > * {
+        background-color: transparent;
+        border-bottom-color: #dee2e6;
+    }
+    
+    .table-hover > tbody > tr:hover > * {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+    
+    /* Progress bar */
+    .progress {
+        background-color: #e9ecef;
+    }
+    
+    /* Dropdown improvements */
+    .dropdown-menu {
+        background-color: #ffffff;
+        border: 1px solid rgba(0, 0, 0, 0.15);
+        box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+    }
+    
+    .dropdown-item {
+        color: #212529;
+    }
+    
+    .dropdown-item:hover,
+    .dropdown-item:focus {
+        background-color: #f8f9fa;
+        color: #0066cc;
+    }
+    
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+        width: 12px;
+        height: 12px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: #f8f9fa;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: #ced4da;
+        border-radius: 6px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: #adb5bd;
+    }
+    
+    /* Alert improvements */
+    .alert {
+        border: 1px solid transparent;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.05);
+    }
+    
+    /* Badge improvements */
+    .badge {
+        font-weight: 500;
+    }
+    
+    /* List group improvements */
+    .list-group-item {
+        background-color: #ffffff;
+        border-color: #dee2e6;
+    }
+    
+    .list-group-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    /* Import manager specific */
+    .import-header {
+        background: linear-gradient(135deg, #0066cc 0%, #004499 100%);
+    }
+    
+    .source-card {
+        background-color: #ffffff;
+    }
+    
+    .source-card.importing {
+        background-color: rgba(0, 102, 204, 0.05);
+    }
+    
+    /* Navigation */
+    .navbar {
+        background-color: #ffffff !important;
+        border-bottom: 1px solid #dee2e6;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.05);
+    }
+    
+    .navbar-brand,
+    .navbar-nav .nav-link {
+        color: #212529 !important;
+    }
+    
+    .navbar-nav .nav-link:hover,
+    .navbar-nav .nav-link.active {
+        color: #0066cc !important;
+    }
+    
+    /* Sidebar */
+    .sidebar {
+        background-color: #f8f9fa;
+        border-right: 1px solid #dee2e6;
+    }
+    
+    /* Code blocks */
+    code {
+        color: #d63384;
+        background-color: #f8f9fa;
+        padding: 0.125rem 0.25rem;
+        border-radius: 0.25rem;
+    }
+    
+    pre {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        color: #212529;
+    }
+}

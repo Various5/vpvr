@@ -1,0 +1,1160 @@
+{% extends "base.html" %}
+
+{% block title %}Channel Manager - IPTV PVR{% endblock %}
+
+{% block extra_css %}
+<style>
+    .channel-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .channel-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 15px;
+        transition: all 0.2s;
+        cursor: pointer;
+        position: relative;
+    }
+    
+    .channel-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+        border-color: var(--color-primary);
+    }
+    
+    .channel-card.selected {
+        background: var(--bg-surface-secondary);
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 2px rgba(var(--theme-h), var(--theme-s), var(--theme-l), 0.2);
+    }
+    
+    .channel-logo {
+        width: 40px;
+        height: 40px;
+        object-fit: contain;
+        border-radius: 4px;
+        margin-right: 12px;
+    }
+    
+    .channel-info {
+        flex: 1;
+    }
+    
+    .channel-checkbox {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+    }
+    
+    .filter-sidebar {
+        position: sticky;
+        top: 20px;
+        max-height: calc(100vh - 100px);
+        overflow-y: auto;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+    }
+    
+    .filter-group {
+        margin-bottom: 20px;
+    }
+    
+    .filter-badge {
+        display: inline-block;
+        padding: 4px 8px;
+        background: var(--bg-surface-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        font-size: 0.875rem;
+        margin-right: 4px;
+        margin-bottom: 4px;
+        cursor: pointer;
+        transition: all 0.2s;
+        color: var(--text-primary);
+    }
+    
+    .filter-badge:hover {
+        background: var(--color-primary);
+        border-color: var(--color-primary);
+        color: white;
+        transform: translateY(-1px);
+    }
+    
+    .filter-badge.active {
+        background: var(--color-primary);
+        border-color: var(--color-primary);
+        color: white;
+        box-shadow: 0 2px 8px rgba(var(--theme-h), var(--theme-s), var(--theme-l), 0.3);
+    }
+    
+    .bulk-actions {
+        position: sticky;
+        bottom: 0;
+        background: var(--bg-surface);
+        border-top: 2px solid var(--border-color);
+        padding: 15px;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        display: none;
+        backdrop-filter: blur(10px);
+    }
+    
+    .bulk-actions.show {
+        display: block;
+    }
+    
+    .channel-status {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 5px;
+    }
+    
+    .channel-status.active {
+        background: #28a745;
+    }
+    
+    .channel-status.inactive {
+        background: #dc3545;
+    }
+    
+    .sort-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    
+    .custom-playlist-item {
+        padding: 10px;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: all 0.2s;
+    }
+    
+    .custom-playlist-item:hover {
+        background: var(--bg-surface-secondary);
+        border-color: var(--color-primary);
+        transform: translateX(2px);
+    }
+    
+    .channel-drag-handle {
+        cursor: move;
+        color: #6c757d;
+        margin-right: 10px;
+    }
+    
+    .sortable-ghost {
+        opacity: 0.5;
+        background: #f0f0f0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-3">
+            <!-- Filter Sidebar -->
+            <div class="card filter-sidebar">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-funnel"></i> Filters</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Search -->
+                    <div class="filter-group">
+                        <label class="form-label">Search Channels</label>
+                        <input type="text" class="form-control" id="channelSearch" 
+                               placeholder="Search by name...">
+                    </div>
+                    
+                    <!-- Status Filter -->
+                    <div class="filter-group">
+                        <label class="form-label">Status</label>
+                        <div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="filterActive" checked>
+                                <label class="form-check-label" for="filterActive">
+                                    Active Channels
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="filterInactive">
+                                <label class="form-check-label" for="filterInactive">
+                                    Inactive Channels
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Groups Filter -->
+                    <div class="filter-group">
+                        <label class="form-label">Groups</label>
+                        <div id="groupFilters">
+                            <!-- Groups will be loaded here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Countries Filter -->
+                    <div class="filter-group">
+                        <label class="form-label">Countries</label>
+                        <div id="countryFilters">
+                            <!-- Countries will be loaded here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Languages Filter -->
+                    <div class="filter-group">
+                        <label class="form-label">Languages</label>
+                        <div id="languageFilters">
+                            <!-- Languages will be loaded here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Playlists Filter -->
+                    <div class="filter-group">
+                        <label class="form-label">Source Playlist</label>
+                        <select class="form-select" id="playlistFilter">
+                            <option value="">All Playlists</option>
+                        </select>
+                    </div>
+                    
+                    <button class="btn btn-secondary w-100" onclick="resetFilters()">
+                        <i class="bi bi-arrow-clockwise"></i> Reset Filters
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Custom Playlists -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-collection-play"></i> My Playlists</h5>
+                        <button class="btn btn-sm btn-primary" onclick="createPlaylist()">
+                            <i class="bi bi-plus"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="customPlaylists">
+                        <!-- Custom playlists will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-9">
+            <!-- Main Content -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2><i class="bi bi-broadcast"></i> Channel Manager</h2>
+                <div>
+                    <button class="btn btn-success" onclick="saveChannelOrder()">
+                        <i class="bi bi-save"></i> Save Changes
+                    </button>
+                    <button class="btn btn-primary" onclick="window.location.href='/admin/imports'">
+                        <i class="bi bi-plus-circle"></i> Import Channels
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Stats -->
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h3 id="totalChannels">0</h3>
+                            <small class="text-muted">Total Channels</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h3 id="activeChannels">0</h3>
+                            <small class="text-muted">Active</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h3 id="selectedChannels">0</h3>
+                            <small class="text-muted">Selected</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h3 id="totalGroups">0</h3>
+                            <small class="text-muted">Groups</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sorting Options -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="sort-buttons">
+                            <button class="btn btn-sm btn-outline-secondary" onclick="sortChannels('name')">
+                                <i class="bi bi-sort-alpha-down"></i> Name
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="sortChannels('number')">
+                                <i class="bi bi-sort-numeric-down"></i> Number
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="sortChannels('group')">
+                                <i class="bi bi-collection"></i> Group
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="sortChannels('country')">
+                                <i class="bi bi-globe"></i> Country
+                            </button>
+                        </div>
+                        <div>
+                            <button class="btn btn-sm btn-outline-primary" onclick="selectAll()">
+                                Select All
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="deselectAll()">
+                                Deselect All
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Channel Grid -->
+            <div id="channelGrid" class="channel-grid">
+                <!-- Channels will be loaded here -->
+            </div>
+            
+            <!-- Loading -->
+            <div id="loadingIndicator" class="text-center p-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Actions Bar -->
+<div class="bulk-actions" id="bulkActions">
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <span id="selectedCount">0</span> channels selected
+            </div>
+            <div>
+                <button class="btn btn-sm btn-success" onclick="bulkEnable()">
+                    <i class="bi bi-check-circle"></i> Enable
+                </button>
+                <button class="btn btn-sm btn-warning" onclick="bulkDisable()">
+                    <i class="bi bi-x-circle"></i> Disable
+                </button>
+                <button class="btn btn-sm btn-info" onclick="bulkChangeGroup()">
+                    <i class="bi bi-collection"></i> Change Group
+                </button>
+                <button class="btn btn-sm btn-primary" onclick="addToPlaylist()">
+                    <i class="bi bi-plus-square"></i> Add to Playlist
+                </button>
+                <button class="btn btn-sm btn-danger" onclick="bulkDelete()">
+                    <i class="bi bi-trash"></i> Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Playlist Modal -->
+<div class="modal fade" id="createPlaylistModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create Custom Playlist</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createPlaylistForm">
+                    <div class="mb-3">
+                        <label for="playlistName" class="form-label">Playlist Name</label>
+                        <input type="text" class="form-control" id="playlistName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="playlistDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="playlistDescription" rows="3"></textarea>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="playlistDefault">
+                        <label class="form-check-label" for="playlistDefault">
+                            Set as default playlist for Live TV
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="savePlaylist()">Create Playlist</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Change Group Modal -->
+<div class="modal fade" id="changeGroupModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Change Channel Group</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="changeGroupForm">
+                    <div class="mb-3">
+                        <label for="newGroup" class="form-label">Select Group</label>
+                        <select class="form-select" id="newGroup">
+                            <option value="">Loading...</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="newGroupName" class="form-label">Or Create New Group</label>
+                        <input type="text" class="form-control" id="newGroupName" 
+                               placeholder="Enter new group name">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="applyGroupChange()">Apply</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script>
+// Global error handlers
+window.addEventListener('unhandledrejection', function(event) {
+    console.error('Unhandled promise rejection:', event.reason);
+    event.preventDefault();
+});
+
+window.addEventListener('error', function(event) {
+    console.error('Global error:', event.error);
+});
+
+let channels = [];
+let filteredChannels = [];
+let selectedChannels = new Set();
+let customPlaylists = [];
+let filters = {
+    search: '',
+    status: ['active'],
+    groups: [],
+    countries: [],
+    languages: [],
+    playlist: ''
+};
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    try {
+        // Add a small delay to ensure all elements are rendered
+        setTimeout(async () => {
+            try {
+                setupEventListeners();
+                await Promise.all([
+                    loadChannels().catch(err => console.error('Failed to load channels:', err)),
+                    loadFilters().catch(err => console.error('Failed to load filters:', err)),
+                    loadCustomPlaylists().catch(err => console.error('Failed to load playlists:', err))
+                ]);
+            } catch (error) {
+                console.error('Error during initialization:', error);
+            }
+        }, 100);
+    } catch (error) {
+        console.error('Error initializing channel manager:', error);
+    }
+});
+
+// Setup event listeners
+function setupEventListeners() {
+    try {
+        // Search
+        const channelSearch = document.getElementById('channelSearch');
+        if (channelSearch) {
+            channelSearch.addEventListener('input', (e) => {
+                filters.search = e.target.value.toLowerCase();
+                applyFilters();
+            });
+        } else {
+            console.warn('channelSearch element not found');
+        }
+        
+        // Status filters
+        const filterActive = document.getElementById('filterActive');
+        const filterInactive = document.getElementById('filterInactive');
+        if (filterActive) {
+            filterActive.addEventListener('change', updateStatusFilter);
+        } else {
+            console.warn('filterActive element not found');
+        }
+        if (filterInactive) {
+            filterInactive.addEventListener('change', updateStatusFilter);
+        } else {
+            console.warn('filterInactive element not found');
+        }
+        
+        // Playlist filter
+        const playlistFilter = document.getElementById('playlistFilter');
+        if (playlistFilter) {
+            playlistFilter.addEventListener('change', (e) => {
+                filters.playlist = e.target.value;
+                applyFilters();
+            });
+        } else {
+            console.warn('playlistFilter element not found');
+        }
+    } catch (error) {
+        console.error('Error in setupEventListeners:', error);
+    }
+}
+
+// Load channels
+async function loadChannels() {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            console.error('No authentication token found');
+            window.location.href = '/login';
+            return;
+        }
+
+        const response = await fetch('/api/channels', {
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        channels = Array.isArray(data) ? data : [];
+        applyFilters();
+        updateStats();
+        
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        if (loadingIndicator) {
+            loadingIndicator.style.display = 'none';
+        }
+        
+    } catch (error) {
+        console.error('Failed to load channels:', error);
+        if (typeof showNotification === 'function') {
+            showNotification('Failed to load channels', 'error');
+        } else {
+            alert('Failed to load channels: ' + error.message);
+        }
+    }
+}
+
+// Load filters
+async function loadFilters() {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        // Load groups
+        const groupsResponse = await fetch('/api/channels/groups', {
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (groupsResponse.ok) {
+            const groups = await groupsResponse.json();
+            const groupFilters = document.getElementById('groupFilters');
+            if (groupFilters && Array.isArray(groups)) {
+                groupFilters.innerHTML = groups.map(group => `
+                    <span class="filter-badge" data-type="group" data-value="${group.name}" 
+                          onclick="toggleFilter('group', '${group.name}')">
+                        ${group.name} (${group.channel_count || 0})
+                    </span>
+                `).join('');
+            }
+        }
+        
+        // Load playlists
+        const playlistsResponse = await fetch('/api/channels/playlists', {
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (playlistsResponse.ok) {
+            const playlists = await playlistsResponse.json();
+            const playlistFilter = document.getElementById('playlistFilter');
+            if (playlistFilter && Array.isArray(playlists)) {
+                playlistFilter.innerHTML = '<option value="">All Playlists</option>' +
+                    playlists.map(p => `
+                        <option value="${p.id}">${p.name}</option>
+                    `).join('');
+            }
+        }
+        
+        // Extract unique countries and languages from channels
+        updateCountryLanguageFilters();
+        
+    } catch (error) {
+        console.error('Failed to load filters:', error);
+    }
+}
+
+// Update country and language filters
+function updateCountryLanguageFilters() {
+    const countries = [...new Set(channels.map(ch => ch.country).filter(c => c))];
+    const languages = [...new Set(channels.map(ch => ch.language).filter(l => l))];
+    
+    const countryFilters = document.getElementById('countryFilters');
+    countryFilters.innerHTML = countries.map(country => `
+        <span class="filter-badge" data-type="country" data-value="${country}" 
+              onclick="toggleFilter('country', '${country}')">
+            ${country}
+        </span>
+    `).join('');
+    
+    const languageFilters = document.getElementById('languageFilters');
+    languageFilters.innerHTML = languages.map(lang => `
+        <span class="filter-badge" data-type="language" data-value="${lang}" 
+              onclick="toggleFilter('language', '${lang}')">
+            ${lang}
+        </span>
+    `).join('');
+}
+
+// Toggle filter
+function toggleFilter(type, value) {
+    const filterArray = filters[type + 's'];
+    const index = filterArray.indexOf(value);
+    
+    if (index > -1) {
+        filterArray.splice(index, 1);
+    } else {
+        filterArray.push(value);
+    }
+    
+    // Update UI
+    document.querySelectorAll(`[data-type="${type}"][data-value="${value}"]`).forEach(badge => {
+        badge.classList.toggle('active');
+    });
+    
+    applyFilters();
+}
+
+// Update status filter
+function updateStatusFilter() {
+    filters.status = [];
+    if (document.getElementById('filterActive').checked) {
+        filters.status.push('active');
+    }
+    if (document.getElementById('filterInactive').checked) {
+        filters.status.push('inactive');
+    }
+    applyFilters();
+}
+
+// Apply filters
+function applyFilters() {
+    filteredChannels = channels.filter(channel => {
+        // Search filter
+        if (filters.search && !channel.name.toLowerCase().includes(filters.search)) {
+            return false;
+        }
+        
+        // Status filter
+        const isActive = channel.is_active !== false;
+        if (!filters.status.includes(isActive ? 'active' : 'inactive')) {
+            return false;
+        }
+        
+        // Group filter
+        if (filters.groups.length > 0 && !filters.groups.includes(channel.group_name)) {
+            return false;
+        }
+        
+        // Country filter
+        if (filters.countries.length > 0 && !filters.countries.includes(channel.country)) {
+            return false;
+        }
+        
+        // Language filter
+        if (filters.languages.length > 0 && !filters.languages.includes(channel.language)) {
+            return false;
+        }
+        
+        // Playlist filter
+        if (filters.playlist && channel.playlist_id != filters.playlist) {
+            return false;
+        }
+        
+        return true;
+    });
+    
+    displayChannels();
+    updateStats();
+}
+
+// Display channels
+function displayChannels() {
+    const grid = document.getElementById('channelGrid');
+    if (!grid) {
+        console.error('Channel grid element not found');
+        return;
+    }
+    
+    if (filteredChannels.length === 0) {
+        grid.innerHTML = `
+            <div class="col-12 text-center p-5">
+                <i class="bi bi-inbox fs-1 text-muted"></i>
+                <p class="text-muted mt-2">No channels found</p>
+            </div>
+        `;
+        return;
+    }
+    
+    grid.innerHTML = filteredChannels.map(channel => `
+        <div class="channel-card ${selectedChannels.has(channel.id) ? 'selected' : ''}" 
+             data-channel-id="${channel.id}" onclick="toggleChannel(${channel.id})">
+            <input type="checkbox" class="form-check-input channel-checkbox" 
+                   ${selectedChannels.has(channel.id) ? 'checked' : ''}>
+            <div class="d-flex align-items-center">
+                ${channel.logo_url ? 
+                    `<img src="${channel.logo_url}" class="channel-logo" onerror="this.style.display='none'">` : 
+                    '<div class="channel-logo bg-secondary d-flex align-items-center justify-content-center text-white"><i class="bi bi-tv"></i></div>'
+                }
+                <div class="channel-info">
+                    <h6 class="mb-1">
+                        <span class="channel-status ${channel.is_active !== false ? 'active' : 'inactive'}"></span>
+                        ${channel.name}
+                        ${channel.number ? `<span class="text-muted">#${channel.number}</span>` : ''}
+                    </h6>
+                    <small class="text-muted">
+                        ${channel.group_name || 'No Group'}
+                        ${channel.country ? `• ${channel.country}` : ''}
+                        ${channel.language ? `• ${channel.language}` : ''}
+                    </small>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Toggle channel selection
+function toggleChannel(channelId) {
+    if (selectedChannels.has(channelId)) {
+        selectedChannels.delete(channelId);
+    } else {
+        selectedChannels.add(channelId);
+    }
+    
+    // Update UI
+    const card = document.querySelector(`[data-channel-id="${channelId}"]`);
+    card.classList.toggle('selected');
+    card.querySelector('.channel-checkbox').checked = selectedChannels.has(channelId);
+    
+    updateBulkActions();
+}
+
+// Update bulk actions
+function updateBulkActions() {
+    const bulkActions = document.getElementById('bulkActions');
+    const selectedCount = document.getElementById('selectedCount');
+    
+    if (selectedChannels.size > 0) {
+        bulkActions.classList.add('show');
+        selectedCount.textContent = selectedChannels.size;
+    } else {
+        bulkActions.classList.remove('show');
+    }
+    
+    document.getElementById('selectedChannels').textContent = selectedChannels.size;
+}
+
+// Select/Deselect all
+function selectAll() {
+    filteredChannels.forEach(channel => selectedChannels.add(channel.id));
+    displayChannels();
+    updateBulkActions();
+}
+
+function deselectAll() {
+    selectedChannels.clear();
+    displayChannels();
+    updateBulkActions();
+}
+
+// Sort channels
+function sortChannels(by) {
+    switch(by) {
+        case 'name':
+            filteredChannels.sort((a, b) => a.name.localeCompare(b.name));
+            break;
+        case 'number':
+            filteredChannels.sort((a, b) => {
+                const numA = parseInt(a.number) || 999999;
+                const numB = parseInt(b.number) || 999999;
+                return numA - numB;
+            });
+            break;
+        case 'group':
+            filteredChannels.sort((a, b) => 
+                (a.group_name || 'zzz').localeCompare(b.group_name || 'zzz'));
+            break;
+        case 'country':
+            filteredChannels.sort((a, b) => 
+                (a.country || 'zzz').localeCompare(b.country || 'zzz'));
+            break;
+    }
+    displayChannels();
+}
+
+// Update stats
+function updateStats() {
+    const totalChannelsEl = document.getElementById('totalChannels');
+    const activeChannelsEl = document.getElementById('activeChannels');
+    const totalGroupsEl = document.getElementById('totalGroups');
+    
+    if (totalChannelsEl) {
+        totalChannelsEl.textContent = channels.length;
+    }
+    if (activeChannelsEl) {
+        activeChannelsEl.textContent = channels.filter(ch => ch.is_active !== false).length;
+    }
+    if (totalGroupsEl) {
+        totalGroupsEl.textContent = [...new Set(channels.map(ch => ch.group_name).filter(g => g))].length;
+    }
+}
+
+// Bulk actions
+async function bulkEnable() {
+    await updateChannelStatus(Array.from(selectedChannels), true);
+}
+
+async function bulkDisable() {
+    await updateChannelStatus(Array.from(selectedChannels), false);
+}
+
+async function updateChannelStatus(channelIds, isActive) {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        
+        const results = await Promise.all(channelIds.map(id => 
+            fetch(`/api/channels/${id}`, {
+                method: 'PATCH',
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ is_active: isActive })
+            }).then(res => {
+                if (!res.ok) throw new Error(`Failed to update channel ${id}`);
+                return res;
+            })
+        ));
+        
+        showNotification(`${channelIds.length} channels ${isActive ? 'enabled' : 'disabled'}`, 'success');
+        loadChannels();
+        
+    } catch (error) {
+        console.error('Error updating channels:', error);
+        showNotification('Failed to update channels', 'error');
+    }
+}
+
+async function bulkChangeGroup() {
+    // Load groups for modal
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        
+        const response = await fetch('/api/channels/groups', {
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            const groups = await response.json();
+            const select = document.getElementById('newGroup');
+            if (select && Array.isArray(groups)) {
+                select.innerHTML = '<option value="">Select a group...</option>' +
+                    groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+            }
+            
+            const modal = document.getElementById('changeGroupModal');
+            if (modal) {
+                new bootstrap.Modal(modal).show();
+            }
+        }
+    } catch (error) {
+        console.error('Failed to load groups:', error);
+    }
+}
+
+async function applyGroupChange() {
+    const groupId = document.getElementById('newGroup').value;
+    const newGroupName = document.getElementById('newGroupName').value;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    
+    try {
+        // If creating new group
+        let targetGroupId = groupId;
+        if (newGroupName && !groupId) {
+            const response = await fetch('/api/channels/groups', {
+                method: 'POST',
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name: newGroupName })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                targetGroupId = data.id;
+            }
+        }
+        
+        // Update channels
+        await Promise.all(Array.from(selectedChannels).map(id => 
+            fetch(`/api/channels/${id}`, {
+                method: 'PATCH',
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ group_id: targetGroupId })
+            })
+        ));
+        
+        showNotification('Channels updated successfully', 'success');
+        const modal = bootstrap.Modal.getInstance(document.getElementById('changeGroupModal'));
+        if (modal) modal.hide();
+        loadChannels();
+        
+    } catch (error) {
+        showNotification('Failed to update channels', 'error');
+    }
+}
+
+async function bulkDelete() {
+    if (!confirm(`Delete ${selectedChannels.size} channels? This cannot be undone.`)) return;
+    
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    
+    try {
+        await Promise.all(Array.from(selectedChannels).map(id => 
+            fetch(`/api/channels/${id}`, {
+                method: 'DELETE',
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+        ));
+        
+        showNotification(`${selectedChannels.size} channels deleted`, 'success');
+        selectedChannels.clear();
+        loadChannels();
+        
+    } catch (error) {
+        showNotification('Failed to delete channels', 'error');
+    }
+}
+
+// Custom playlists
+async function loadCustomPlaylists() {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            customPlaylists = [];
+            displayCustomPlaylists();
+            return [];
+        }
+        
+        const response = await fetch('/api/channels/custom-playlists', {
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            customPlaylists = await response.json();
+            displayCustomPlaylists();
+            return customPlaylists;
+        } else {
+            throw new Error(`Failed to load playlists: ${response.status}`);
+        }
+        
+    } catch (error) {
+        console.error('Failed to load custom playlists:', error);
+        customPlaylists = [];
+        displayCustomPlaylists();
+        throw error;
+    }
+}
+
+function displayCustomPlaylists() {
+    const container = document.getElementById('customPlaylists');
+    
+    if (customPlaylists.length === 0) {
+        container.innerHTML = '<p class="text-muted text-center">No custom playlists yet</p>';
+        return;
+    }
+    
+    container.innerHTML = customPlaylists.map(playlist => `
+        <div class="custom-playlist-item">
+            <div>
+                <strong>${playlist.name}</strong>
+                <br>
+                <small class="text-muted">${playlist.channel_count} channels</small>
+            </div>
+            <div>
+                <button class="btn btn-sm btn-outline-primary" onclick="editPlaylist(${playlist.id})">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deletePlaylist(${playlist.id})">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function createPlaylist() {
+    document.getElementById('createPlaylistForm').reset();
+    new bootstrap.Modal(document.getElementById('createPlaylistModal')).show();
+}
+
+async function savePlaylist() {
+    const name = document.getElementById('playlistName').value;
+    const description = document.getElementById('playlistDescription').value;
+    const isDefault = document.getElementById('playlistDefault').checked;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    
+    try {
+        const response = await fetch('/api/channels/custom-playlists', {
+            method: 'POST',
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name: name,
+                description: description,
+                is_default: isDefault,
+                channel_ids: Array.from(selectedChannels)
+            })
+        });
+        
+        if (response.ok) {
+            showNotification('Playlist created successfully', 'success');
+            const modal = bootstrap.Modal.getInstance(document.getElementById('createPlaylistModal'));
+            if (modal) modal.hide();
+            loadCustomPlaylists();
+        } else {
+            const error = await response.json();
+            alert('Failed to create playlist: ' + (error.detail || 'Unknown error'));
+        }
+        
+    } catch (error) {
+        alert('Failed to create playlist: ' + error.message);
+    }
+}
+
+async function addToPlaylist() {
+    if (selectedChannels.size === 0) return;
+    
+    try {
+        // Show playlist selection modal
+        await loadCustomPlaylists();
+        // TODO: Implementation for playlist selection modal
+        showNotification('Add to playlist feature coming soon', 'info');
+    } catch (error) {
+        console.error('Error in addToPlaylist:', error);
+        showNotification('Failed to load playlists', 'error');
+    }
+}
+
+function resetFilters() {
+    filters = {
+        search: '',
+        status: ['active'],
+        groups: [],
+        countries: [],
+        languages: [],
+        playlist: ''
+    };
+    
+    document.getElementById('channelSearch').value = '';
+    document.getElementById('filterActive').checked = true;
+    document.getElementById('filterInactive').checked = false;
+    document.getElementById('playlistFilter').value = '';
+    
+    document.querySelectorAll('.filter-badge').forEach(badge => {
+        badge.classList.remove('active');
+    });
+    
+    applyFilters();
+}
+
+// Save channel order (if using drag & drop)
+async function saveChannelOrder() {
+    // Implementation for saving channel order
+    showNotification('Channel order saved', 'success');
+}
+
+// Show notification helper
+function showNotification(message, type = 'info') {
+    // Check if there's a global notification function
+    if (typeof window.showNotification === 'function') {
+        window.showNotification(message, type);
+        return;
+    }
+    
+    // Fallback to simple alert
+    if (type === 'error') {
+        console.error(message);
+        alert('Error: ' + message);
+    } else {
+        console.log(message);
+        if (type === 'success') {
+            alert(message);
+        }
+    }
+}
+</script>
+{% endblock %}

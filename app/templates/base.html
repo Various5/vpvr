@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}IPTV PVR{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="alternate icon" href="/static/favicon.ico">
+    
+    <!-- Immediate theme setup to prevent FOUC -->
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            const validThemes = ['light', 'dark', 'spacecake', 'spacewars'];
+            const theme = validThemes.includes(savedTheme) ? savedTheme : 'light';
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <!-- Theme System v3 -->
+    <link href="/static/css/themes/v3/theme-base.css" rel="stylesheet">
+    <link href="/static/css/themes/v3/theme-light.css" rel="stylesheet" id="theme-light-css" disabled>
+    <link href="/static/css/themes/v3/theme-dark.css" rel="stylesheet" id="theme-dark-css" disabled>
+    <link href="/static/css/themes/v3/theme-spacecake.css" rel="stylesheet" id="theme-spacecake-css" disabled>
+    <link href="/static/css/themes/v3/spacewars.css" rel="stylesheet" id="theme-spacewars-css" disabled>
+    
+    <!-- Core Styles -->
+    <link href="/static/css/style.css" rel="stylesheet">
+    
+    <!-- Modal Fixes -->
+    <link href="/static/css/clean-modal-fix.css" rel="stylesheet">
+    <link href="/static/css/modal-force-fix.css" rel="stylesheet">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body role="document">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-tv"></i> IPTV PVR
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/livetv">
+                            <i class="bi bi-tv"></i> Live TV
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/channels">
+                            <i class="bi bi-broadcast"></i> Channels
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/epg">
+                            <i class="bi bi-calendar3"></i> EPG
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/recordings">
+                            <i class="bi bi-record-circle"></i> Recordings
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/system">
+                            <i class="bi bi-speedometer2"></i> System
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown" id="adminMenu" style="display: none;">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-gear"></i> Admin
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/admin/users">Users</a></li>
+                            <li><a class="dropdown-item" href="/admin/channel-manager">Channel Manager</a></li>
+                            <li><a class="dropdown-item" href="/admin/imports">Import Sources</a></li>
+                            <li><a class="dropdown-item" href="/admin/database-cleanup"><i class="bi bi-trash3"></i> Database Cleanup</a></li>
+                            <li><a class="dropdown-item" href="/admin/epg-manager"><i class="bi bi-broadcast"></i> EPG Manager</a></li>
+                            <li><a class="dropdown-item" href="/admin/system">System</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/server-settings"><i class="bi bi-hdd-network"></i> Server Settings</a></li>
+                        </ul>
+                    </li>
+                </ul>
+                
+                <ul class="navbar-nav">
+                    <li class="nav-item" id="creditsItem" style="display: none;">
+                        <a class="nav-link" href="/credits">
+                            <i class="bi bi-coin"></i> Credits: <span id="user-credits">0</span>
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown" id="userMenu" style="display: none;">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> <span id="username-display">User</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/profile"><i class="bi bi-person"></i> Profile</a></li>
+                            <li><a class="dropdown-item" href="/themes"><i class="bi bi-palette"></i> Themes</a></li>
+                            <li><a class="dropdown-item" href="/settings"><i class="bi bi-gear"></i> Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="logout()"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item" id="loginLink">
+                        <a class="nav-link" href="/login">Login</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <main class="container-fluid mt-3" id="main-content" role="main">
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.type }} alert-dismissible fade show" role="alert">
+            {{ message.text }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Video Player Modal -->
+    <div class="modal fade" id="playerModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="playerTitle">Player</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <video id="videoPlayer" class="w-100" controls></video>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- jQuery (for better Bootstrap compatibility) -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Global Modal Fix - Must load immediately after Bootstrap -->
+    <script src="/static/js/modal-fix-global.js"></script>
+    
+    <!-- Notification System - Must load before other systems -->
+    <script src="/static/js/notification-system.js"></script>
+    
+    <!-- Axios for API calls -->
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.2/dist/axios.min.js"></script>
+    
+    <!-- Theme System -->
+    <script src="/static/js/theme-system.js"></script>
+    
+    <!-- Error Management System -->
+    <script src="/static/js/error-system.js"></script>
+    
+    <!-- UI Improvements -->
+    <script src="/static/js/ui-improvements.js"></script>
+    
+    <!-- Core Application -->
+    <script src="/static/js/app.js"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,432 @@
+{% extends "base.html" %}
+
+{% block title %}Recordings - IPTV PVR{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-record-circle"></i> My Recordings</h2>
+        <div class="btn-group">
+            <button class="btn btn-primary" onclick="showScheduleModal()">
+                <i class="bi bi-calendar-plus"></i> Schedule Recording
+            </button>
+            <button class="btn btn-outline-primary" onclick="showSchedulesModal()">
+                <i class="bi bi-clock-history"></i> Series Schedules
+            </button>
+        </div>
+    </div>
+
+    <!-- Recording Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="text-muted">Active Recordings</h6>
+                    <h3 class="mb-0" id="activeCount">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="text-muted">Completed</h6>
+                    <h3 class="mb-0" id="completedCount">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="text-muted">Storage Used</h6>
+                    <h3 class="mb-0" id="storageUsed">0 GB</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="text-muted">Quota Used</h6>
+                    <h3 class="mb-0" id="quotaUsed">0/0</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recordings Tabs -->
+    <ul class="nav nav-tabs mb-3" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" data-bs-toggle="tab" href="#active">
+                Active <span class="badge bg-danger" id="activeBadge">0</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="tab" href="#completed">
+                Completed <span class="badge bg-success" id="completedBadge">0</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="tab" href="#scheduled">
+                Scheduled <span class="badge bg-warning" id="scheduledBadge">0</span>
+            </a>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="active">
+            <div class="row" id="activeRecordings">
+                <!-- Active recordings will be loaded here -->
+            </div>
+        </div>
+        <div class="tab-pane fade" id="completed">
+            <div class="row" id="completedRecordings">
+                <!-- Completed recordings will be loaded here -->
+            </div>
+        </div>
+        <div class="tab-pane fade" id="scheduled">
+            <div class="row" id="scheduledRecordings">
+                <!-- Scheduled recordings will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Schedule Recording Modal -->
+<div class="modal fade" id="scheduleModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Schedule Recording</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="scheduleForm">
+                    <div class="mb-3">
+                        <label for="scheduleChannel" class="form-label">Channel</label>
+                        <select class="form-select" id="scheduleChannel" required>
+                            <option value="">Select a channel...</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="scheduleTitle" class="form-label">Recording Title</label>
+                        <input type="text" class="form-control" id="scheduleTitle" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="scheduleDate" class="form-label">Date</label>
+                                <input type="date" class="form-control" id="scheduleDate" required>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="scheduleStartTime" class="form-label">Start Time</label>
+                                <input type="time" class="form-control" id="scheduleStartTime" required>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="scheduleEndTime" class="form-label">End Time</label>
+                                <input type="time" class="form-control" id="scheduleEndTime" required>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="scheduleRecording()">Schedule</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Series Schedules Modal -->
+<div class="modal fade" id="schedulesModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Series Recording Schedules</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="schedulesList">
+                    <!-- Schedules will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let recordings = [];
+let channels = [];
+let userQuota = null;
+
+async function loadRecordings() {
+    try {
+        const response = await axios.get('/api/recordings', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        recordings = response.data;
+        displayRecordings();
+        updateStats();
+    } catch (error) {
+        console.error('Failed to load recordings:', error);
+    }
+}
+
+async function loadChannels() {
+    try {
+        const response = await axios.get('/api/channels', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        channels = response.data;
+        
+        // Populate channel select
+        const select = document.getElementById('scheduleChannel');
+        select.innerHTML = '<option value="">Select a channel...</option>';
+        channels.forEach(channel => {
+            select.innerHTML += `<option value="${channel.id}">${channel.name}</option>`;
+        });
+    } catch (error) {
+        console.error('Failed to load channels:', error);
+    }
+}
+
+async function loadUserQuota() {
+    try {
+        const response = await axios.get('/api/credits/balance', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        userQuota = response.data;
+        updateQuotaDisplay();
+    } catch (error) {
+        console.error('Failed to load user quota:', error);
+    }
+}
+
+function displayRecordings() {
+    const active = recordings.filter(r => r.status === 'recording');
+    const completed = recordings.filter(r => r.status === 'completed');
+    const scheduled = recordings.filter(r => r.status === 'scheduled');
+    
+    // Update badges
+    document.getElementById('activeBadge').textContent = active.length;
+    document.getElementById('completedBadge').textContent = completed.length;
+    document.getElementById('scheduledBadge').textContent = scheduled.length;
+    
+    // Display active recordings
+    displayRecordingCards('activeRecordings', active, 'danger');
+    
+    // Display completed recordings
+    displayRecordingCards('completedRecordings', completed, 'success');
+    
+    // Display scheduled recordings
+    displayRecordingCards('scheduledRecordings', scheduled, 'warning');
+}
+
+function displayRecordingCards(containerId, recordingList, statusColor) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    
+    if (recordingList.length === 0) {
+        container.innerHTML = '<div class="col-12"><p class="text-muted text-center">No recordings found</p></div>';
+        return;
+    }
+    
+    recordingList.forEach(recording => {
+        const card = `
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card recording-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title mb-0">${recording.title}</h5>
+                            <span class="badge bg-${statusColor}">${recording.status}</span>
+                        </div>
+                        <p class="text-muted mb-2">${recording.channel_name}</p>
+                        <p class="small mb-2">
+                            <i class="bi bi-clock"></i> ${formatDateTime(recording.start_time)} - ${formatTime(recording.end_time)}
+                        </p>
+                        ${recording.file_size ? `<p class="small mb-2"><i class="bi bi-hdd"></i> ${formatFileSize(recording.file_size)}</p>` : ''}
+                        <div class="d-flex gap-2">
+                            ${recording.status === 'completed' ? `
+                                <button class="btn btn-sm btn-primary" onclick="playRecording(${recording.id})">
+                                    <i class="bi bi-play"></i> Play
+                                </button>
+                                <button class="btn btn-sm btn-outline-primary" onclick="downloadRecording(${recording.id})">
+                                    <i class="bi bi-download"></i> Download
+                                </button>
+                            ` : ''}
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteRecording(${recording.id})">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        container.innerHTML += card;
+    });
+}
+
+function updateStats() {
+    const active = recordings.filter(r => r.status === 'recording').length;
+    const completed = recordings.filter(r => r.status === 'completed').length;
+    const totalSize = recordings.reduce((sum, r) => sum + (r.file_size || 0), 0);
+    
+    document.getElementById('activeCount').textContent = active;
+    document.getElementById('completedCount').textContent = completed;
+    document.getElementById('storageUsed').textContent = (totalSize / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+}
+
+function updateQuotaDisplay() {
+    if (userQuota) {
+        const used = recordings.filter(r => ['recording', 'scheduled'].includes(r.status)).length;
+        document.getElementById('quotaUsed').textContent = `${used}/${userQuota.max_recordings}`;
+    }
+}
+
+function formatDateTime(dateStr) {
+    return new Date(dateStr).toLocaleString();
+}
+
+function formatTime(dateStr) {
+    return new Date(dateStr).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+}
+
+function showScheduleModal() {
+    const modal = new bootstrap.Modal(document.getElementById('scheduleModal'));
+    modal.show();
+    
+    // Set default date to today
+    document.getElementById('scheduleDate').valueAsDate = new Date();
+}
+
+async function scheduleRecording() {
+    const channelId = document.getElementById('scheduleChannel').value;
+    const title = document.getElementById('scheduleTitle').value;
+    const date = document.getElementById('scheduleDate').value;
+    const startTime = document.getElementById('scheduleStartTime').value;
+    const endTime = document.getElementById('scheduleEndTime').value;
+    
+    const startDateTime = new Date(`${date}T${startTime}`);
+    const endDateTime = new Date(`${date}T${endTime}`);
+    
+    if (endDateTime <= startDateTime) {
+        alert('End time must be after start time');
+        return;
+    }
+    
+    try {
+        await axios.post('/api/recordings/schedule', {
+            channel_id: parseInt(channelId),
+            title: title,
+            start_time: startDateTime.toISOString(),
+            end_time: endDateTime.toISOString()
+        }, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        bootstrap.Modal.getInstance(document.getElementById('scheduleModal')).hide();
+        document.getElementById('scheduleForm').reset();
+        loadRecordings();
+        showNotification('Recording scheduled successfully', 'success');
+    } catch (error) {
+        alert(error.response?.data?.detail || 'Failed to schedule recording');
+    }
+}
+
+async function deleteRecording(recordingId) {
+    if (!confirm('Are you sure you want to delete this recording?')) return;
+    
+    try {
+        await axios.delete(`/api/recordings/${recordingId}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        loadRecordings();
+        showNotification('Recording deleted', 'success');
+    } catch (error) {
+        alert('Failed to delete recording');
+    }
+}
+
+function playRecording(recordingId) {
+    // In a real implementation, this would open a player
+    // For now, we'll just download
+    downloadRecording(recordingId);
+}
+
+function downloadRecording(recordingId) {
+    const token = localStorage.getItem('token');
+    window.open(`/api/recordings/${recordingId}/download?token=${token}`, '_blank');
+}
+
+async function showSchedulesModal() {
+    const modal = new bootstrap.Modal(document.getElementById('schedulesModal'));
+    modal.show();
+    
+    try {
+        const response = await axios.get('/api/recordings/schedules', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        const container = document.getElementById('schedulesList');
+        
+        if (response.data.length === 0) {
+            container.innerHTML = '<p class="text-muted text-center">No series schedules found</p>';
+        } else {
+            container.innerHTML = response.data.map(schedule => `
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6>${schedule.title_pattern || schedule.series_id || 'Unnamed Schedule'}</h6>
+                                <p class="small text-muted mb-0">
+                                    Type: ${schedule.recording_type} | 
+                                    ${schedule.channel_name ? `Channel: ${schedule.channel_name}` : 'All Channels'}
+                                </p>
+                            </div>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteSchedule(${schedule.id})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+    } catch (error) {
+        console.error('Failed to load schedules:', error);
+    }
+}
+
+async function deleteSchedule(scheduleId) {
+    if (!confirm('Are you sure you want to delete this schedule?')) return;
+    
+    try {
+        await axios.delete(`/api/recordings/schedules/${scheduleId}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        showSchedulesModal();
+        showNotification('Schedule deleted', 'success');
+    } catch (error) {
+        alert('Failed to delete schedule');
+    }
+}
+
+// Load data on page load
+loadRecordings();
+loadChannels();
+loadUserQuota();
+
+// Refresh recordings every 30 seconds
+setInterval(loadRecordings, 30000);
+</script>
+{% endblock %}

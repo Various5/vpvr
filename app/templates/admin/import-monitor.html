@@ -1,0 +1,688 @@
+{% extends "base.html" %}
+
+{% block title %}Import Monitor - IPTV PVR System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .log-viewer {
+        background-color: #1a1a1a;
+        color: #00ff00;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        font-size: 12px;
+        padding: 15px;
+        border-radius: 8px;
+        height: 500px;
+        overflow-y: auto;
+        overflow-x: auto;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        border: 1px solid #333;
+        box-shadow: inset 0 2px 8px rgba(0,0,0,0.5);
+    }
+    
+    [data-theme="light"] .log-viewer {
+        background-color: #f8f8f8;
+        color: #333;
+        border-color: #ddd;
+        box-shadow: inset 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .log-line {
+        padding: 2px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    
+    [data-theme="light"] .log-line {
+        border-bottom-color: rgba(0,0,0,0.05);
+    }
+    
+    .log-timestamp {
+        color: #666;
+        margin-right: 8px;
+    }
+    
+    .log-level {
+        font-weight: bold;
+        margin-right: 8px;
+        padding: 0 6px;
+        border-radius: 3px;
+    }
+    
+    .log-level-INFO {
+        color: #00ff00;
+        background-color: rgba(0,255,0,0.1);
+    }
+    
+    .log-level-WARNING {
+        color: #ffaa00;
+        background-color: rgba(255,170,0,0.1);
+    }
+    
+    .log-level-ERROR {
+        color: #ff0000;
+        background-color: rgba(255,0,0,0.1);
+    }
+    
+    .log-level-DEBUG {
+        color: #888;
+        background-color: rgba(136,136,136,0.1);
+    }
+    
+    [data-theme="light"] .log-level-INFO {
+        color: #28a745;
+        background-color: rgba(40,167,69,0.1);
+    }
+    
+    [data-theme="light"] .log-level-WARNING {
+        color: #ffc107;
+        background-color: rgba(255,193,7,0.1);
+    }
+    
+    [data-theme="light"] .log-level-ERROR {
+        color: #dc3545;
+        background-color: rgba(220,53,69,0.1);
+    }
+    
+    .log-source {
+        color: #0099ff;
+        margin-right: 8px;
+    }
+    
+    [data-theme="light"] .log-source {
+        color: #0066cc;
+    }
+    
+    .log-message {
+        color: inherit;
+    }
+    
+    .progress-container {
+        background-color: var(--bg-surface-secondary);
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .progress-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 10px;
+        color: var(--text-primary);
+    }
+    
+    .progress-subtitle {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        margin-bottom: 15px;
+    }
+    
+    .progress {
+        height: 30px;
+        margin-bottom: 10px;
+        background-color: var(--bg-surface-tertiary);
+    }
+    
+    .progress-bar {
+        font-size: 14px;
+        line-height: 30px;
+        font-weight: 600;
+        transition: width 0.6s ease;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+    }
+    
+    .stat-card {
+        background-color: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 15px;
+        text-align: center;
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--color-primary);
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+    }
+    
+    .control-buttons {
+        margin-bottom: 20px;
+    }
+    
+    .auto-scroll-toggle {
+        margin-left: 10px;
+    }
+    
+    .phase-indicator {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-left: 10px;
+    }
+    
+    .phase-downloading {
+        background-color: rgba(13, 202, 240, 0.2);
+        color: #0dcaf0;
+    }
+    
+    .phase-parsing {
+        background-color: rgba(255, 193, 7, 0.2);
+        color: #ffc107;
+    }
+    
+    .phase-importing {
+        background-color: rgba(25, 135, 84, 0.2);
+        color: #198754;
+    }
+    
+    .phase-completed {
+        background-color: rgba(40, 167, 69, 0.2);
+        color: #28a745;
+    }
+    
+    .phase-failed {
+        background-color: rgba(220, 53, 69, 0.2);
+        color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h3">Import Monitor</h1>
+            <p class="text-muted">Real-time monitoring of import operations</p>
+        </div>
+    </div>
+    
+    <!-- Active Import Progress -->
+    <div id="progressContainer" class="progress-container" style="display: none;">
+        <div class="d-flex align-items-center justify-content-between">
+            <div>
+                <h4 class="progress-title">
+                    <span id="importName">Import in Progress</span>
+                    <span id="phaseIndicator" class="phase-indicator"></span>
+                </h4>
+                <p class="progress-subtitle" id="progressMessage">Initializing...</p>
+            </div>
+            <div class="text-end">
+                <button class="btn btn-danger btn-sm" onclick="cancelImport()" id="cancelBtn">
+                    <i class="bi bi-stop-circle"></i> Cancel Import
+                </button>
+            </div>
+        </div>
+        
+        <div class="progress">
+            <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                 role="progressbar" style="width: 0%">0%</div>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="statChannels">0</div>
+                <div class="stat-label">Channels Found</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statProcessed">0</div>
+                <div class="stat-label">Processed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statSpeed">0</div>
+                <div class="stat-label">Items/sec</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statElapsed">0:00</div>
+                <div class="stat-label">Elapsed Time</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Log Controls -->
+    <div class="control-buttons">
+        <button class="btn btn-secondary btn-sm" onclick="clearLogs()">
+            <i class="bi bi-trash"></i> Clear Logs
+        </button>
+        <button class="btn btn-secondary btn-sm" onclick="downloadLogs()">
+            <i class="bi bi-download"></i> Download Logs
+        </button>
+        <div class="form-check form-switch auto-scroll-toggle d-inline-block">
+            <input class="form-check-input" type="checkbox" id="autoScrollToggle" checked>
+            <label class="form-check-label" for="autoScrollToggle">Auto-scroll</label>
+        </div>
+        <select class="form-select form-select-sm d-inline-block w-auto ms-3" id="logLevelFilter">
+            <option value="ALL">All Levels</option>
+            <option value="ERROR">Errors Only</option>
+            <option value="WARNING">Warnings & Errors</option>
+            <option value="INFO" selected>Info & Above</option>
+            <option value="DEBUG">Debug (All)</option>
+        </select>
+    </div>
+    
+    <!-- Log Viewer -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Import Logs</h5>
+        </div>
+        <div class="card-body p-0">
+            <div id="logViewer" class="log-viewer"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let ws = null;
+let autoScroll = true;
+let currentImportId = null;
+let logBuffer = [];
+let startTime = null;
+let logLevelFilter = 'INFO';
+
+// Log level priorities
+const LOG_LEVELS = {
+    'DEBUG': 0,
+    'INFO': 1,
+    'WARNING': 2,
+    'ERROR': 3
+};
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    connectWebSocket();
+    
+    // Auto-scroll toggle
+    document.getElementById('autoScrollToggle').addEventListener('change', function(e) {
+        autoScroll = e.target.checked;
+    });
+    
+    // Log level filter
+    document.getElementById('logLevelFilter').addEventListener('change', function(e) {
+        logLevelFilter = e.target.value;
+        filterLogs();
+    });
+    
+    // Check for active imports
+    checkActiveImports();
+});
+
+function connectWebSocket() {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        console.error('No access token found');
+        return;
+    }
+    
+    const wsUrl = `ws://${window.location.host}/api/ws?token=${token}`;
+    ws = new WebSocket(wsUrl);
+    
+    ws.onopen = function() {
+        console.log('WebSocket connected for import monitoring');
+        addLogLine('INFO', 'system', 'Connected to import monitor');
+    };
+    
+    ws.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        
+        if (data.type === 'import_progress') {
+            updateProgress(data);
+        } else if (data.type === 'import_log') {
+            addLogLine(data.level, data.source, data.message, data.timestamp);
+        }
+    };
+    
+    ws.onerror = function(error) {
+        console.error('WebSocket error:', error);
+        addLogLine('ERROR', 'system', 'WebSocket connection error');
+    };
+    
+    ws.onclose = function() {
+        console.log('WebSocket disconnected');
+        addLogLine('WARNING', 'system', 'Disconnected from import monitor');
+        // Reconnect after 5 seconds
+        setTimeout(connectWebSocket, 5000);
+    };
+}
+
+function checkActiveImports() {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        console.error('No access token found, skipping active imports check');
+        return;
+    }
+    
+    fetch('/api/import-sources/active', {
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            if (response.status === 401) {
+                console.error('Unauthorized access to active imports');
+                // Try to refresh the page to re-authenticate
+                window.location.href = '/login';
+                return;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data && data.active_imports && data.active_imports.length > 0) {
+            const activeImport = data.active_imports[0];
+            currentImportId = activeImport.import_id;
+            startTime = new Date(activeImport.created_at);
+            document.getElementById('progressContainer').style.display = 'block';
+            updateProgress({
+                status: activeImport.status,
+                progress: activeImport.progress,
+                message: activeImport.message,
+                details: activeImport.details
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error checking active imports:', error);
+        addLogLine('ERROR', 'system', 'Failed to check active imports: ' + error.message);
+    });
+}
+
+function updateProgress(data) {
+    const progressContainer = document.getElementById('progressContainer');
+    const progressBar = document.getElementById('progressBar');
+    const progressMessage = document.getElementById('progressMessage');
+    const phaseIndicator = document.getElementById('phaseIndicator');
+    
+    if (data.import_id) {
+        currentImportId = data.import_id;
+    }
+    
+    if (data.status === 'pending' || data.status === 'downloading' || 
+        data.status === 'parsing' || data.status === 'importing') {
+        progressContainer.style.display = 'block';
+        
+        if (!startTime && data.created_at) {
+            startTime = new Date(data.created_at);
+        } else if (!startTime) {
+            startTime = new Date();
+        }
+        
+        // Update progress bar
+        const progress = Math.round(data.progress || 0);
+        progressBar.style.width = progress + '%';
+        progressBar.textContent = progress + '%';
+        
+        // Update message
+        progressMessage.textContent = data.message || 'Processing...';
+        
+        // Update phase indicator
+        phaseIndicator.className = 'phase-indicator phase-' + data.status;
+        phaseIndicator.textContent = data.status.charAt(0).toUpperCase() + data.status.slice(1);
+        
+        // Update stats
+        if (data.details) {
+            if (data.details.channels_found !== undefined) {
+                document.getElementById('statChannels').textContent = 
+                    data.details.channels_found.toLocaleString();
+            }
+            if (data.details.processed !== undefined) {
+                document.getElementById('statProcessed').textContent = 
+                    data.details.processed.toLocaleString();
+            }
+            if (data.details.speed !== undefined) {
+                document.getElementById('statSpeed').textContent = 
+                    data.details.speed.toFixed(1);
+            }
+        }
+        
+        // Update elapsed time
+        updateElapsedTime();
+        
+    } else if (data.status === 'completed' || data.status === 'failed') {
+        // Keep showing for 5 seconds after completion
+        setTimeout(() => {
+            progressContainer.style.display = 'none';
+            currentImportId = null;
+            startTime = null;
+        }, 5000);
+        
+        // Update final state
+        progressBar.classList.remove('progress-bar-animated');
+        if (data.status === 'completed') {
+            progressBar.classList.add('bg-success');
+            phaseIndicator.className = 'phase-indicator phase-completed';
+            phaseIndicator.textContent = 'Completed';
+        } else {
+            progressBar.classList.add('bg-danger');
+            phaseIndicator.className = 'phase-indicator phase-failed';
+            phaseIndicator.textContent = 'Failed';
+        }
+    }
+}
+
+function updateElapsedTime() {
+    if (!startTime) return;
+    
+    const elapsed = Math.floor((new Date() - startTime) / 1000);
+    const minutes = Math.floor(elapsed / 60);
+    const seconds = elapsed % 60;
+    document.getElementById('statElapsed').textContent = 
+        `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    
+    // Update again in 1 second if import is active
+    if (currentImportId) {
+        setTimeout(updateElapsedTime, 1000);
+    }
+}
+
+function addLogLine(level, source, message, timestamp) {
+    const logViewer = document.getElementById('logViewer');
+    
+    // Create timestamp if not provided
+    if (!timestamp) {
+        timestamp = new Date().toISOString();
+    }
+    
+    // Create log entry
+    const logEntry = {
+        timestamp: timestamp,
+        level: level.toUpperCase(),
+        source: source,
+        message: message
+    };
+    
+    // Add to buffer
+    logBuffer.push(logEntry);
+    
+    // Limit buffer size
+    if (logBuffer.length > 1000) {
+        logBuffer.shift();
+    }
+    
+    // Check if should display based on filter
+    if (!shouldDisplayLog(level)) {
+        return;
+    }
+    
+    // Create log line element
+    const logLine = document.createElement('div');
+    logLine.className = 'log-line';
+    logLine.innerHTML = `
+        <span class="log-timestamp">${formatTimestamp(timestamp)}</span>
+        <span class="log-level log-level-${level.toUpperCase()}">${level.toUpperCase()}</span>
+        <span class="log-source">${source}</span>
+        <span class="log-message">${escapeHtml(message)}</span>
+    `;
+    
+    logViewer.appendChild(logLine);
+    
+    // Limit displayed lines
+    while (logViewer.children.length > 500) {
+        logViewer.removeChild(logViewer.firstChild);
+    }
+    
+    // Auto-scroll
+    if (autoScroll) {
+        logViewer.scrollTop = logViewer.scrollHeight;
+    }
+}
+
+function shouldDisplayLog(level) {
+    if (logLevelFilter === 'ALL') return true;
+    
+    const levelPriority = LOG_LEVELS[level.toUpperCase()] || 0;
+    const filterPriority = LOG_LEVELS[logLevelFilter] || 0;
+    
+    return levelPriority >= filterPriority;
+}
+
+function filterLogs() {
+    const logViewer = document.getElementById('logViewer');
+    logViewer.innerHTML = '';
+    
+    // Re-display filtered logs
+    logBuffer.forEach(entry => {
+        if (shouldDisplayLog(entry.level)) {
+            addLogLine(entry.level, entry.source, entry.message, entry.timestamp);
+        }
+    });
+}
+
+function formatTimestamp(timestamp) {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString('en-US', { 
+        hour12: false, 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        second: '2-digit',
+        fractionalSecondDigits: 3
+    });
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function clearLogs() {
+    if (confirm('Clear all logs?')) {
+        document.getElementById('logViewer').innerHTML = '';
+        logBuffer = [];
+        addLogLine('INFO', 'system', 'Logs cleared');
+    }
+}
+
+function downloadLogs() {
+    const logText = logBuffer.map(entry => 
+        `${entry.timestamp} - ${entry.source} - ${entry.level} - ${entry.message}`
+    ).join('\n');
+    
+    const blob = new Blob([logText], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `import-log-${new Date().toISOString()}.log`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+
+function cancelImport() {
+    if (!currentImportId) return;
+    
+    const token = localStorage.getItem('token');
+    if (!token) {
+        addLogLine('ERROR', 'system', 'No authentication token available');
+        return;
+    }
+    
+    if (confirm('Are you sure you want to cancel this import?')) {
+        fetch(`/api/import-sources/cancel/${currentImportId}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                addLogLine('WARNING', 'system', 'Import cancelled by user');
+                document.getElementById('cancelBtn').disabled = true;
+            } else if (response.status === 401) {
+                addLogLine('ERROR', 'system', 'Unauthorized - please login again');
+                window.location.href = '/login';
+            } else {
+                addLogLine('ERROR', 'system', 'Failed to cancel import');
+            }
+        })
+        .catch(error => {
+            console.error('Error cancelling import:', error);
+            addLogLine('ERROR', 'system', 'Error cancelling import: ' + error.message);
+        });
+    }
+}
+
+// Simulate some import logs for testing (remove in production)
+function simulateImportLogs() {
+    const testLogs = [
+        ['INFO', 'app.utils.m3u_parser', 'Reading M3U file: /tmp/m3u_import_source_1_1753380381.m3u'],
+        ['INFO', 'app.utils.m3u_parser', 'File size: 355740523 bytes (339.26 MB)'],
+        ['INFO', 'app.utils.m3u_parser', 'Content length: 341456819 characters'],
+        ['INFO', 'app.utils.m3u_parser', 'Starting M3U content parsing'],
+        ['INFO', 'app.utils.m3u_parser', 'Total lines to process: 2474337'],
+        ['INFO', 'app.utils.m3u_parser', 'Valid M3U header found'],
+        ['INFO', 'app.utils.m3u_parser', 'Processing line 1000/2474337 (106 lines/sec, 500 channels found)'],
+        ['INFO', 'app.utils.m3u_parser', 'Processing line 2000/2474337 (211 lines/sec, 1000 channels found)'],
+        ['WARNING', 'app.utils.m3u_parser', 'Invalid channel entry at line 2145: missing URL'],
+        ['INFO', 'app.utils.m3u_parser', 'Line processing completed in 9.39 seconds'],
+        ['INFO', 'app.utils.m3u_parser', 'Found 1237168 channels before category enhancement'],
+        ['INFO', 'app.utils.m3u_parser', 'Starting category enhancement'],
+        ['INFO', 'app.utils.m3u_parser', 'Category enhancement completed. Enhanced 1536 channels'],
+        ['INFO', 'app.utils.m3u_parser', 'Final result: 1237168 channels parsed'],
+        ['INFO', 'app.utils.import_manager', 'M3U parsing completed! Found 1237168 channels'],
+        ['INFO', 'app.utils.import_manager', 'Starting channel import for 1237168 channels'],
+        ['INFO', 'app.utils.import_manager', 'Opening database session for channel import'],
+        ['INFO', 'app.utils.import_manager', 'Querying existing channels for playlist 13'],
+        ['INFO', 'app.utils.import_manager', 'Found 1244199 existing channels'],
+        ['INFO', 'app.utils.import_manager', 'Querying all channel IDs for uniqueness check'],
+        ['INFO', 'app.utils.import_manager', 'Processed 100/1237168 channels (10.6 channels/sec)'],
+        ['ERROR', 'app.utils.import_manager', 'Database error: connection timeout'],
+        ['INFO', 'app.utils.import_manager', 'Retrying database operation...'],
+        ['INFO', 'app.utils.import_manager', 'Database connection restored'],
+        ['INFO', 'app.utils.import_manager', 'Import completed successfully']
+    ];
+    
+    let index = 0;
+    const interval = setInterval(() => {
+        if (index < testLogs.length) {
+            const [level, source, message] = testLogs[index];
+            addLogLine(level, source, message);
+            index++;
+        } else {
+            clearInterval(interval);
+        }
+    }, 500);
+}
+
+// Uncomment to test log display
+// setTimeout(simulateImportLogs, 1000);
+</script>
+{% endblock %}

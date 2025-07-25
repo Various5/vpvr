@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+{% block title %}Channels - IPTV PVR{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2>Channels</h2>
+            <div class="d-flex gap-2">
+                <input type="text" class="form-control" id="searchInput" placeholder="Search channels...">
+                <select class="form-select" id="groupFilter" style="width: 200px;">
+                    <option value="">All Groups</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="row" id="channelsList">
+            <!-- Channels will be loaded here -->
+        </div>
+    </div>
+</div>
+
+<!-- Channel Actions Modal -->
+<div class="modal fade" id="channelActionsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="channelActionsTitle">Channel Actions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary" onclick="playChannel()">
+                        <i class="bi bi-play-circle"></i> Play Now
+                    </button>
+                    <button class="btn btn-danger" onclick="recordNow()">
+                        <i class="bi bi-record-circle"></i> Record Now
+                    </button>
+                    <button class="btn btn-info" onclick="viewEPG()">
+                        <i class="bi bi-calendar3"></i> View EPG
+                    </button>
+                    <button class="btn btn-secondary" onclick="downloadM3U()">
+                        <i class="bi bi-download"></i> Download M3U
+                    </button>
+                    <button class="btn btn-secondary" onclick="downloadEPG()">
+                        <i class="bi bi-download"></i> Download EPG
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedChannel = null;
+let channels = [];
+
+async function loadChannels() {
+    try {
+        const response = await axios.get('/api/channels', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        channels = response.data;
+        displayChannels(channels);
+        loadGroups();
+    } catch (error) {
+        console.error('Failed to load channels:', error);
+    }
+}
+
+function displayChannels(channelsToShow) {
+    const container = document.getElementById('channelsList');
+    container.innerHTML = '';
+    
+    channelsToShow.forEach(channel => {
+        const channelCard = `
+            <div class="col-md-4 col-lg-3 mb-3">
+                <div class="card channel-card" onclick="showChannelActions(${channel.id})">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-2">
+                            ${channel.logo_url ? `<img src="${channel.logo_url}" class="channel-logo me-2">` : '<i class="bi bi-tv fs-3 me-2"></i>'}
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0">${channel.number || ''} ${channel.name}</h6>
+                                <small class="text-muted">${channel.group_name || 'Uncategorized'}</small>
+                            </div>
+                        </div>
+                        <div class="channel-info">
+                            <div class="now-playing" id="now-${channel.id}">
+                                <small class="text-muted">Loading...</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        container.innerHTML += channelCard;
+    });
+    
+    // Load now/next info for visible channels
+    channelsToShow.forEach(channel => {
+        loadNowNext(channel.id);
+    });
+}
+
+async function loadNowNext(channelId) {
+    try {
+        const response = await axios.get(`/api/epg/now-next/${channelId}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        const nowDiv = document.getElementById(`now-${channelId}`);
+        if (response.data.now) {
+            const now = response.data.now;
+            const startTime = new Date(now.start_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            const endTime = new Date(now.end_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            nowDiv.innerHTML = `
+                <small class="d-block"><strong>Now:</strong> ${now.title}</small>
+                <small class="text-muted">${startTime} - ${endTime}</small>
+            `;
+        } else {
+            nowDiv.innerHTML = '<small class="text-muted">No program info</small>';
+        }
+    } catch (error) {
+        console.error(`Failed to load now/next for channel ${channelId}:`, error);
+    }
+}
+
+async function loadGroups() {
+    try {
+        const response = await axios.get('/api/channels/groups', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        const select = document.getElementById('groupFilter');
+        response.data.forEach(group => {
+            const option = document.createElement('option');
+            option.value = group;
+            option.textContent = group;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Failed to load groups:', error);
+    }
+}
+
+function showChannelActions(channelId) {
+    selectedChannel = channels.find(ch => ch.id === channelId);
+    if (selectedChannel) {
+        document.getElementById('channelActionsTitle').textContent = selectedChannel.name;
+        const modal = new bootstrap.Modal(document.getElementById('channelActionsModal'));
+        modal.show();
+    }
+}
+
+async function playChannel() {
+    if (!selectedChannel) return;
+    
+    try {
+        const response = await axios.get(`/api/channels/${selectedChannel.id}/stream-url`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        const streamUrl = response.data.stream_url;
+        
+        // Show player modal
+        document.getElementById('playerTitle').textContent = selectedChannel.name;
+        const player = document.getElementById('videoPlayer');
+        player.src = streamUrl;
+        
+        const playerModal = new bootstrap.Modal(document.getElementById('playerModal'));
+        playerModal.show();
+        
+        // Close actions modal
+        bootstrap.Modal.getInstance(document.getElementById('channelActionsModal')).hide();
+        
+        // Play video
+        player.play();
+    } catch (error) {
+        alert('Failed to play channel');
+    }
+}
+
+async function recordNow() {
+    if (!selectedChannel) return;
+    
+    const duration = prompt('Recording duration (minutes):', '60');
+    if (!duration) return;
+    
+    try {
+        await axios.post(`/api/recordings/record-now?channel_id=${selectedChannel.id}&duration_minutes=${duration}`, {}, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        alert('Recording started!');
+        bootstrap.Modal.getInstance(document.getElementById('channelActionsModal')).hide();
+    } catch (error) {
+        alert(error.response?.data?.detail || 'Failed to start recording');
+    }
+}
+
+function viewEPG() {
+    if (!selectedChannel) return;
+    window.location.href = `/epg?channel=${selectedChannel.id}`;
+}
+
+function downloadM3U() {
+    if (!selectedChannel) return;
+    window.open(`/api/channels/${selectedChannel.id}/m3u`, '_blank');
+}
+
+function downloadEPG() {
+    if (!selectedChannel) return;
+    window.open(`/api/epg/channel/${selectedChannel.id}/xmltv`, '_blank');
+}
+
+// Search functionality
+document.getElementById('searchInput').addEventListener('input', (e) => {
+    const search = e.target.value.toLowerCase();
+    const filtered = channels.filter(ch => 
+        ch.name.toLowerCase().includes(search) ||
+        (ch.number && ch.number.includes(search))
+    );
+    displayChannels(filtered);
+});
+
+// Group filter
+document.getElementById('groupFilter').addEventListener('change', (e) => {
+    const group = e.target.value;
+    const filtered = group ? channels.filter(ch => ch.group_name === group) : channels;
+    displayChannels(filtered);
+});
+
+// Load channels on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadChannels();
+});
+</script>
+
+<style>
+.channel-card {
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.channel-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.channel-logo {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
+
+#videoPlayer {
+    max-height: 80vh;
+    background: #000;
+}
+</style>
+{% endblock %}
